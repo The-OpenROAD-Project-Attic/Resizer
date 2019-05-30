@@ -15,6 +15,7 @@ TAGS
 Makefile
 
 /build
+/test/results
 
 ResizerTclInitVar.cc
 Resizer_wrap.cc

@@ -149,18 +149,18 @@ writeDefComponent(Instance *inst,
 		def_component->placementOrientStr());
       }
     }
-  }
-  if (def_component->hasWeight())
-    fprintf(out_stream, "\n+ WEIGHT %d",
-	    def_component->weight());
-  if (def_component->hasRegionName())
-    fprintf(out_stream, "\n+ REGION %s",
-	    def_component->regionName());
-  if (def_component->hasRegionBounds()) {
-    int size, *xl, *yl, *xh, *yh;
-    def_component->regionBounds(&size, &xl, &yl, &xh, &yh);
-    fprintf(out_stream, "\n+ REGION ( %d %d ) ( %d %d )",
-	    xl[0], yl[0], xh[0], yh[0]);
+    if (def_component->hasWeight())
+      fprintf(out_stream, "\n+ WEIGHT %d",
+	      def_component->weight());
+    if (def_component->hasRegionName())
+      fprintf(out_stream, "\n+ REGION %s",
+	      def_component->regionName());
+    if (def_component->hasRegionBounds()) {
+      int size, *xl, *yl, *xh, *yh;
+      def_component->regionBounds(&size, &xl, &yl, &xh, &yh);
+      fprintf(out_stream, "\n+ REGION ( %d %d ) ( %d %d )",
+	      xl[0], yl[0], xh[0], yh[0]);
+    }
   }
   fprintf(out_stream, " ;\n");
 }

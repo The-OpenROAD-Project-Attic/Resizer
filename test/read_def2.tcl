@@ -1,5 +1,5 @@
 # def buffer upsize, insertion
-source -echo def1.tcl
+source -echo read_def1.tcl
 # buffer upsize
 replace_cell u1 snl_bufx2
 report_checks -fields input_pin
