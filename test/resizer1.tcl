@@ -1,4 +1,4 @@
-# 
+# resize to target_slew
 read_liberty nlc18.lib
 read_lef nlc18.lef
 read_def reg1.def

@@ -16,7 +16,10 @@
 
 namespace eval sta {
 
-# Defined by SWIG interface Resizer.i.
+# Defined by SWIG interface LefDef.i.
+define_cmd_args "read_lef" {filename}
+define_cmd_args "read_def" {filename}
+define_cmd_args "write_def" {filename}
 define_cmd_args "resize" {}
 
 # sta namespace end

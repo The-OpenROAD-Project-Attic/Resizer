@@ -37,7 +37,7 @@ See /test for examples.
 
 ...
 cd test
-../resizer -f resize.tcl
+../resizer -f resize1.tcl
 ...
 
 ## Authors

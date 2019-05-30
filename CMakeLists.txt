@@ -249,7 +249,6 @@ set(RESIZER_INCLUDE_DIRS
 
 set(RESIZER_TCL_FILES
   ${STA_TCL_FILES}
-  LefDef.tcl
   Resizer.tcl
   )
 
