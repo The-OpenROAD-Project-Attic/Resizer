@@ -13,5 +13,5 @@ resize
 puts "TNS before = [format %.2f [total_negative_slack]]"
 puts "WNS before = [format %.2f [worst_negative_slack]]"
 
-set def_file [make_result_file reg1_sized.def]
+set def_file [make_result_file mea_sized.def]
 write_def $def_file

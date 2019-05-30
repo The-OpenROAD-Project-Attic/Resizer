@@ -34,8 +34,12 @@ proc read_def { filename } {
 define_cmd_args "write_def" {filename}
 
 proc write_def { filename } {
-  if { ![file writable $filename] } {
+  if { [file exists $filename] && ![file writable $filename] } {
     sta_error "$filename is not writeable.\n"
+  }
+  set dir [file dirname $filename]
+  if { ![file writable $dir] } {
+    sta_error "$dir is not writeable.\n"
   }
   write_def_cmd $filename
 }
