@@ -1,7 +1,3 @@
-%module lefdef
-
-%{
-
 // OpenSTA, Static Timing Analyzer
 // Copyright (c) 2019, Parallax Software, Inc.
 // 
@@ -18,29 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "LefReader.hh"
-#include "DefReader.hh"
-#include "LefDefNetwork.hh"
-#include "Sta.hh"
+#ifndef STA_DEF_WRITER_H
+#define STA_DEF_WRITER_H
 
-%}
+namespace sta {
 
-%inline %{
+class LefDefNetwork;
 
 void
-read_lef(const char *filename)
-{
-  Sta *sta = Sta::sta();
-  LefDefNetwork *network = dynamic_cast<LefDefNetwork*>(sta->network());
-  readLef(filename, false, network);
-}
+writeDef(const char *filename,
+	 LefDefNetwork *network);
 
-void
-read_def(const char *filename)
-{
-  Sta *sta = Sta::sta();
-  LefDefNetwork *network = dynamic_cast<LefDefNetwork*>(sta->network());
-  readDef(filename, false, network);
-}
-
-%} // inline
+} // namespace
+#endif

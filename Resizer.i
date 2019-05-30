@@ -22,10 +22,13 @@
 %include "DelayCalc.i"
 %include "Parasitics.i"
 %include "Verilog.i"
-%include "LefDef.i"
 
 %{
 
+#include "LefReader.hh"
+#include "DefReader.hh"
+#include "DefWriter.hh"
+#include "LefDefNetwork.hh"
 #include "Resizer.hh"
 
 using namespace sta;
@@ -39,6 +42,30 @@ using namespace sta;
 ////////////////////////////////////////////////////////////////
 
 %inline %{
+
+void
+read_lef(const char *filename)
+{
+  Sta *sta = Sta::sta();
+  LefDefNetwork *network = dynamic_cast<LefDefNetwork*>(sta->network());
+  readLef(filename, true, network);
+}
+
+void
+read_def(const char *filename)
+{
+  Sta *sta = Sta::sta();
+  LefDefNetwork *network = dynamic_cast<LefDefNetwork*>(sta->network());
+  readDef(filename, true, network);
+}
+
+void
+write_def(const char *filename)
+{
+  Resizer *resizer = static_cast<Resizer*>(Sta::sta());
+  LefDefNetwork *network = static_cast<LefDefNetwork*>(resizer->network());
+  writeDef(filename, network);
+}
 
 void
 resize()

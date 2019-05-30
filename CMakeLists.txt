@@ -224,6 +224,7 @@ set(STA_INCLUDE_DIRS
 
 set(RESIZER_SOURCE
   DefReader.cc
+  DefWriter.cc
   LefReader.cc
   LefDefNetwork.cc
   Resizer.cc
@@ -234,6 +235,7 @@ set(RESIZER_SOURCE
 
 set(RESIZER_HEADERS
   DefReader.hh
+  DefWriter.hh
   LefReader.hh
   LefDefNetwork.hh
   Resizer.hh

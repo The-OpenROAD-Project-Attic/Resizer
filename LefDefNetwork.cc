@@ -22,8 +22,20 @@ namespace sta {
 
 LefDefNetwork::LefDefNetwork() :
   ConcreteNetwork(),
+  filename_(nullptr),
   lef_library_(nullptr)
 {
+}
+
+LefDefNetwork::~LefDefNetwork()
+{
+  stringDelete(filename_);
+}
+
+void
+LefDefNetwork::setFilename(const char *filename)
+{
+  filename_ = stringCopy(filename);
 }
 
 Library *

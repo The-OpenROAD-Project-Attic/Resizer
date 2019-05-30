@@ -40,6 +40,10 @@ class LefDefNetwork : public ConcreteNetwork
 {
 public:
   LefDefNetwork();
+  ~LefDefNetwork();
+  const char *filename() { return filename_; }
+  void setFilename(const char *filename);
+
   virtual Library *makeLibrary(const char *name,
 			       const char *filename);
   virtual Cell *makeCell(Library *library,
@@ -69,6 +73,7 @@ public:
 	       defiNet *def_net);
 
 protected:
+  const char *filename_;
   LefLibrary *lef_library_;
 
   using NetworkEdit::makeNet;
@@ -112,13 +117,14 @@ class DefComponent : public ConcreteInstance
 {
 public:
   LefMacro *lefMacro();
+  defiComponent *defComponent() { return def_component_; }
 
 protected:
   DefComponent(ConcreteCell *cell,
 	       const char *name,
 	       ConcreteInstance *top_instance,
 	       defiComponent *def_component);
-  
+
 private:
   defiComponent *def_component_;
 

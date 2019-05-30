@@ -27,5 +27,4 @@ readDef(const char *filename,
 	LefDefNetwork *network);
 
 } // namespace
-
 #endif
