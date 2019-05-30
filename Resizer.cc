@@ -97,6 +97,7 @@ Resizer::resize(Corner *corner)
   // Disable incremental timing.
   search_->arrivalsInvalid();
 
+  ensureLevelized();
   InstanceSeq insts;
   instancesSortByLevel(insts);
 
