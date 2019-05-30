@@ -28,17 +28,43 @@ CMAKE_BUILD_TYPE DEBUG|RELEASE
 The resizer is run using TCL scripts. All OpenSTA commands are available.
 Addtional commands are
 
-* read_lef
-* read_def
+* read_lef filename
+* read_def filename
 * resize
+* write_def filename
 
 Liberty libraries should be read before LEF and DEF.
-See /test for examples.
+Only one LEF and one DEF file are supported.
+A typical resizer command file is shown below.
 
-...
+```
+source helpers.tcl
+read_liberty nlc18.lib
+read_lef nlc18.lef
+read_def mea.def
+source mea.sdc
+resize
+write_def mea_sized.def
+```
+To run this example use the following commands.
+
+```
 cd test
-../resizer -f resize1.tcl
-...
+../resizer -f resize_mea1.tcl
+```
+
+Note that OpenSTA commands can be used to report timing metrics before or after
+the resizing.
+
+```
+puts "TNS before = [format %.2f [total_negative_slack]]"
+puts "WNS before = [format %.2f [worst_negative_slack]]"
+
+resize
+
+puts "TNS before = [format %.2f [total_negative_slack]]"
+puts "WNS before = [format %.2f [worst_negative_slack]]"
+```
 
 ## Authors
 

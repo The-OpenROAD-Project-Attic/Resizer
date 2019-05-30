@@ -43,41 +43,58 @@ using namespace sta;
 
 %inline %{
 
-void
-read_lef(const char *filename)
+LefDefNetwork *
+lefDefNetwork()
 {
   Sta *sta = Sta::sta();
-  LefDefNetwork *network = dynamic_cast<LefDefNetwork*>(sta->network());
-  readLef(filename, true, network);
+  return dynamic_cast<LefDefNetwork*>(sta->network());
+}
+
+Resizer *
+getResizer()
+{
+  return static_cast<Resizer*>(Sta::sta());
 }
 
 void
-read_def(const char *filename)
+read_lef(const char *filename)
 {
-  Sta *sta = Sta::sta();
-  LefDefNetwork *network = dynamic_cast<LefDefNetwork*>(sta->network());
+  LefDefNetwork *network = lefDefNetwork();
+  readLef(filename, true, network);
+}
+
+bool
+lef_exists()
+{
+  LefDefNetwork *network = lefDefNetwork();
+  return network->lefLibrary() != nullptr;
+}
+
+void
+read_def_cmd(const char *filename)
+{
+  LefDefNetwork *network = lefDefNetwork();
   readDef(filename, true, network);
 }
 
 void
-write_def(const char *filename)
+write_def_cmd(const char *filename)
 {
-  Resizer *resizer = static_cast<Resizer*>(Sta::sta());
-  LefDefNetwork *network = static_cast<LefDefNetwork*>(resizer->network());
+  LefDefNetwork *network = lefDefNetwork();
   writeDef(filename, network);
 }
 
 void
 resize()
 {
-  Resizer *resizer = static_cast<Resizer*>(Sta::sta());
+  Resizer *resizer = getResizer();
   resizer->resize(resizer->cmdCorner());
 }
 
 void
 resize_to_target_slew(Instance *inst)
 {
-  Resizer *resizer = static_cast<Resizer*>(Sta::sta());
+  Resizer *resizer = getResizer();
   resizer->resizeToTargetSlew(inst, resizer->cmdCorner());
 }
 

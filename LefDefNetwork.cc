@@ -33,6 +33,15 @@ LefDefNetwork::~LefDefNetwork()
 }
 
 void
+LefDefNetwork::clear()
+{
+  stringDelete(filename_);
+  filename_ = nullptr;
+  lef_library_ = nullptr;
+  ConcreteNetwork::clear();
+}
+
+void
 LefDefNetwork::setFilename(const char *filename)
 {
   filename_ = stringCopy(filename);

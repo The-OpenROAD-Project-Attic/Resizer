@@ -41,6 +41,7 @@ class LefDefNetwork : public ConcreteNetwork
 public:
   LefDefNetwork();
   ~LefDefNetwork();
+  virtual void clear();
   const char *filename() { return filename_; }
   void setFilename(const char *filename);
 

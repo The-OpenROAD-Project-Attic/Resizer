@@ -18,8 +18,29 @@ namespace eval sta {
 
 # Defined by SWIG interface LefDef.i.
 define_cmd_args "read_lef" {filename}
+
 define_cmd_args "read_def" {filename}
+
+proc read_def { filename } {
+  if { ![lef_exists] } {
+    sta_error "use LEF file has not been read.\n"
+  }
+  if { ![file readable $filename] } {
+    sta_error "$filename is not readable.\n"
+  }
+  read_def_cmd $filename
+}
+
 define_cmd_args "write_def" {filename}
+
+proc write_def { filename } {
+  if { ![file writable $filename] } {
+    sta_error "$filename is not writeable.\n"
+  }
+  write_def_cmd $filename
+}
+
+# Defined by SWIG interface LefDef.i.
 define_cmd_args "resize" {}
 
 # sta namespace end
