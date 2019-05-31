@@ -51,8 +51,8 @@ writeDef(const char *filename,
     if (out_stream) {
       size_t buffer_size = 128;
       char *buffer = new char[buffer_size];
-      do {
-	getline(&buffer, &buffer_size, in_stream);
+      while (getline(&buffer, &buffer_size, in_stream) >= 0) {
+	
 	if (stringBeginEqual(buffer, "COMPONENTS ")) {
 	  // Skip the components.
 	  do {
@@ -71,7 +71,7 @@ writeDef(const char *filename,
 	}
 	else
 	  fputs(buffer, out_stream);
-      } while (!feof(in_stream));
+      }
       delete [] buffer;
       fclose(out_stream);
     }
