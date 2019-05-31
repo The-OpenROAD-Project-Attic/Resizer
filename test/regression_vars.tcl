@@ -112,10 +112,12 @@ proc list_delete { list delete } {
 record_sta_tests {
   read_def1
   read_def2
+  read_def3
   resize1
   resize2
   resize_mea1
   write_def1
+  write_def2
 }
 
 # Regression test groups

@@ -42,6 +42,11 @@ static int
 defPinEndCbk(defrCallbackType_e,
 	     void *,
 	     defiUserData user);
+static const char *
+defToSta(const char *token,
+	 Network *network);
+
+////////////////////////////////////////////////////////////////
 
 // DEF parser callback routine state.
 class DefReader
@@ -111,14 +116,15 @@ defComponentCbk(defrCallbackType_e,
 {
   LefDefNetwork *network = getNetwork(user);
   Library *lef_lib = network->lefLibrary();
-  const char *name = def_component->id();
+  const char *def_name = def_component->id();
+  const char *sta_name = defToSta(def_name, network);
   const char *macro_name = def_component->name();
   Cell *cell = network->findCell(lef_lib, macro_name);
   if (cell)
-    network->makeDefComponent(cell, name,
+    network->makeDefComponent(cell, sta_name,
 			      saveDefData(user) ? def_component : nullptr);
   else
-    printf("Error: component %s macro %s not found.\n", name, macro_name);
+    printf("Error: component %s macro %s not found.\n", def_name, macro_name);
   return 0;
 }
 
@@ -164,12 +170,14 @@ defNetCbk(defrCallbackType_e,
 	  defiUserData user)
 {
   LefDefNetwork *network = getNetwork(user);
-  const char *net_name = def_net->name();
-  Net *net = network->makeNet(net_name, saveDefData(user) ? def_net : nullptr);
+  const char *def_net_name = def_net->name();
+  const char *sta_net_name = defToSta(def_net_name, network);
+  Net *net = network->makeNet(sta_net_name, saveDefData(user) ? def_net : nullptr);
   for (int i = 0; i < def_net->numConnections(); i++) {
-    const char *inst_name = def_net->instance(i);
+    const char *def_inst_name = def_net->instance(i);
+    const char *sta_inst_name = defToSta(def_inst_name, network);
     const char *pin_name = def_net->pin(i);
-    if (stringEq(inst_name, "PIN")) {
+    if (stringEq(def_inst_name, "PIN")) {
       Instance *top_inst = network->topInstance();
       Pin *pin = network->findPin(top_inst, pin_name);
       if (pin == nullptr) {
@@ -179,14 +187,14 @@ defNetCbk(defrCallbackType_e,
 	  pin = network->makePin(top_inst, port, nullptr);
 	else
 	  printf("Error: net %s connection to PIN %s not found\n",
-		 net_name,
+		 def_net_name,
 		 pin_name);
       }
       if (pin)
 	network->makeTerm(pin, net);
     }
     else {
-      Instance *inst = network->findInstance(inst_name);
+      Instance *inst = network->findInstance(sta_inst_name);
       if (inst) {
 	Cell *cell = network->cell(inst);
 	Port *port = network->findPort(cell, pin_name);
@@ -194,18 +202,43 @@ defNetCbk(defrCallbackType_e,
 	  network->connect(inst, port, net);
 	else
 	  printf("Error: net %s connection to component %s/%s pin %s not found.\n",
-		 net_name,
-		 inst_name,
+		 def_net_name,
+		 def_inst_name,
 		 network->name(cell),
 		 pin_name);
       }
       else
 	printf("Error: net %s connection component %s not found.\n",
-	       net_name,
-	       inst_name);
+	       def_net_name,
+	       def_inst_name);
     }
   }
   return 0;
+}
+
+// Escape path dividers in token.
+static const char *
+defToSta(const char *token,
+	 Network *network)
+{
+  char path_escape = network->pathEscape();
+  char path_divider = network->pathDivider();
+  char *escaped = makeTmpString(strlen(token) + 1);
+  char *e = escaped;
+  for (const char *s = token; *s ; s++) {
+    char ch = *s;
+
+    if (ch == path_divider) {
+      // Insert escape for divider.
+      *e++ = path_escape;
+      *e++ = path_divider;
+    }
+    else
+      // Just the normal noises.
+      *e++ = ch;
+  }
+  *e = '\0';
+  return escaped;
 }
 
 } // namespace

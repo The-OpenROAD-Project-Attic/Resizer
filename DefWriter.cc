@@ -39,6 +39,11 @@ static void
 writeDefNet(Net *net,
 	    FILE *out_stream,
 	    LefDefNetwork *network);
+static const char *
+staToDef(const char *token,
+	 Network *network);
+
+////////////////////////////////////////////////////////////////
 
 void
 writeDef(const char *filename,
@@ -108,7 +113,7 @@ writeDefComponent(Instance *inst,
   DefComponent *component = reinterpret_cast<DefComponent*>(inst);
   defiComponent *def_component = component->defComponent();
   fprintf(out_stream, "- %s %s",
-	  network->name(inst),
+	  staToDef(network->name(inst), network),
 	  network->name(network->cell(inst)));
   if (def_component) {
     if (def_component->hasEEQ())
@@ -187,9 +192,10 @@ writeDefNet(Net *net,
 	    FILE *out_stream,
 	    LefDefNetwork *network)
 {
-  const char *net_name = network->name(net);
-  fprintf(out_stream, "- %s", net_name);
-  int column = strlen(net_name) + 2;
+  const char *sta_net_name = network->name(net);
+  const char *def_net_name = staToDef(sta_net_name, network);
+  fprintf(out_stream, "- %s", def_net_name);
+  int column = strlen(def_net_name) + 2;
   int column_max = 80;
 
   NetTermIterator *term_iter = network->termIterator(net);
@@ -207,17 +213,37 @@ writeDefNet(Net *net,
   NetPinIterator *pin_iter = network->pinIterator(net);
   while (pin_iter->hasNext()) {
     Pin *pin = pin_iter->next();
-    const char *component_name = network->name(network->instance(pin));
+    const char *sta_component_name = network->name(network->instance(pin));
+    const char *def_component_name = staToDef(sta_component_name, network);
     const char *port_name = network->portName(pin);
     fprintf(out_stream, " ( %s %s )",
-	    component_name,
+	    def_component_name,
 	    port_name);
-    column += strlen(component_name) + strlen(port_name) + 6;
+    column += strlen(def_component_name) + strlen(port_name) + 6;
     if (column > column_max)
       fprintf(out_stream, "\n ");
   }
   delete pin_iter;
   fprintf(out_stream, " ;\n");
+}
+
+// Remove path divider escapes in token.
+static const char *
+staToDef(const char *token,
+	 Network *network)
+{
+  char path_escape = network->pathEscape();
+  char path_divider = network->pathDivider();
+  char *unescaped = makeTmpString(strlen(token) + 1);
+  char *u = unescaped;
+  for (const char *s = token; *s ; s++) {
+    char ch = *s;
+
+    if (ch != path_escape)
+      *u++ = ch;
+  }
+  *u = '\0';
+  return unescaped;
 }
 
 } // namespace
