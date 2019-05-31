@@ -27,6 +27,10 @@ namespace sta {
 static void
 registerDefCallbacks();
 static int
+defDividerCbk(defrCallbackType_e,
+	      const char *divider,
+	      defiUserData user);
+static int
 defComponentCbk(defrCallbackType_e,
 		defiComponent *def_component,
 		defiUserData user);
@@ -92,6 +96,7 @@ readDef(const char *filename,
 static void
 registerDefCallbacks()
 {
+  defrSetDividerCbk(defDividerCbk);
   defrSetComponentCbk(defComponentCbk);
   defrSetNetCbk(defNetCbk);
   defrSetPinCbk(defPinCbk);
@@ -108,6 +113,16 @@ DefReader::DefReader(bool save_def_data,
 #define getDefReader(user) (reinterpret_cast<DefReader *>(user))
 #define getNetwork(user) (getDefReader(user)->network())
 #define saveDefData(user) (getDefReader(user)->saveDefData())
+
+static int
+defDividerCbk(defrCallbackType_e,
+	      const char *divider,
+	      defiUserData user)
+{
+  LefDefNetwork *network = getNetwork(user);
+  network->setDivider(divider[0]);
+  return 0;
+}
 
 static int
 defComponentCbk(defrCallbackType_e,

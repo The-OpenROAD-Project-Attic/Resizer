@@ -42,6 +42,7 @@ public:
   LefDefNetwork();
   ~LefDefNetwork();
   virtual void clear();
+  void setDivider(char divider);
   const char *filename() { return filename_; }
   void setFilename(const char *filename);
 

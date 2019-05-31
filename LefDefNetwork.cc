@@ -42,6 +42,12 @@ LefDefNetwork::clear()
 }
 
 void
+LefDefNetwork::setDivider(char divider)
+{
+  divider_ = divider_;
+}
+
+void
 LefDefNetwork::setFilename(const char *filename)
 {
   filename_ = stringCopy(filename);
