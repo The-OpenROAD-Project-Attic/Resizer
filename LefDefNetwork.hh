@@ -75,6 +75,14 @@ public:
 	       defiNet *def_net);
 
 protected:
+  Library *lefToSta(LefLibrary *lib) const;
+  LefLibrary *staToLef(Library *lib) const;
+  Cell *lefToSta(LefMacro *macro) const;
+  LefMacro *staToLef(Cell *cell) const;
+  DefComponent *staToDef(Instance *inst) const;
+  Instance *defToSta(DefComponent *component) const;
+  Net *defToSta(DefNet *net) const;
+
   const char *filename_;
   LefLibrary *lef_library_;
 

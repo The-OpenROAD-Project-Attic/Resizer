@@ -59,13 +59,13 @@ LefDefNetwork::makeLibrary(const char *name,
 {
   lef_library_ = new LefLibrary(name, filename);
   addLibrary(lef_library_);
-  return reinterpret_cast<Library*>(lef_library_);
+  return lefToSta(lef_library_);
 }
 
 Library *
 LefDefNetwork::lefLibrary()
 {
-  return reinterpret_cast<Library*>(lef_library_);
+  return lefToSta(lef_library_);
 }
 
 Cell *
@@ -74,7 +74,7 @@ LefDefNetwork::makeCell(Library *library,
 			bool is_leaf,
 			const char *filename)
 {
-  LefLibrary *lef_lib = reinterpret_cast<LefLibrary*>(library);
+  LefLibrary *lef_lib = staToLef(library);
   LefMacro *macro = new LefMacro(lef_lib, name, is_leaf, filename);
   lef_lib->addCell(macro);
 
@@ -82,15 +82,13 @@ LefDefNetwork::makeCell(Library *library,
   // This assumes liberty libraries are read before LEF.
   LibertyCell *lib_cell = findLibertyCell(name);
   macro->setLibertyCell(lib_cell);
-
-  Cell *cell = reinterpret_cast<Cell*>(macro);
-  return cell;
+  return lefToSta(macro);
 }
 
 LibertyCell *
 LefDefNetwork::libertyCell(Cell *cell) const
 {
-  LefMacro *macro = reinterpret_cast<LefMacro*>(cell);
+  LefMacro *macro = staToLef(cell);
   return macro->libertyCell();
 }
 
@@ -110,7 +108,7 @@ LefDefNetwork::libertyPort(Port *port) const
 void
 LefDefNetwork::initTopInstancePins()
 {
-  reinterpret_cast<DefComponent*>(top_instance_)->initPins();
+  staToDef(top_instance_)->initPins();
 }
 
 Instance *
@@ -119,7 +117,7 @@ LefDefNetwork::makeInstance(Cell *cell,
 			    Instance *)
 {
   DefComponent *component = makeDefComponent(cell, name, nullptr);
-  return reinterpret_cast<Instance*>(component);
+  return defToSta(component);
 }
 
 Instance *
@@ -138,14 +136,11 @@ LefDefNetwork::makeDefComponent(Cell *cell,
 				const char *name,
 				defiComponent *def_component)
 {
-  LefMacro *macro = reinterpret_cast<LefMacro*>(cell);
-  DefComponent *top = reinterpret_cast<DefComponent*>(top_instance_);
+  LefMacro *macro = staToLef(cell);
+  DefComponent *top = staToDef(top_instance_);
   DefComponent *component = new DefComponent(macro, name, top, def_component);
-  if (top_instance_) {
-    ConcreteInstance *cparent =
-      reinterpret_cast<ConcreteInstance*>(top_instance_);
-    cparent->addChild(component);
-  }
+  if (top_instance_)
+    top->addChild(component);
   return component;
 }
 
@@ -161,7 +156,7 @@ LefDefNetwork::replaceCell(Instance *inst,
 Instance *
 LefDefNetwork::findInstance(const char *name) const
 {
-  DefComponent *top = reinterpret_cast<DefComponent*>(top_instance_);
+  DefComponent *top = staToDef(top_instance_);
   return top->findChild(name);
 }
 
@@ -169,9 +164,53 @@ Net *
 LefDefNetwork::makeNet(const char *name,
 		       defiNet *def_net)
 {
-  DefComponent *top = reinterpret_cast<DefComponent*>(top_instance_);
+  DefComponent *top = staToDef(top_instance_);
   DefNet *net = new DefNet(name, top, def_net);
   top->addNet(net);
+  return defToSta(net);
+}
+
+////////////////////////////////////////////////////////////////
+
+Library *
+LefDefNetwork::lefToSta(LefLibrary *lib) const
+{
+  return reinterpret_cast<Library*>(lib);
+}
+
+LefLibrary *
+LefDefNetwork::staToLef(Library *lib) const
+{
+  return reinterpret_cast<LefLibrary*>(lib);
+}
+
+Cell *
+LefDefNetwork::lefToSta(LefMacro *macro) const
+{
+  return reinterpret_cast<Cell*>(macro);
+}
+
+LefMacro *
+LefDefNetwork::staToLef(Cell *cell) const
+{
+  return reinterpret_cast<LefMacro*>(cell);
+}
+
+DefComponent *
+LefDefNetwork::staToDef(Instance *inst) const
+{
+  return reinterpret_cast<DefComponent*>(inst);
+}
+
+Instance *
+LefDefNetwork::defToSta(DefComponent *component) const
+{
+  return reinterpret_cast<Instance*>(component);
+}
+
+Net *
+LefDefNetwork::defToSta(DefNet *net) const
+{
   return reinterpret_cast<Net*>(net);
 }
 
