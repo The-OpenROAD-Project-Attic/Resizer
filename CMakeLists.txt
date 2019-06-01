@@ -20,8 +20,8 @@ project(sizer VERSION 2.0.15)
 
 set(RESIZER_HOME ${PROJECT_SOURCE_DIR})
 set(STA_HOME ${PROJECT_SOURCE_DIR}/../opensta)
-set(LEF_HOME ${PROJECT_SOURCE_DIR}/../lef)
-set(DEF_HOME ${PROJECT_SOURCE_DIR}/../def)
+set(LEF_HOME ${PROJECT_SOURCE_DIR}/../lef/5.8-p027)
+set(DEF_HOME ${PROJECT_SOURCE_DIR}/../def/5.8-p027)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -243,8 +243,8 @@ set(RESIZER_HEADERS
 
 set(RESIZER_INCLUDE_DIRS
   ${STA_INCLUDE_DIRS}
-  ${LEF_HOME}/5.8-p027/lef
-  ${DEF_HOME}/5.8-p027/def
+  ${LEF_HOME}/lef
+  ${DEF_HOME}/def
   )
 
 set(RESIZER_TCL_FILES
@@ -290,8 +290,8 @@ target_link_libraries(resizer
   ${STA_HOME}/app/libOpenSTAnoCmds.a
   ${TCL_LIB}
   ${CUDD_LIB}
-  ${LEF_HOME}/5.8-p027/lef/liblef.a
-  ${DEF_HOME}/5.8-p027/def/libdef.a
+  ${LEF_HOME}/lef/liblef.a
+  ${DEF_HOME}/def/libdef.a
   )
 
 if (ZLIB_FOUND)
@@ -307,3 +307,10 @@ endif()
 
 # executable
 install(TARGETS resizer DESTINATION bin)
+
+################################################################
+
+add_custom_target(tags etags -o TAGS ${RESIZER_SOURCE} ${RESIZER_HEADERS} ${RESIZER_TCL_FILES}
+  WORKING_DIRECTORY ${RESIZER_HOME}
+  DEPENDS ${RESIZER_SOURCE} ${RESIZER_HEADERS} ${RESIZER_TCL_FILES}
+  )

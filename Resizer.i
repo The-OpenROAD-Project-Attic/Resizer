@@ -21,7 +21,6 @@
 %include "NetworkEdit.i"
 %include "DelayCalc.i"
 %include "Parasitics.i"
-%include "Verilog.i"
 
 %{
 
