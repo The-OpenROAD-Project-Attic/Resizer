@@ -73,6 +73,7 @@ public:
   Instance *findInstance(const char *name) const;
   Net *makeNet(const char *name,
 	       defiNet *def_net);
+  int pinCount(Net *net);
 
 protected:
   Library *lefToSta(LefLibrary *lib) const;

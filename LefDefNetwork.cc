@@ -170,6 +170,16 @@ LefDefNetwork::makeNet(const char *name,
   return defToSta(net);
 }
 
+int
+LefDefNetwork::pinCount(Net *net)
+{
+  int pin_count = 0;
+  NetPinIterator *pin_iter = pinIterator(net);
+  while (pin_iter->hasNext())
+    pin_count++;
+  return pin_count;
+}
+
 ////////////////////////////////////////////////////////////////
 
 Library *
@@ -283,4 +293,4 @@ DefNet::DefNet(const char *name,
     def_net_ = new defiNet(*def_net);
 }
 
-};
+} // namespace
