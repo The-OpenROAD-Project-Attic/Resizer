@@ -69,11 +69,16 @@ public:
 				 defiComponent *def_component);
   virtual void replaceCell(Instance *inst,
 			   LibertyCell *cell);
+  virtual Pin *connect(Instance *inst,
+		       LibertyPort *port,
+		       Net *net);
   // DEF instances all have top_instance as the parent.
   Instance *findInstance(const char *name) const;
   Net *makeNet(const char *name,
 	       defiNet *def_net);
   int pinCount(Net *net);
+
+  using ConcreteNetwork::connect;
 
 protected:
   Library *lefToSta(LefLibrary *lib) const;
@@ -86,9 +91,6 @@ protected:
 
   const char *filename_;
   LefLibrary *lef_library_;
-
-  using NetworkEdit::makeNet;
-  using NetworkEdit::makeInstance;
 };
 
 ////////////////////////////////////////////////////////////////

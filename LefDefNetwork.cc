@@ -127,8 +127,12 @@ LefDefNetwork::makeInstance(LibertyCell *cell,
 {
   // Keep it all in the family.
   ConcreteCell *ccell = lef_library_->findCell(cell->name());
-  Cell *macro_cell = reinterpret_cast<Cell*>(ccell);
-  return makeInstance(macro_cell, name, parent);
+  if (ccell) {
+    Cell *macro_cell = reinterpret_cast<Cell*>(ccell);
+    return makeInstance(macro_cell, name, parent);
+  }
+  else
+    return nullptr;
 }
 
 DefComponent *
@@ -151,6 +155,19 @@ LefDefNetwork::replaceCell(Instance *inst,
   // Keep it all in the family.
   ConcreteCell *ccell = lef_library_->findCell(cell->name());
   replaceCellIntenal(inst, ccell);
+}
+
+Pin *
+LefDefNetwork::connect(Instance *inst,
+		       LibertyPort *port,
+		       Net *net)
+{
+  DefComponent *component = staToDef(inst);
+  // Connect the corresponding LEF pin.
+  LefMacro *lef_macro = component->lefMacro();
+  ConcretePort *lef_pin = lef_macro->findPort(port->name());
+  Port *port1 = reinterpret_cast<Port*>(lef_pin);
+  return ConcreteNetwork::connect(inst, port1, net);
 }
 
 Instance *
