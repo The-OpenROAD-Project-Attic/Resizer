@@ -108,15 +108,16 @@ proc list_delete { list delete } {
 
 # Regression test lists.
 
-# Record tests in $STA/test
+# Record tests in resizer/test
 record_sta_tests {
   insert_buffer1
   read_def1
-  read_def3
+  read_def2
   resize1
   resize2
   resize_mea1
   write_def1
+  write_def2
 }
 
 # Regression test groups
