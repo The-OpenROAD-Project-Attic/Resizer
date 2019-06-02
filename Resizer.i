@@ -101,7 +101,15 @@ void
 steiner_tree(Net *net)
 {
   Resizer *resizer = getResizer();
-  resizer->steinerTree(net);
+  resizer->makeSteinerTree(net);
+}
+
+void
+make_parasitics(float wire_cap_per_length,
+		float wire_res_per_length)
+{
+  Resizer *resizer = getResizer();
+  resizer->makeNetParasitics(wire_cap_per_length, wire_res_per_length);
 }
 
 %} // inline

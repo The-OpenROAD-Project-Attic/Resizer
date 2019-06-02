@@ -48,6 +48,18 @@ LefDefNetwork::setDivider(char divider)
 }
 
 void
+LefDefNetwork::setDefUnits(double def_units)
+{
+  def_units_ = def_units;
+}
+
+double
+LefDefNetwork::dbuToMeters(int dbu) const
+{
+  return dbu / def_units_ * 1e-6;
+}
+
+void
 LefDefNetwork::setFilename(const char *filename)
 {
   filename_ = stringCopy(filename);
@@ -188,7 +200,7 @@ LefDefNetwork::makeNet(const char *name,
 }
 
 void
-LefDefNetwork::connectedPins(Net *net,
+LefDefNetwork::connectedPins(const Net *net,
 			     PinSeq &pins)
 {
   NetConnectedPinIterator *pin_iter = connectedPinIterator(net);

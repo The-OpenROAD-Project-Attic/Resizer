@@ -31,6 +31,10 @@ defDividerCbk(defrCallbackType_e,
 	      const char *divider,
 	      defiUserData user);
 static int
+defUnitsCbk(defrCallbackType_e,
+	    double units,
+	    defiUserData user);
+static int
 defComponentCbk(defrCallbackType_e,
 		defiComponent *def_component,
 		defiUserData user);
@@ -97,6 +101,7 @@ static void
 registerDefCallbacks()
 {
   defrSetDividerCbk(defDividerCbk);
+  defrSetUnitsCbk(defUnitsCbk);
   defrSetComponentCbk(defComponentCbk);
   defrSetNetCbk(defNetCbk);
   defrSetPinCbk(defPinCbk);
@@ -121,6 +126,16 @@ defDividerCbk(defrCallbackType_e,
 {
   LefDefNetwork *network = getNetwork(user);
   network->setDivider(divider[0]);
+  return 0;
+}
+
+static int
+defUnitsCbk(defrCallbackType_e,
+	    double units,
+	    defiUserData user)
+{
+  LefDefNetwork *network = getNetwork(user);
+  network->setDefUnits(units);
   return 0;
 }
 

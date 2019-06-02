@@ -26,9 +26,14 @@
 #include "DcalcAnalysisPt.hh"
 #include "Graph.hh"
 #include "GraphDelayCalc.hh"
+#include "Parasitics.hh"
 #include "Search.hh"
 #include "Resizer.hh"
 #include "flute.h"
+
+// Outstanding issues
+//  Instance levelization and resizing to target slew only support single output gates
+//  flute wants to read files which prevents having a stand-alone executable
 
 namespace sta {
 
@@ -112,6 +117,7 @@ Resizer::resize(Corner *corner)
   instancesSortByLevel(insts);
 
   ensureTargetLoads(corner);
+  // Resize by in reverse level order.
   for (int i = insts.size() - 1; i >= 0; i--) {
     Instance *inst = insts[i];
     resizeToTargetSlew1(inst, corner);
@@ -385,7 +391,6 @@ private:
 
 SteinerTree::~SteinerTree()
 {
-  free(tree_.branch);
 }
 
 void
@@ -484,7 +489,7 @@ Resizer::ensureFluteInited()
 }
 
 SteinerTree *
-Resizer::steinerTree(Net *net)
+Resizer::makeSteinerTree(const Net *net)
 {
   LefDefNetwork *network = lefDefNetwork();
   debugPrint1(debug_, "steiner", 1, "Net %s\n", network->pathName(net));
@@ -523,6 +528,61 @@ Resizer::steinerTree(Net *net)
   }
   else
     return nullptr;
+}
+
+////////////////////////////////////////////////////////////////
+
+void
+Resizer::makeNetParasitics(float wire_cap_per_length, // Farads/Meter
+			   float wire_res_per_length) // Ohms/Meter
+{
+  NetIterator *net_iter = network_->netIterator(network_->topInstance());
+  while (net_iter->hasNext()) {
+    Net *net = net_iter->next();
+    makeNetParasitics(net, wire_cap_per_length, wire_res_per_length);
+  }
+  delete net_iter;
+
+  graph_delay_calc_->delaysInvalid();
+  search_->arrivalsInvalid();
+}
+
+void
+Resizer::makeNetParasitics(const Net *net,
+			   float wire_cap_per_length,
+			   float wire_res_per_length)
+{
+  Corner *corner = cmd_corner_;
+  const MinMax *min_max = MinMax::max();
+  LefDefNetwork *network = lefDefNetwork();
+  const ParasiticAnalysisPt *ap = corner->findParasiticAnalysisPt(min_max);
+  SteinerTree *tree = makeSteinerTree(net);
+  Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false, ap);
+  int branch_count = tree->branchCount();
+  for (int i = 0; i < branch_count; i++) {
+    DefPt pt1, pt2;
+    Pin *pin1, *pin2;
+    int steiner_pt1, steiner_pt2;
+    int wire_length_dbu;
+    tree->branch(i,
+		 pt1, pin1, steiner_pt1,
+		 pt2, pin2, steiner_pt2,
+		 wire_length_dbu);
+    ParasiticNode *n1 = pin1
+      ? parasitics_->ensureParasiticNode(parasitic, pin1)
+      : parasitics_->ensureParasiticNode(parasitic, net, steiner_pt1);
+    ParasiticNode *n2 = pin2
+      ? parasitics_->ensureParasiticNode(parasitic, pin2)
+      : parasitics_->ensureParasiticNode(parasitic, net, steiner_pt2);
+    float wire_length = network->dbuToMeters(wire_length_dbu);
+    float wire_cap = wire_length * wire_cap_per_length;
+    float wire_res = wire_length * wire_res_per_length;
+    // Make pi model for the wire.
+    parasitics_->incrCap(n1, wire_cap / 2.0, ap);
+    parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
+    parasitics_->incrCap(n1, wire_cap / 2.0, ap);
+  }
+  delete tree;
 }
 
 };

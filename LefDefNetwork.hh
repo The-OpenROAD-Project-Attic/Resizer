@@ -45,6 +45,10 @@ public:
   void setDivider(char divider);
   const char *filename() { return filename_; }
   void setFilename(const char *filename);
+  // dbu/micron
+  float defUnits() const { return def_units_; }
+  void setDefUnits(double def_units);
+  double dbuToMeters(int dbu) const;
 
   virtual Library *makeLibrary(const char *name,
 			       const char *filename);
@@ -69,6 +73,7 @@ public:
 				 defiComponent *def_component);
   virtual void replaceCell(Instance *inst,
 			   LibertyCell *cell);
+  // In DBUs.
   DefPt location(const Pin *pin);
   virtual Pin *connect(Instance *inst,
 		       LibertyPort *port,
@@ -77,7 +82,7 @@ public:
   Instance *findInstance(const char *name) const;
   Net *makeNet(const char *name,
 	       defiNet *def_net);
-  void connectedPins(Net *net,
+  void connectedPins(const Net *net,
 		     PinSeq &pins);
 
   using ConcreteNetwork::connect;
@@ -93,6 +98,7 @@ protected:
 
   const char *filename_;
   LefLibrary *lef_library_;
+  float def_units_;		// dbu/micron
 };
 
 ////////////////////////////////////////////////////////////////

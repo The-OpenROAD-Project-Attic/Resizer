@@ -111,6 +111,7 @@ proc list_delete { list delete } {
 # Record tests in resizer/test
 record_sta_tests {
   insert_buffer1
+  make_parasitics1
   read_def1
   read_def2
   resize1

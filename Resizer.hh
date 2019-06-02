@@ -37,7 +37,9 @@ public:
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
-  SteinerTree *steinerTree(Net *net);
+  SteinerTree *makeSteinerTree(const Net *net);
+  void makeNetParasitics(float wire_cap_per_length,
+			 float wire_res_per_length);
 
 protected:
   virtual void makeNetwork();
@@ -64,6 +66,9 @@ protected:
 			     float *slews,
 			     int *counts);
   void ensureFluteInited();
+  void makeNetParasitics(const Net *net,
+			 float wire_cap_per_length,
+			 float wire_res_per_length);
 
 private:
   bool flute_inited_;
