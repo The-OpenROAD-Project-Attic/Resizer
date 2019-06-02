@@ -21,17 +21,23 @@
 
 namespace sta {
 
+class LefDefNetwork;
+class SteinerTree;
+
 typedef Map<LibertyCell*, float> CellTargetLoadMap;
 
 class Resizer : public Sta
 {
 public:
   Resizer();
+  LefDefNetwork *lefDefNetwork();
+
   // Resize all instances in the network.
   void resize(Corner *corner);
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
+  SteinerTree *steinerTree(Net *net);
 
 protected:
   virtual void makeNetwork();
@@ -57,8 +63,10 @@ protected:
 			     // Return values.
 			     float *slews,
 			     int *counts);
+  void ensureFluteInited();
 
 private:
+  bool flute_inited_;
   CellTargetLoadMap *target_load_map_;
 };
 

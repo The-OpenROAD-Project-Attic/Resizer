@@ -28,15 +28,19 @@
 #include "GraphDelayCalc.hh"
 #include "Search.hh"
 #include "Resizer.hh"
+#include "flute.h"
 
 namespace sta {
+
+using std::abs;
 
 static Pin *
 singleOutputPin(const Instance *inst,
 		Network *network);
 
 Resizer::Resizer() :
-  Sta()
+  Sta(),
+  flute_inited_(false)
 {
 }
 
@@ -44,6 +48,12 @@ void
 Resizer::makeNetwork()
 {
   network_ = new LefDefNetwork();
+}
+
+LefDefNetwork *
+Resizer::lefDefNetwork()
+{
+  return dynamic_cast<LefDefNetwork*>(network_);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -341,6 +351,178 @@ Resizer::findBufferTargetSlews(LibertyLibrary *library,
       }
     }
   }
+}
+
+////////////////////////////////////////////////////////////////
+
+// Wrapper for Flute::Tree
+class SteinerTree
+{
+public:
+  SteinerTree() {}
+  ~SteinerTree();
+  PinSeq &pins() { return pins_; }
+  void setTree(Flute::Tree tree,
+	       int pin_map[]);
+  int branchCount();
+  void branch(int index,
+	      // Return values.
+	      DefPt &pt1,
+	      Pin *&pin1,
+	      int &steiner_pt1,
+	      DefPt &pt2,
+	      Pin *&pin2,
+	      int &steiner_pt2,
+	      int &wire_length);
+  void reportBranches(const Network *network);
+
+private:
+  Flute::Tree tree_;
+  PinSeq pins_;
+  // tree vertex index -> pin index
+  Vector<int> pin_map_;
+};
+
+SteinerTree::~SteinerTree()
+{
+  free(tree_.branch);
+}
+
+void
+SteinerTree::setTree(Flute::Tree tree,
+		     int pin_map[])
+{
+  tree_ = tree;
+
+  int pin_count = pins_.size();
+  // Invert the steiner vertex to pin index map.
+  pin_map_.resize(pin_count);
+  for (int i = 0; i < pin_count; i++)
+    pin_map_[pin_map[i]] = i;
+}
+
+int
+SteinerTree::branchCount()
+{
+  // branch[deg * 2 - 2 - 1] is the root that has branch.n == branch index.
+  return tree_.deg * 2 - 3;
+}
+
+void
+SteinerTree::branch(int index,
+		    // Return values.
+		    DefPt &pt1,
+		    Pin *&pin1,
+		    int &steiner_pt1,
+		    DefPt &pt2,
+		    Pin *&pin2,
+		    int &steiner_pt2,
+		    int &wire_length)
+{
+  Flute::Branch &branch_pt1 = tree_.branch[index];
+  int index2 = branch_pt1.n;
+  Flute::Branch &branch_pt2 = tree_.branch[index2];
+  pt1 = DefPt(branch_pt1.x, branch_pt1.y);
+  if (index < pins_.size() ){
+    pin1 = pins_[pin_map_[index]];
+    steiner_pt1 = 0;
+  }
+  else {
+    pin1 = nullptr;
+    steiner_pt1 = index;
+  }
+
+  pt2 = DefPt(branch_pt2.x, branch_pt2.y);
+  if (index2 < pins_.size() ){
+    pin2 = pins_[pin_map_[index2]];
+    steiner_pt2 = 0;
+  }
+  else {
+    pin2 = nullptr;
+    steiner_pt2 = index2;
+  }
+
+  wire_length = abs(branch_pt1.x - branch_pt2.x)
+    + abs(branch_pt1.y - branch_pt2.y);
+}
+
+void
+SteinerTree::reportBranches(const Network *network)
+{
+  int branch_count = branchCount();
+  for(int i = 0; i < branch_count; i++) {
+    DefPt pt1, pt2;
+    Pin *pin1, *pin2;
+    int steiner_pt1, steiner_pt2;
+    int wire_length;
+    branch(i,
+	   pt1, pin1, steiner_pt1,
+	   pt2, pin2, steiner_pt2,
+	   wire_length);
+    printf(" branch %s (%d %d) - %s (%d %d) wire_length = %d\n",
+	   pin1 ? network->pathName(pin1) : stringPrintTmp("S%d", steiner_pt1),
+	   pt1.x(),
+	   pt1.y(),
+	   pin2 ? network->pathName(pin2) : stringPrintTmp("S%d", steiner_pt2),
+	   pt2.x(),
+	   pt2.y(),
+	   wire_length);
+  }
+}
+
+////////////////////////////////////////////////////////////////
+
+void
+Resizer::ensureFluteInited()
+{
+  if (!flute_inited_) {
+    // Flute reads look up tables from local files. gag me.
+    Flute::readLUT("/Users/cherry/sta/flute/POWV9.dat",
+		   "/Users/cherry/sta/flute/PORT9.dat");
+    flute_inited_ = true;  
+  }
+}
+
+SteinerTree *
+Resizer::steinerTree(Net *net)
+{
+  LefDefNetwork *network = lefDefNetwork();
+  debugPrint1(debug_, "steiner", 1, "Net %s\n", network->pathName(net));
+  ensureFluteInited();
+
+  SteinerTree *tree = new SteinerTree();
+  PinSeq &pins = tree->pins();
+  network->connectedPins(net, pins);
+  int pin_count = pins.size();
+  if (pin_count > 0) {
+    DBU x[pin_count];
+    DBU y[pin_count];
+    // map[pin_index] -> steiner tree vertex index
+    int pin_map[pin_count];
+
+    for (int j = 0; j < pin_count; j++) {
+      Pin *pin = pins[j];
+      DefPt loc = network->location(pin);
+      x[j] = loc.x();
+      y[j] = loc.y();
+      debugPrint3(debug_, "steiner", 3, "%s (%d %d)\n",
+		  network->pathName(pin), loc.x(), loc.y());
+    }
+
+    Flute::Tree stree = Flute::flute(pin_count, x, y, FLUTE_ACCURACY, pin_map);
+    tree->setTree(stree, pin_map);
+    if (debug_->check("steiner", 3)) {
+      Flute::printtree(stree);
+      printf("pin map\n");
+      for (int i = 0; i < pin_count; i++)
+	printf(" %d -> %d\n", i, pin_map[i]);
+    }
+    if (debug_->check("steiner", 2)) 
+      tree->reportBranches(network);
+    return tree;
+  }
+  else
+    return nullptr;
 }
 
 };

@@ -187,14 +187,32 @@ LefDefNetwork::makeNet(const char *name,
   return defToSta(net);
 }
 
-int
-LefDefNetwork::pinCount(Net *net)
+void
+LefDefNetwork::connectedPins(Net *net,
+			     PinSeq &pins)
 {
-  int pin_count = 0;
-  NetPinIterator *pin_iter = pinIterator(net);
-  while (pin_iter->hasNext())
-    pin_count++;
-  return pin_count;
+  NetConnectedPinIterator *pin_iter = connectedPinIterator(net);
+  while (pin_iter->hasNext()) {
+    Pin *pin = pin_iter->next();
+    pins.push_back(pin);
+  }
+  delete pin_iter;
+}
+
+DefPt
+LefDefNetwork::location(const Pin *pin)
+{
+  Instance *inst = instance(pin);
+  DefComponent *component = staToDef(inst);
+  defiComponent *def_component = component->defComponent();
+  if (def_component
+      && def_component->isPlaced()) {
+    // Component location is good enough for now.
+    return DefPt(def_component->placementX(),
+		 def_component->placementY());
+  }
+  else
+    return DefPt(0, 0);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -308,6 +326,21 @@ DefNet::DefNet(const char *name,
 {
   if (def_net)
     def_net_ = new defiNet(*def_net);
+}
+
+////////////////////////////////////////////////////////////////
+
+DefPt::DefPt(int x,
+	     int y) :
+  x_(x),
+  y_(y)
+{
+}
+
+DefPt::DefPt() :
+  x_(0),
+  y_(0)
+{
 }
 
 } // namespace

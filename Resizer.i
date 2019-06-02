@@ -97,4 +97,11 @@ resize_to_target_slew(Instance *inst)
   resizer->resizeToTargetSlew(inst, resizer->cmdCorner());
 }
 
+void
+steiner_tree(Net *net)
+{
+  Resizer *resizer = getResizer();
+  resizer->steinerTree(net);
+}
+
 %} // inline

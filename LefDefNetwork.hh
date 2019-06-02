@@ -30,10 +30,10 @@ class LefMacro;
 class DefComponent;
 class DefNet;
 class LefPin;
+class DefPt;
 
 // No need to specializing ConcreteLibrary at this point.
 typedef ConcreteLibrary LefLibrary;
-
 typedef UnorderedMap<Cell*, LibertyCell*> LibertyCellMap;
 
 class LefDefNetwork : public ConcreteNetwork
@@ -69,6 +69,7 @@ public:
 				 defiComponent *def_component);
   virtual void replaceCell(Instance *inst,
 			   LibertyCell *cell);
+  DefPt location(const Pin *pin);
   virtual Pin *connect(Instance *inst,
 		       LibertyPort *port,
 		       Net *net);
@@ -76,7 +77,8 @@ public:
   Instance *findInstance(const char *name) const;
   Net *makeNet(const char *name,
 	       defiNet *def_net);
-  int pinCount(Net *net);
+  void connectedPins(Net *net,
+		     PinSeq &pins);
 
   using ConcreteNetwork::connect;
 
@@ -158,6 +160,20 @@ private:
   defiNet *def_net_;
 
   friend class LefDefNetwork;
+};
+
+class DefPt
+{
+public:
+  DefPt();
+  DefPt(int x,
+	int y);
+  int x() const { return x_; }
+  int y() const { return y_; }
+
+private:
+  int x_;
+  int y_;
 };
 
 } // namespace

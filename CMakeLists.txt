@@ -22,6 +22,7 @@ set(RESIZER_HOME ${PROJECT_SOURCE_DIR})
 set(STA_HOME ${PROJECT_SOURCE_DIR}/../opensta)
 set(LEF_HOME ${PROJECT_SOURCE_DIR}/../lef/5.8-p027)
 set(DEF_HOME ${PROJECT_SOURCE_DIR}/../def/5.8-p027)
+set(FLUTE_HOME ${PROJECT_SOURCE_DIR}/../flute)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -245,6 +246,7 @@ set(RESIZER_INCLUDE_DIRS
   ${STA_INCLUDE_DIRS}
   ${LEF_HOME}/lef
   ${DEF_HOME}/def
+  ${FLUTE_HOME}/include
   )
 
 set(RESIZER_TCL_FILES
@@ -292,6 +294,7 @@ target_link_libraries(resizer
   ${CUDD_LIB}
   ${LEF_HOME}/lef/liblef.a
   ${DEF_HOME}/def/libdef.a
+  ${FLUTE_HOME}/lib/libflute.a
   )
 
 if (ZLIB_FOUND)

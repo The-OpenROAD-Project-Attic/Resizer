@@ -7,6 +7,7 @@ Expected directory layout
 /resizer - this source tree
 /lef - lef reader/writer
 /def - def reader/writer
+/flute - flute steiner tree package
 /opensta - OpenSTA
 
 git clone https://parallax.xp-dev.com/git/resizer
