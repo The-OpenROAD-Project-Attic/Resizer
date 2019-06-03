@@ -174,10 +174,10 @@ lefPinCbk(lefrCallbackType_e,
       dir = PortDirection::input();
     else if (stringEq(ldir, "OUTPUT"))
       dir = PortDirection::output();
-    else if (stringEq(ldir, "INOUT"))
-      dir = PortDirection::bidirect();
     else if (stringEq(ldir, "OUTPUT TRISTATE"))
       dir = PortDirection::tristate();
+    else if (stringEq(ldir, "INOUT"))
+      dir = PortDirection::bidirect();
   }
   if (lpin->hasUse()) {
     const char *use = lpin->use();

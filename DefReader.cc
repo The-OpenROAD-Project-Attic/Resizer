@@ -177,8 +177,17 @@ defPinCbk(defrCallbackType_e,
       dir = PortDirection::input();
     else if (stringEq(def_dir, "OUTPUT"))
       dir = PortDirection::output();
+    else if (stringEq(def_dir, "OUTPUT TRISTATE"))
+      dir = PortDirection::tristate();
     else if (stringEq(def_dir, "INOUT"))
       dir = PortDirection::bidirect();
+  }
+  if (def_pin->hasUse()) {
+    const char *use = def_pin->use();
+    if (stringEq(use, "POWER"))
+      dir = PortDirection::power();
+    else if (stringEq(use, "GROUND"))
+      dir = PortDirection::ground();
   }
   network->setDirection(port, dir);
 
