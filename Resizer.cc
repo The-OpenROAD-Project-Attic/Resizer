@@ -34,6 +34,7 @@
 // Outstanding issues
 //  Instance levelization and resizing to target slew only support single output gates
 //  flute wants to read files which prevents having a stand-alone executable
+//  DefRead uses printf for errors.
 
 namespace sta {
 

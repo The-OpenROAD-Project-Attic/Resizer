@@ -177,8 +177,8 @@ lefPinCbk(lefrCallbackType_e,
     else if (stringEq(ldir, "INOUT"))
       dir = PortDirection::bidirect();
   }
-  Port *lef_pin = network->makePort(reader->lefMacro(), lpin->name());
-  network->setDirection(lef_pin, dir);
+  Port *port = network->makePort(reader->lefMacro(), lpin->name());
+  network->setDirection(port, dir);
   return 0;
 }
 

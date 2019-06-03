@@ -165,6 +165,8 @@ defPinCbk(defrCallbackType_e,
 {
   LefDefNetwork *network = getNetwork(user);
   const char *pin_name = def_pin->pinName();
+  // Make LEF ports in the top cell.
+  // The corresponding top level pins are made when the NET section is parsed.
   Cell *top_cell = network->cell(network->topInstance());
   Port *port = network->makePort(top_cell, pin_name);
 
@@ -179,6 +181,9 @@ defPinCbk(defrCallbackType_e,
       dir = PortDirection::bidirect();
   }
   network->setDirection(port, dir);
+
+  if (def_pin->isPlaced() || def_pin->isFixed() || def_pin->isCover())
+    network->setLocation(port, def_pin->placementX(), def_pin->placementY());
   return 0;
 }
 

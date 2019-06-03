@@ -16,18 +16,18 @@ DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
 
 COMPONENTS 5 ;
-- r1 snl_ffqx1 + PLACED ( 375200 216000 ) N ;
-- r2 snl_ffqx1 + PLACED ( 590000 153600 ) N ;
-- r3 snl_ffqx1 + PLACED ( 324400 211200 ) N ;
-- u1 snl_bufx1 + PLACED ( 252000 14400 ) N ;
-- u2 snl_and02x1 + PLACED ( 94400 182400 ) N ;
+- r1 snl_ffqx1 + PLACED   ( 100000 200000 ) N ;
+- r2 snl_ffqx1 + PLACED   ( 200000 100000 ) N ;
+- r3 snl_ffqx1 + PLACED   ( 300000 300000 ) N ;
+- u1 snl_bufx1 + PLACED   ( 400000 100000 ) N ;
+- u2 snl_and02x1 + PLACED ( 100000 400000 ) N ;
 END COMPONENTS
 
 PINS 6 ;
 - in1 + NET in1 + DIRECTION INPUT ;
 - in2 + NET in2 + DIRECTION INPUT ;
 - clk + NET clk + DIRECTION INPUT + USE SIGNAL 
-  + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 799000 0 ) N ;
+  + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 100000 ) N ;
 - out + NET out + DIRECTION OUTPUT ;
 END PINS
 

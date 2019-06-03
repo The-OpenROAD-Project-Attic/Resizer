@@ -223,8 +223,23 @@ LefDefNetwork::location(const Pin *pin)
     return DefPt(def_component->placementX(),
 		 def_component->placementY());
   }
-  else
-    return DefPt(0, 0);
+  else if (isTopLevelPort(pin)) {
+    Port *port = this->port(pin);
+    DefPt location;
+    bool exists;
+    port_locations_.findKey(port, location, exists);
+    if (exists)
+      return location;
+  }
+  return DefPt(0, 0);
+}
+
+void
+LefDefNetwork::setLocation(Port *port,
+			   int x,
+			   int y)
+{
+  port_locations_[port] = {x, y};
 }
 
 ////////////////////////////////////////////////////////////////
@@ -282,14 +297,6 @@ LefMacro::LefMacro(ConcreteLibrary *library,
 {
 }
 
-LefPin *
-LefMacro::makeLefPin(const char *name)
-{
-  LefPin *pin = new LefPin(this, name);
-  addPort(pin);
-  return pin;
-}
-
 void
 LefMacro::setLefMacro(lefiMacro *lef_macro)
 {
@@ -301,14 +308,6 @@ void
 LefMacro::setLibertyCell(LibertyCell *cell)
 {
   liberty_cell_ = cell;
-}
-
-////////////////////////////////////////////////////////////////
-
-LefPin::LefPin(LefMacro *macro,
-	       const char *name) :
-  ConcretePort(macro, name, false, -1, -1, false, nullptr)
-{
 }
 
 ////////////////////////////////////////////////////////////////

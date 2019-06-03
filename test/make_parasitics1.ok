@@ -37,11 +37,11 @@ Path Type: max
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
    0.00    0.00 ^ r2/CP (snl_ffqx1)
-   0.49    0.49 v r2/Q (snl_ffqx1)
-   0.30    0.79 v u1/Z (snl_bufx1)
-   0.24    1.03 v u2/Z (snl_and02x1)
-   0.00    1.03 v r3/D (snl_ffqx1)
-           1.03   data arrival time
+   0.36    0.36 v r2/Q (snl_ffqx1)
+   0.32    0.68 v u1/Z (snl_bufx1)
+   0.27    0.96 v u2/Z (snl_and02x1)
+   0.00    0.96 v r3/D (snl_ffqx1)
+           0.96   data arrival time
 
   10.00   10.00   clock clk (rise edge)
    0.00   10.00   clock network delay (ideal)
@@ -51,8 +51,8 @@ Path Type: max
            9.85   data required time
 ---------------------------------------------------------
            9.85   data required time
-          -1.03   data arrival time
+          -0.96   data arrival time
 ---------------------------------------------------------
-           8.82   slack (MET)
+           8.89   slack (MET)
 
 

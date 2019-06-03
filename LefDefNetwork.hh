@@ -32,9 +32,24 @@ class DefNet;
 class LefPin;
 class DefPt;
 
+class DefPt
+{
+public:
+  DefPt();
+  DefPt(int x,
+	int y);
+  int x() const { return x_; }
+  int y() const { return y_; }
+
+private:
+  int x_;
+  int y_;
+};
+
 // No need to specializing ConcreteLibrary at this point.
 typedef ConcreteLibrary LefLibrary;
 typedef UnorderedMap<Cell*, LibertyCell*> LibertyCellMap;
+typedef UnorderedMap<Port*, DefPt> DefPortLocations;
 
 class LefDefNetwork : public ConcreteNetwork
 {
@@ -57,6 +72,7 @@ public:
 			 bool is_leaf,
 			 const char *filename);
   virtual LibertyCell *libertyCell(Cell *cell) const;
+
   virtual LibertyPort *libertyPort(Port *port) const;
 
   Library *lefLibrary();
@@ -75,6 +91,10 @@ public:
 			   LibertyCell *cell);
   // In DBUs.
   DefPt location(const Pin *pin);
+  // Set top level pin/port location.
+  void setLocation(Port *port,
+		   int x,
+		   int y);
   virtual Pin *connect(Instance *inst,
 		       LibertyPort *port,
 		       Net *net);
@@ -99,6 +119,7 @@ protected:
   const char *filename_;
   LefLibrary *lef_library_;
   float def_units_;		// dbu/micron
+  DefPortLocations port_locations_;
 };
 
 ////////////////////////////////////////////////////////////////
@@ -106,7 +127,6 @@ protected:
 class LefMacro : public ConcreteCell
 {
 public:
-  LefPin *makeLefPin(const char *name);
   void setLefMacro(lefiMacro *lef_macro);
   LibertyCell *libertyCell() { return liberty_cell_; }
 
@@ -121,17 +141,6 @@ protected:
   LibertyCell *liberty_cell_;
 
   friend class LefDefNetwork;
-};
-
-class LefPin : public ConcretePort
-{
-public:
-
-protected:
-  LefPin(LefMacro *macro,
-	 const char *name);
-
-  friend class LefMacro;
 };
 
 class DefComponent : public ConcreteInstance
@@ -166,20 +175,6 @@ private:
   defiNet *def_net_;
 
   friend class LefDefNetwork;
-};
-
-class DefPt
-{
-public:
-  DefPt();
-  DefPt(int x,
-	int y);
-  int x() const { return x_; }
-  int y() const { return y_; }
-
-private:
-  int x_;
-  int y_;
 };
 
 } // namespace
