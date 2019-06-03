@@ -176,6 +176,15 @@ lefPinCbk(lefrCallbackType_e,
       dir = PortDirection::output();
     else if (stringEq(ldir, "INOUT"))
       dir = PortDirection::bidirect();
+    else if (stringEq(ldir, "OUTPUT TRISTATE"))
+      dir = PortDirection::tristate();
+  }
+  if (lpin->hasUse()) {
+    const char *use = lpin->use();
+    if (stringEq(use, "POWER"))
+      dir = PortDirection::power();
+    else if (stringEq(use, "GROUND"))
+      dir = PortDirection::ground();
   }
   Port *port = network->makePort(reader->lefMacro(), lpin->name());
   network->setDirection(port, dir);
