@@ -17,8 +17,8 @@
 #include "Machine.hh"
 #include "Debug.hh"
 #include "PortDirection.hh"
-#include "LefDefNetwork.hh"
 #include "TimingRole.hh"
+#include "Units.hh"
 #include "Liberty.hh"
 #include "TimingArc.hh"
 #include "TimingModel.hh"
@@ -28,6 +28,7 @@
 #include "GraphDelayCalc.hh"
 #include "Parasitics.hh"
 #include "Search.hh"
+#include "LefDefNetwork.hh"
 #include "Resizer.hh"
 #include "flute.h"
 
@@ -362,6 +363,29 @@ Resizer::findBufferTargetSlews(LibertyLibrary *library,
 
 ////////////////////////////////////////////////////////////////
 
+class DefPtHash
+{
+public:
+  Hash operator()(const DefPt &pt) const
+  {
+    Hash hash = hash_init_value;
+    hashIncr(hash, pt.x());
+    hashIncr(hash, pt.y());
+    return hash;
+  }
+};
+
+class DefPtEqual
+{
+public:
+  bool operator()(const DefPt &pt1,
+		  const DefPt &pt2) const
+  {
+    return pt1.x() == pt2.x()
+      && pt1.y() == pt2.y();
+  }
+};
+
 // Wrapper for Flute::Tree
 class SteinerTree
 {
@@ -382,12 +406,18 @@ public:
 	      int &steiner_pt2,
 	      int &wire_length);
   void reportBranches(const Network *network);
+  // The steiner tree is binary so the steiner points can be in the
+  // same location as the pins.
+  void findSteinerPtAliases();
+  // Return a pin in the same location as the steiner pt if it exists.
+  Pin *steinerPtAlias(int steiner_pt);
 
 private:
   Flute::Tree tree_;
   PinSeq pins_;
   // tree vertex index -> pin index
   Vector<int> pin_map_;
+  UnorderedMap<DefPt, Pin*, DefPtHash, DefPtEqual> steiner_pt_pin_alias_map_;
 };
 
 SteinerTree::~SteinerTree()
@@ -400,8 +430,8 @@ SteinerTree::setTree(Flute::Tree tree,
 {
   tree_ = tree;
 
-  int pin_count = pins_.size();
   // Invert the steiner vertex to pin index map.
+  int pin_count = pins_.size();
   pin_map_.resize(pin_count);
   for (int i = 0; i < pin_count; i++)
     pin_map_[pin_map[i]] = i;
@@ -439,7 +469,7 @@ SteinerTree::branch(int index,
   }
 
   pt2 = DefPt(branch_pt2.x, branch_pt2.y);
-  if (index2 < pins_.size() ){
+  if (index2 < pins_.size()) {
     pin2 = pins_[pin_map_[index2]];
     steiner_pt2 = 0;
   }
@@ -474,6 +504,24 @@ SteinerTree::reportBranches(const Network *network)
 	   pt2.y(),
 	   wire_length);
   }
+}
+
+void
+SteinerTree::findSteinerPtAliases()
+{
+  int pin_count = pins_.size();
+  for(int i = 0; i < pin_count; i++) {
+    Flute::Branch &branch_pt1 = tree_.branch[i];
+    // location -> pin
+    steiner_pt_pin_alias_map_[DefPt(branch_pt1.x, branch_pt1.y)] = pins_[pin_map_[i]];
+  }
+}
+
+Pin *
+SteinerTree::steinerPtAlias(int steiner_pt)
+{
+  Flute::Branch &branch_pt = tree_.branch[steiner_pt];
+  return steiner_pt_pin_alias_map_[DefPt(branch_pt.x, branch_pt.y)];
 }
 
 ////////////////////////////////////////////////////////////////
@@ -558,6 +606,7 @@ Resizer::makeNetParasitics(const Net *net,
   LefDefNetwork *network = lefDefNetwork();
   const ParasiticAnalysisPt *ap = corner->findParasiticAnalysisPt(min_max);
   SteinerTree *tree = makeSteinerTree(net);
+  tree->findSteinerPtAliases();
   Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false, ap);
   int branch_count = tree->branchCount();
   for (int i = 0; i < branch_count; i++) {
@@ -569,21 +618,45 @@ Resizer::makeNetParasitics(const Net *net,
 		 pt1, pin1, steiner_pt1,
 		 pt2, pin2, steiner_pt2,
 		 wire_length_dbu);
-    ParasiticNode *n1 = pin1
-      ? parasitics_->ensureParasiticNode(parasitic, pin1)
-      : parasitics_->ensureParasiticNode(parasitic, net, steiner_pt1);
-    ParasiticNode *n2 = pin2
-      ? parasitics_->ensureParasiticNode(parasitic, pin2)
-      : parasitics_->ensureParasiticNode(parasitic, net, steiner_pt2);
-    float wire_length = network->dbuToMeters(wire_length_dbu);
-    float wire_cap = wire_length * wire_cap_per_length;
-    float wire_res = wire_length * wire_res_per_length;
-    // Make pi model for the wire.
-    parasitics_->incrCap(n1, wire_cap / 2.0, ap);
-    parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
-    parasitics_->incrCap(n1, wire_cap / 2.0, ap);
+    ParasiticNode *n1 = findParasiticNode(tree, parasitic, net, pin1, steiner_pt1);
+    ParasiticNode *n2 = findParasiticNode(tree, parasitic, net, pin2, steiner_pt2);
+    if (wire_length_dbu == 0)
+      // Steiner pt on top of a pin.
+      // Use a small resistor to keep the connectivity intact.
+      parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
+    else {
+      float wire_length = network->dbuToMeters(wire_length_dbu);
+      float wire_cap = wire_length * wire_cap_per_length;
+      float wire_res = wire_length * wire_res_per_length;
+      // Make pi model for the wire.
+      debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
+		  parasitics_->name(n1),
+		  units_->capacitanceUnit()->asString(wire_cap / 2.0),
+		  units_->resistanceUnit()->asString(wire_res),
+		  units_->capacitanceUnit()->asString(wire_cap / 2.0),
+		  parasitics_->name(n2));
+      parasitics_->incrCap(n1, wire_cap / 2.0, ap);
+      parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
+      parasitics_->incrCap(n2, wire_cap / 2.0, ap);
+    }
   }
   delete tree;
+}
+
+ParasiticNode *
+Resizer::findParasiticNode(SteinerTree *tree,
+			   Parasitic *parasitic,
+			   const Net *net,
+			   const Pin *pin,
+			   int steiner_pt)
+{
+  if (pin == nullptr)
+    // If the steiner pt is on top of a pin, use the pin instead.
+    pin = tree->steinerPtAlias(steiner_pt);
+  if (pin)
+    return parasitics_->ensureParasiticNode(parasitic, pin);
+  else 
+    return parasitics_->ensureParasiticNode(parasitic, net, steiner_pt);
 }
 
 };

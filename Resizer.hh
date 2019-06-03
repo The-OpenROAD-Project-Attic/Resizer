@@ -69,6 +69,11 @@ protected:
   void makeNetParasitics(const Net *net,
 			 float wire_cap_per_length,
 			 float wire_res_per_length);
+  ParasiticNode *findParasiticNode(SteinerTree *tree,
+				   Parasitic *parasitic,
+				   const Net *net,
+				   const Pin *pin,
+				   int steiner_pt);
 
 private:
   bool flute_inited_;
