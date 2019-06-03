@@ -98,13 +98,6 @@ resize_to_target_slew(Instance *inst)
 }
 
 void
-steiner_tree(Net *net)
-{
-  Resizer *resizer = getResizer();
-  resizer->makeSteinerTree(net);
-}
-
-void
 make_parasitics(float wire_cap_per_length,
 		float wire_res_per_length)
 {

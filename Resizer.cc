@@ -36,6 +36,7 @@
 //  Instance levelization and resizing to target slew only support single output gates
 //  flute wants to read files which prevents having a stand-alone executable
 //  DefRead uses printf for errors.
+//  multi-corner support?
 
 namespace sta {
 
@@ -112,18 +113,15 @@ void
 Resizer::resize(Corner *corner)
 {
   // Disable incremental timing.
+  graph_delay_calc_->delaysInvalid();
   search_->arrivalsInvalid();
 
   ensureLevelized();
-  InstanceSeq insts;
-  instancesSortByLevel(insts);
+  InstanceSeq level_insts;
+  instancesSortByLevel(level_insts);
 
   ensureTargetLoads(corner);
-  // Resize by in reverse level order.
-  for (int i = insts.size() - 1; i >= 0; i--) {
-    Instance *inst = insts[i];
-    resizeToTargetSlew1(inst, corner);
-  }
+  resizeToTargetSlew(level_insts, corner);
 }
 
 void
@@ -144,6 +142,17 @@ Resizer::resizeToTargetSlew(Instance *inst,
 {
   ensureTargetLoads(corner);
   resizeToTargetSlew1(inst, corner);
+}
+
+void
+Resizer::resizeToTargetSlew(InstanceSeq &level_insts,
+			    Corner *corner)
+{
+  // Resize by in reverse level order.
+  for (int i = level_insts.size() - 1; i >= 0; i--) {
+    Instance *inst = level_insts[i];
+    resizeToTargetSlew1(inst, corner);
+  }
 }
 
 void
@@ -215,6 +224,7 @@ Resizer::ensureTargetLoads(Corner *corner)
     findTargetLoads(corner);
 }
 
+// Find the target load for each library cell that gives the target slew.
 void
 Resizer::findTargetLoads(Corner *corner)
 {
@@ -621,7 +631,6 @@ Resizer::makeNetParasitics(const Net *net,
     ParasiticNode *n1 = findParasiticNode(tree, parasitic, net, pin1, steiner_pt1);
     ParasiticNode *n2 = findParasiticNode(tree, parasitic, net, pin2, steiner_pt2);
     if (wire_length_dbu == 0)
-      // Steiner pt on top of a pin.
       // Use a small resistor to keep the connectivity intact.
       parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
     else {

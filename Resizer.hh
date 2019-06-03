@@ -38,14 +38,16 @@ public:
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
   SteinerTree *makeSteinerTree(const Net *net);
-  void makeNetParasitics(float wire_cap_per_length,
-			 float wire_res_per_length);
+  void makeNetParasitics(float wire_cap_per_length,  // Farads/Meter
+			 float wire_res_per_length); // Ohms/Meter
 
 protected:
   virtual void makeNetwork();
+  void instancesSortByLevel(InstanceSeq &insts);
+  void resizeToTargetSlew(InstanceSeq &level_insts,
+			  Corner *corner);
   void resizeToTargetSlew1(Instance *inst,
 			   Corner *corner);
-  void instancesSortByLevel(InstanceSeq &insts);
   void ensureTargetLoads(Corner *corner);
   void findTargetLoads(Corner *corner);
   void findTargetLoads(LibertyLibrary *library,
