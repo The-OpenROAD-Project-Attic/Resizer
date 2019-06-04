@@ -26,8 +26,16 @@ CMAKE_BUILD_TYPE DEBUG|RELEASE
 
 #### Running Resizer
 
+resizer -help              show help and exit
+        -version           show version and exit
+        -no_init           do not read .sta init file
+        -no_splash         do not show the license splash at startup
+	cmd_file           source cmd_file and exit
+
 Resizer looks for the files ../etc/POWV9.dat and ../etc/PORT9.dat relative
 to the executable when it starts.
+
+Resizer sources the TCL command file ~/.resizer and enters interactive command mode unless the command line option -no_init is specified.
 
 The resizer is run using TCL scripts. All OpenSTA commands are available.
 Addtional commands are

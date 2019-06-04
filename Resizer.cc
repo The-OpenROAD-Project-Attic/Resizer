@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <fstream>
 #include "Machine.hh"
 #include "Debug.hh"
 #include "PortDirection.hh"
@@ -45,6 +46,8 @@ using std::abs;
 static Pin *
 singleOutputPin(const Instance *inst,
 		Network *network);
+bool
+fileExists(const std::string &filename);
 
 Resizer::Resizer() :
   Sta()
@@ -542,19 +545,53 @@ SteinerTree::steinerPtAlias(int steiner_pt)
 
 ////////////////////////////////////////////////////////////////
 
+// Flute reads look up tables from local files. gag me.
 void
 Resizer::initFlute(const char *resizer_path)
 {
   string resizer_dir = resizer_path;
-  resizer_dir.erase(resizer_dir.find_last_of("/"));
-  resizer_dir.erase(resizer_dir.find_last_of("/"));
-  string flute_path1 = resizer_dir;
-  string flute_path2 = resizer_dir;
+  // One directory level up from /bin or /build to find /etc.
+  auto last_slash = resizer_dir.find_last_of("/");
+  if (last_slash != string::npos) {
+    resizer_dir.erase(last_slash);
+    last_slash = resizer_dir.find_last_of("/");
+    if (last_slash != string::npos) {
+      resizer_dir.erase(last_slash);
+      if (readFluteInits(resizer_dir))
+	return;
+    }
+  }
+  // try ../etc
+  resizer_dir = "..";
+  if (readFluteInits(resizer_dir))
+    return;
+  printf("Error: Could not find FluteLUT files POWV9.dat and PORT9.dat.\n");
+  exit(EXIT_FAILURE);
+}
+
+bool
+Resizer::readFluteInits(string dir)
+{
+  string flute_path1 = dir;
+  string flute_path2 = dir;
   flute_path1 += "/etc/POWV9.dat";
   flute_path2 += "/etc/PORT9.dat";
-  // Flute reads look up tables from local files. gag me.
-  Flute::readLUT(flute_path1.c_str(), flute_path2.c_str());
+  if (fileExists(flute_path1) && fileExists(flute_path2)) {
+    Flute::readLUT(flute_path1.c_str(), flute_path2.c_str());
+    return true;
+  }
+  else
+    return false;
 }
+
+// c++17 std::filesystem::exists
+bool
+fileExists(const std::string &filename)
+{
+  std::ifstream stream(filename.c_str());
+  return stream.good();
+}
+
 
 SteinerTree *
 Resizer::makeSteinerTree(const Net *net)

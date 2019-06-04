@@ -78,6 +78,7 @@ protected:
 				   const Net *net,
 				   const Pin *pin,
 				   int steiner_pt);
+  bool readFluteInits(string dir);
 
 private:
   CellTargetLoadMap *target_load_map_;

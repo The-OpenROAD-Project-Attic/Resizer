@@ -16,7 +16,7 @@
 
 cmake_minimum_required (VERSION 3.9)
 
-project(sizer VERSION 2.0.15)
+project(resizer VERSION 1.2.0)
 
 set(RESIZER_HOME ${PROJECT_SOURCE_DIR})
 set(STA_HOME ${PROJECT_SOURCE_DIR}/../opensta)
@@ -30,7 +30,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Disable compiler specific extensions like gnu++11.
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-message(STATUS "STA version: ${PROJECT_VERSION}")
+message(STATUS "Resizer version: ${PROJECT_VERSION}")
 
 # Default to bulding optimnized/release executable.
 if(NOT CMAKE_BUILD_TYPE)
@@ -139,8 +139,8 @@ endif()
 message(STATUS "SSTA: ${SSTA}")
 
 # configure a header file to pass some of the CMake settins
-configure_file(${STA_HOME}/util/StaConfig.hh.cmake
-  ${STA_HOME}/util/StaConfig.hh
+configure_file(${RESIZER_HOME}/ResizerConfig.hh.cmake
+  ${RESIZER_HOME}/ResizerConfig.hh
   )
 
 
