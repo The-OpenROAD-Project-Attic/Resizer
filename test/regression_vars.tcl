@@ -65,13 +65,32 @@ proc record_test { test cmd_dir } {
   return $test
 }
 
-# Record a test in the $STA/test directory.
-proc record_sta_tests { tests } {
+# Record a test in the $RESIZER/test directory.
+proc record_resizer_tests { tests } {
   global test_dir
   foreach test $tests {
     # Prune commented tests from the list.
     if { [string index $test 0] != "#" } {
       record_test $test $test_dir
+    }
+  }
+}
+
+# Record tests in $STAX/designs.
+proc record_test_design { tests } {
+  global env
+  if [info exists env(STAX)] {
+    foreach dir_test $tests {
+      # Prune commented tests from the list.
+      if { [string index $dir_test 0] != "#" } {
+	if {[regexp {([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)} $dir_test \
+	       ignore cmd_subdir test]} {
+	  set cmd_dir [file join $env(STAX) "designs" $cmd_subdir]
+	  record_test $test $cmd_dir
+	} else {
+	  puts "Warning: could not parse test name $dir_test"
+	}
+      }
     }
   }
 }
@@ -109,24 +128,32 @@ proc list_delete { list delete } {
 # Regression test lists.
 
 # Record tests in resizer/test
-record_sta_tests {
+record_resizer_tests {
   insert_buffer1
   make_parasitics1
   read_def1
   read_def2
   resize1
   resize2
-  resize_mea1
   write_def1
   write_def2
 }
+
+# Record tests in $STAX/designs
+record_test_design {
+  aes2/aes2_resize1
+  mea/mea_resize1
+}
+
+################################################################
 
 # Regression test groups
 
 # Medium speed tests.
 # run time <15s with optimized compile
 define_test_group med {
-  resize_mea1
+  mea_resize1
+  aes_resize1
 }
 
 set fast [group_tests all]

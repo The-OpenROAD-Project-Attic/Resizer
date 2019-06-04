@@ -562,7 +562,7 @@ Resizer::makeSteinerTree(const Net *net)
   PinSeq &pins = tree->pins();
   network->connectedPins(net, pins);
   int pin_count = pins.size();
-  if (pin_count > 0) {
+  if (pin_count > 1) {
     DBU x[pin_count];
     DBU y[pin_count];
     // map[pin_index] -> steiner tree vertex index
@@ -620,40 +620,42 @@ Resizer::makeNetParasitics(const Net *net,
   LefDefNetwork *network = lefDefNetwork();
   const ParasiticAnalysisPt *ap = corner->findParasiticAnalysisPt(min_max);
   SteinerTree *tree = makeSteinerTree(net);
-  tree->findSteinerPtAliases();
-  Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false, ap);
-  int branch_count = tree->branchCount();
-  for (int i = 0; i < branch_count; i++) {
-    DefPt pt1, pt2;
-    Pin *pin1, *pin2;
-    int steiner_pt1, steiner_pt2;
-    int wire_length_dbu;
-    tree->branch(i,
-		 pt1, pin1, steiner_pt1,
-		 pt2, pin2, steiner_pt2,
-		 wire_length_dbu);
-    ParasiticNode *n1 = findParasiticNode(tree, parasitic, net, pin1, steiner_pt1);
-    ParasiticNode *n2 = findParasiticNode(tree, parasitic, net, pin2, steiner_pt2);
-    if (wire_length_dbu == 0)
-      // Use a small resistor to keep the connectivity intact.
-      parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
-    else {
-      float wire_length = network->dbuToMeters(wire_length_dbu);
-      float wire_cap = wire_length * wire_cap_per_length;
-      float wire_res = wire_length * wire_res_per_length;
-      // Make pi model for the wire.
-      debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
-		  parasitics_->name(n1),
-		  units_->capacitanceUnit()->asString(wire_cap / 2.0),
-		  units_->resistanceUnit()->asString(wire_res),
-		  units_->capacitanceUnit()->asString(wire_cap / 2.0),
-		  parasitics_->name(n2));
-      parasitics_->incrCap(n1, wire_cap / 2.0, ap);
-      parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
-      parasitics_->incrCap(n2, wire_cap / 2.0, ap);
+  if (tree) {
+    tree->findSteinerPtAliases();
+    Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false, ap);
+    int branch_count = tree->branchCount();
+    for (int i = 0; i < branch_count; i++) {
+      DefPt pt1, pt2;
+      Pin *pin1, *pin2;
+      int steiner_pt1, steiner_pt2;
+      int wire_length_dbu;
+      tree->branch(i,
+		   pt1, pin1, steiner_pt1,
+		   pt2, pin2, steiner_pt2,
+		   wire_length_dbu);
+      ParasiticNode *n1 = findParasiticNode(tree, parasitic, net, pin1, steiner_pt1);
+      ParasiticNode *n2 = findParasiticNode(tree, parasitic, net, pin2, steiner_pt2);
+      if (wire_length_dbu == 0)
+	// Use a small resistor to keep the connectivity intact.
+	parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
+      else {
+	float wire_length = network->dbuToMeters(wire_length_dbu);
+	float wire_cap = wire_length * wire_cap_per_length;
+	float wire_res = wire_length * wire_res_per_length;
+	// Make pi model for the wire.
+	debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
+		    parasitics_->name(n1),
+		    units_->capacitanceUnit()->asString(wire_cap / 2.0),
+		    units_->resistanceUnit()->asString(wire_res),
+		    units_->capacitanceUnit()->asString(wire_cap / 2.0),
+		    parasitics_->name(n2));
+	parasitics_->incrCap(n1, wire_cap / 2.0, ap);
+	parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
+	parasitics_->incrCap(n2, wire_cap / 2.0, ap);
+      }
     }
+    delete tree;
   }
-  delete tree;
 }
 
 ParasiticNode *

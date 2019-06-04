@@ -204,9 +204,12 @@ writeDefNet(Net *net,
     const char *port_name = network->portName(term);
     fprintf(out_stream, " ( PIN %s )",
 	    port_name);
-    column += strlen(port_name) + 9;
-    if (column > column_max)
+    int width = strlen(port_name) + 9;
+    if ((column + width) > column_max) {
       fprintf(out_stream, "\n ");
+      column = 0;
+    }
+    column += width;
   }
   delete term_iter;
 
@@ -219,9 +222,12 @@ writeDefNet(Net *net,
     fprintf(out_stream, " ( %s %s )",
 	    def_component_name,
 	    port_name);
-    column += strlen(def_component_name) + strlen(port_name) + 6;
-    if (column > column_max)
+    int width = strlen(def_component_name) + strlen(port_name) + 6;
+    if ((column + width) > column_max) {
       fprintf(out_stream, "\n ");
+      column = 0;
+    }
+    column += width;
   }
   delete pin_iter;
   fprintf(out_stream, " ;\n");
