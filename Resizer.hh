@@ -30,6 +30,7 @@ class Resizer : public Sta
 {
 public:
   Resizer();
+  void initFlute(const char *resizer_path);
   LefDefNetwork *lefDefNetwork();
 
   // Resize all instances in the network.
@@ -67,7 +68,6 @@ protected:
 			     // Return values.
 			     float *slews,
 			     int *counts);
-  void ensureFluteInited();
   void makeNetParasitics(const Net *net,
 			 float wire_cap_per_length,
 			 float wire_res_per_length);
@@ -78,7 +78,6 @@ protected:
 				   int steiner_pt);
 
 private:
-  bool flute_inited_;
   CellTargetLoadMap *target_load_map_;
 };
 

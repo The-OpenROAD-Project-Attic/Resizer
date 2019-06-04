@@ -26,6 +26,9 @@ CMAKE_BUILD_TYPE DEBUG|RELEASE
 
 #### Running Resizer
 
+Resizer looks for the files ../etc/POWV9.dat and ../etc/PORT9.dat relative
+to the executable when it starts.
+
 The resizer is run using TCL scripts. All OpenSTA commands are available.
 Addtional commands are
 

@@ -48,7 +48,8 @@ main(int argc,
     return 0;
   }
   else {
-    Resizer *resizer = new Resizer;
+    Resizer *resizer = new Resizer();
+    resizer->initFlute(argv[0]);
     staMain(resizer, argc, argv, Resizer_Init, sta::resizer_tcl_inits);
     return 0;
   }

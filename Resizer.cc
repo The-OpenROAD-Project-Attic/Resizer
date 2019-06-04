@@ -47,8 +47,7 @@ singleOutputPin(const Instance *inst,
 		Network *network);
 
 Resizer::Resizer() :
-  Sta(),
-  flute_inited_(false)
+  Sta()
 {
 }
 
@@ -121,6 +120,9 @@ Resizer::resize(Corner *corner)
   instancesSortByLevel(level_insts);
 
   ensureTargetLoads(corner);
+  float wire_cap_per_length = 1.33e-10;
+  float wire_res_per_length = 1.67e+05;
+  makeNetParasitics(wire_cap_per_length, wire_res_per_length);
   resizeToTargetSlew(level_insts, corner);
 }
 
@@ -204,7 +206,7 @@ singleOutputPin(const Instance *inst,
     Pin *pin = pin_iter->next();
     if (network->direction(pin)->isOutput()) {
       if (output) {
-	// Already found one.
+// Already found one.
 	delete pin_iter;
 	return nullptr;
       }
@@ -537,14 +539,17 @@ SteinerTree::steinerPtAlias(int steiner_pt)
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::ensureFluteInited()
+Resizer::initFlute(const char *resizer_path)
 {
-  if (!flute_inited_) {
-    // Flute reads look up tables from local files. gag me.
-    Flute::readLUT("/Users/cherry/sta/flute/POWV9.dat",
-		   "/Users/cherry/sta/flute/PORT9.dat");
-    flute_inited_ = true;  
-  }
+  string resizer_dir = resizer_path;
+  resizer_dir.erase(resizer_dir.find_last_of("/"));
+  resizer_dir.erase(resizer_dir.find_last_of("/"));
+  string flute_path1 = resizer_dir;
+  string flute_path2 = resizer_dir;
+  flute_path1 += "/etc/POWV9.dat";
+  flute_path2 += "/etc/PORT9.dat";
+  // Flute reads look up tables from local files. gag me.
+  Flute::readLUT(flute_path1.c_str(), flute_path2.c_str());
 }
 
 SteinerTree *
@@ -552,7 +557,6 @@ Resizer::makeSteinerTree(const Net *net)
 {
   LefDefNetwork *network = lefDefNetwork();
   debugPrint1(debug_, "steiner", 1, "Net %s\n", network->pathName(net));
-  ensureFluteInited();
 
   SteinerTree *tree = new SteinerTree();
   PinSeq &pins = tree->pins();
