@@ -34,13 +34,15 @@ public:
   LefDefNetwork *lefDefNetwork();
 
   // Resize all instances in the network.
-  void resize(Corner *corner);
+  void resize(float wire_res_per_length, // ohms/meter
+	      float wire_cap_per_length, // farads/meter
+	      Corner *corner);
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
   SteinerTree *makeSteinerTree(const Net *net);
-  void makeNetParasitics(float wire_cap_per_length,  // Farads/Meter
-			 float wire_res_per_length); // Ohms/Meter
+  void makeNetParasitics(float wire_res_per_length,
+			 float wire_cap_per_length);
 
 protected:
   virtual void makeNetwork();
@@ -69,8 +71,8 @@ protected:
 			     float *slews,
 			     int *counts);
   void makeNetParasitics(const Net *net,
-			 float wire_cap_per_length,
-			 float wire_res_per_length);
+			 float wire_res_per_length,
+			 float wire_cap_per_length);
   ParasiticNode *findParasiticNode(SteinerTree *tree,
 				   Parasitic *parasitic,
 				   const Net *net,

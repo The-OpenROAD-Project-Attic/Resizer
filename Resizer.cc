@@ -109,7 +109,9 @@ InstanceOutputLevelLess::outputLevel(const Instance *inst) const
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::resize(Corner *corner)
+Resizer::resize(float wire_res_per_length,
+		float wire_cap_per_length,
+		Corner *corner)
 {
   // Disable incremental timing.
   graph_delay_calc_->delaysInvalid();
@@ -119,10 +121,12 @@ Resizer::resize(Corner *corner)
   InstanceSeq level_insts;
   instancesSortByLevel(level_insts);
 
+  // Find a target slew for the libraries and then
+  // a target load for each cell that gives the target slew.
   ensureTargetLoads(corner);
-  float wire_cap_per_length = 1.33e-10;
-  float wire_res_per_length = 1.67e+05;
-  makeNetParasitics(wire_cap_per_length, wire_res_per_length);
+
+  if (wire_cap_per_length > 0.0)
+    makeNetParasitics(wire_res_per_length, wire_cap_per_length);
   resizeToTargetSlew(level_insts, corner);
 }
 
@@ -596,13 +600,13 @@ Resizer::makeSteinerTree(const Net *net)
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::makeNetParasitics(float wire_cap_per_length, // Farads/Meter
-			   float wire_res_per_length) // Ohms/Meter
+Resizer::makeNetParasitics(float wire_res_per_length,
+			   float wire_cap_per_length)
 {
   NetIterator *net_iter = network_->netIterator(network_->topInstance());
   while (net_iter->hasNext()) {
     Net *net = net_iter->next();
-    makeNetParasitics(net, wire_cap_per_length, wire_res_per_length);
+    makeNetParasitics(net, wire_res_per_length, wire_cap_per_length);
   }
   delete net_iter;
 
@@ -612,8 +616,8 @@ Resizer::makeNetParasitics(float wire_cap_per_length, // Farads/Meter
 
 void
 Resizer::makeNetParasitics(const Net *net,
-			   float wire_cap_per_length,
-			   float wire_res_per_length)
+			   float wire_res_per_length,
+			   float wire_cap_per_length)
 {
   Corner *corner = cmd_corner_;
   const MinMax *min_max = MinMax::max();

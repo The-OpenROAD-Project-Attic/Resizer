@@ -153,7 +153,7 @@ record_test_design {
 # run time <15s with optimized compile
 define_test_group med {
   mea_resize1
-  aes_resize1
+  aes2_resize1
 }
 
 set fast [group_tests all]

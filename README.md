@@ -34,11 +34,15 @@ Addtional commands are
 
 * read_lef filename
 * read_def filename
-* resize
+* resize [-wire_res_per_length res]
+         [-wire_cap_per_length cap]
+         [-corner corner_name]
 * write_def filename
 
 Liberty libraries should be read before LEF and DEF.
 Only one LEF and one DEF file are supported.
+The res (ohms/meter) and cap (farads/meter) args are used to add parasitics
+based on placed component locations.
 A typical resizer command file is shown below.
 
 ```

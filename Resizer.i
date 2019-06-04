@@ -84,10 +84,12 @@ write_def_cmd(const char *filename)
 }
 
 void
-resize()
+resize_cmd(float wire_res_per_length, // Ohms/Meter
+	   float wire_cap_per_length, // Farads/Meter
+	   Corner *corner)
 {
   Resizer *resizer = getResizer();
-  resizer->resize(resizer->cmdCorner());
+  resizer->resize(wire_res_per_length, wire_cap_per_length, corner);
 }
 
 void

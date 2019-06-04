@@ -44,8 +44,28 @@ proc write_def { filename } {
   write_def_cmd $filename
 }
 
-# Defined by SWIG interface LefDef.i.
-define_cmd_args "resize" {}
+define_cmd_args "resize" {[-wire_res_per_length res]\
+			    [-wire_cap_per_length cap]\
+			    [-corner corner_name]}
+
+proc resize { args } {
+  parse_key_args "resize" args \
+    keys {-wire_res_per_length -wire_cap_per_length -corner} flags {}
+
+  set wire_res_per_length 0.0
+  if [info exists keys(-wire_res_per_length)] {
+    set wire_res_per_length $keys(-wire_res_per_length)
+    check_positive_float "-wire_res_per_length" $wire_res_per_length
+  }
+  set wire_cap_per_length 0.0
+  if [info exists keys(-wire_cap_per_length)] {
+    set wire_cap_per_length $keys(-wire_cap_per_length)
+    check_positive_float "-wire_cap_per_length" $wire_cap_per_length
+  }
+  set corner [parse_corner keys]
+
+  resize_cmd $wire_res_per_length $wire_cap_per_length $corner
+}
 
 # sta namespace end
 }
