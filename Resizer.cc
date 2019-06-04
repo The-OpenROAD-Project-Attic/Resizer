@@ -603,7 +603,7 @@ Resizer::makeSteinerTree(const Net *net)
   PinSeq &pins = tree->pins();
   network->connectedPins(net, pins);
   int pin_count = pins.size();
-  if (pin_count > 1) {
+  if (pin_count >= 2) {
     DBU x[pin_count];
     DBU y[pin_count];
     // map[pin_index] -> steiner tree vertex index
