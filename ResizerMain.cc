@@ -29,7 +29,7 @@ using sta::Resizer;
 using sta::findCmdLineFlag;
 using sta::findCmdLineKey;
 using sta::evalTclInit;
-using sta::sourceTclFileEchoVerbose;
+using sta::sourceTclFile;
 
 // Swig uses C linkage for init functions.
 extern "C" {
@@ -120,13 +120,12 @@ resizerTclAppInit(Tcl_Interp *interp)
 
   if (!findCmdLineFlag(argc, argv, "-no_init")) {
     const char *init_filename = "[file join $env(HOME) .resizer]";
-    sourceTclFileEchoVerbose(init_filename, interp);
+    sourceTclFile(init_filename, true, false, interp);
   }
 
-  // cmd_file is read with "source -echo -verbose file".
   char *cmd_file = findCmdLineArg(argc, argv, 0);
   if (cmd_file) {
-    sourceTclFileEchoVerbose(cmd_file, interp);
+    sourceTclFile(cmd_file, false, false, interp);
     exit(EXIT_SUCCESS);
   }
   return TCL_OK;

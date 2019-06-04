@@ -15,18 +15,15 @@ proc regression_main {} {
 }
 
 proc setup {} {
-  global report_stats check_stats until_error run_pt cmp_to repeat
+  global report_stats check_stats until_error cmp_to repeat
   global result_dir diff_file failure_file errors 
   global use_valgrind valgrind_shared_lib_failure
-  global use_tcheck
 
   set repeat 1
   set until_error 0
   set report_stats 0
   set check_stats 0
   set use_valgrind 0
-  set use_tcheck 0
-  set run_pt 0
   set cmp_to ""
 
   if { !([file exists $result_dir] && [file isdirectory $result_dir]) } {
@@ -51,7 +48,7 @@ proc setup {} {
 
 proc parse_args {} {
   global argv app_options tests test_groups repeat cmd_paths until_error
-  global use_valgrind use_tcheck run_pt cmp_to cmp_log_dir 
+  global use_valgrind cmp_to cmp_log_dir 
   global report_stats check_stats result_dir tests
 
   while { $argv != {} } {
@@ -86,9 +83,6 @@ proc parse_args {} {
     } elseif { $arg == "-valgrind" } {
       set use_valgrind 1
       set argv [lrange $argv 1 end]
-    } elseif { $arg == "-tcheck" } {
-      set use_tcheck 1
-      set argv [lrange $argv 1 end]
     } elseif { $arg == "-repeat" } {
       set repeat [lindex $argv 1]
       set argv [lrange $argv 2 end]
@@ -100,9 +94,6 @@ proc parse_args {} {
       set argv [lrange $argv 1 end]
     } elseif { $arg == "-until_error" } {
       set until_error 1
-      set argv [lrange $argv 1 end]
-    } elseif { $arg == "-pt" } {
-      set run_pt 1
       set argv [lrange $argv 1 end]
     } elseif { $arg == "-cmp" } {
       set cmp_to [lindex $argv 1]
@@ -409,13 +400,9 @@ proc append_failure { test } {
 
 # Return error.
 proc run_test_app { test cmd_file log_file } {
-  global app_path errorCode use_valgrind use_tcheck run_pt
-  if { $run_pt } {
-    return [run_test_pt $test $cmd_file $log_file]
-  } elseif { $use_valgrind } {
+  global app_path errorCode use_valgrind
+  if { $use_valgrind } {
     return [run_test_valgrind $test $cmd_file $log_file]
-  } elseif { $use_tcheck } {
-    return [run_test_tcheck $test $cmd_file $log_file]
   } else {
     return [run_test_plain $test $cmd_file $log_file]
   }
@@ -429,7 +416,6 @@ proc run_test_plain { test cmd_file log_file } {
   # Use -x instead of script so cmds don't end up in logfile.
   set cmd [concat "cd [file dirname $cmd_file];" \
 	     "source [file tail $cmd_file];" \
-	     "sta::write_stats $stat_file;" \
 	     "exit"]
   if { ![file exists $app_path] } {
     return "ERROR $app_path not found."
@@ -438,8 +424,9 @@ proc run_test_plain { test cmd_file log_file } {
   } else {
     init_stats $test
     for { set i 0 } { $i < $repeat } { incr i } {
+      cd [file dirname $cmd_file]
       if [catch [concat exec $app_path $app_options \
-		   -x \"$cmd\" >& $log_file]] {
+		   $cmd_file >& $log_file]] {
 	set signal [lindex $errorCode 2]
 	set error [lindex $errorCode 3]
 	# Errors strings are not consistent across platforms but signal
@@ -559,105 +546,6 @@ proc cleanse_valgrind_logfile { test log_file } {
 }
 
 ################################################################
-
-proc run_test_tcheck { test cmd_file log_file } {
-  global app_path app_options tcheck_path tcheck_options 
-  global result_dir errorCode
-  
-  # Use -x instead of script so cmds don't end up in logfile.
-  set cmd [concat "cd [file dirname $cmd_file];" \
-	     "source [file tail $cmd_file];" \
-	     "exit"]
-  set tcheck_error_ext "csv"
-  set tcheck_error_rootname [file rootname $log_file]
-  set tcheck_error_file "$tcheck_error_rootname.$tcheck_error_ext"
-  if [catch [concat exec $tcheck_path $tcheck_options \
-	       "--report" $tcheck_error_rootname \
-	       "--results" $tcheck_error_rootname \
-	       $app_path $app_options -threads max \
-	       -x \"$cmd\" >& $log_file]] {
-    set error [lindex $errorCode 3]
-    return "ERROR $error"
-  } else {
-    cleanse_tcheck_logfile $test $log_file
-    return [check_tcheck_errors $tcheck_error_file]
-  }
-}
-
-# tcheck turds in the log file.
-proc cleanse_tcheck_logfile { test log_file } {
-  global tcheck_header_line_count
-  set tmp_file [test_tmp_file $test]
-  set tcheck_log_file [test_tcheck_file $test]
-  set tcheck_log [open $tcheck_log_file "w"]
-  file copy -force $log_file $tmp_file
-  set tmp [open $tmp_file "r"]
-  set log [open $log_file "w"]
-  set tcheck [open $tcheck_log_file "w"]
-  set tcheck_tail 0
-  gets $tmp line
-  while { ![eof $tmp] } {
-    if {[regexp "Intel\\(R\\) Thread Checker" $line]} {
-      set tcheck_tail 1
-    }
-    if { $tcheck_tail } {
-      puts $tcheck $line
-    } else {
-      puts $log $line
-    }
-    gets $tmp line
-  }
-  close $log
-  close $tmp
-  close $tcheck
-  file delete $tmp_file
-}
-
-# Thread checker race errors.
-set tcheck_race_regexp "Write -> Read data-race|Write -> Write data-race|Read -> Write data-race"
-
-# Scan tcheck error file.
-proc check_tcheck_errors { tcheck_error_file } {
-  global tcheck_race_regexp
-  set tcheck [open $tcheck_error_file "r"]
-  set race_errors 0
-  gets $tcheck line
-  while { ![eof $tcheck] } {
-    if {[regexp $tcheck_race_regexp $line]} {
-      set race_errors 1
-    }
-    gets $tcheck line
-  }
-  close $tcheck
-  
-  if { $race_errors } {
-    return "RACE"
-  } else {
-    return {}
-  }
-}
-
-################################################################
-
-proc run_test_pt { test cmd_file log_file } {
-  global test_dir
-  set wrapper_file [file join [file dirname $log_file] "pt_wrapper.tcl"]
-  set wrapper [open $wrapper_file "w"]
-  # Define sta cmds that are not in pt.
-  puts $wrapper "cd [file dirname $cmd_file]"
-  puts $wrapper "source [file join $test_dir null_cmds.tcl]"
-  # Catch errors to make sure exit is executed.
-  puts $wrapper "catch { source $cmd_file }"
-  puts $wrapper "exit"
-  close $wrapper
-  
-  exec "pt_shell" -f $wrapper_file >& $log_file
-  # Copy the log file to a cmp log file.
-  regsub "\.log" $log_file ".pt" syn_file
-  file delete $syn_file
-  file copy $log_file $syn_file
-  return ""
-}
 
 proc show_summary {} {
   global errors tests diff_file result_dir valgrind_shared_lib_failure
