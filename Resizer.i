@@ -16,14 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-%include "StaException.i"
-%include "StaTcl.i"
-%include "NetworkEdit.i"
-%include "DelayCalc.i"
-%include "Parasitics.i"
-
 %{
 
+#include "Machine.hh"
+#include "Error.hh"
 #include "LefReader.hh"
 #include "DefReader.hh"
 #include "DefWriter.hh"

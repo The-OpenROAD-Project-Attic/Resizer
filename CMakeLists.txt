@@ -55,32 +55,6 @@ message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 ################################################################
 #
-# Source files.
-#
-################################################################
-
-# Source files.
-set(STA_TCL_FILES
-  ${STA_HOME}/tcl/Util.tcl
-  ${STA_HOME}/tcl/Graph.tcl
-  ${STA_HOME}/tcl/Liberty.tcl
-  ${STA_HOME}/tcl/Link.tcl
-  ${STA_HOME}/tcl/Network.tcl
-  ${STA_HOME}/tcl/NetworkEdit.tcl
-  ${STA_HOME}/tcl/Sdc.tcl
-  ${STA_HOME}/tcl/Search.tcl
-  ${STA_HOME}/tcl/Cmds.tcl
-  ${STA_HOME}/tcl/Variables.tcl
-  ${STA_HOME}/tcl/Sta.tcl
-  ${STA_HOME}/tcl/Power.tcl
-  ${STA_HOME}/tcl/Splash.tcl
-  ${STA_HOME}/dcalc/DelayCalc.tcl
-  ${STA_HOME}/parasitics/Parasitics.tcl
-  ${STA_HOME}/sdf/Sdf.tcl
-  )
-
-################################################################
-#
 # Library dependencies
 #
 ################################################################
@@ -250,22 +224,11 @@ set(RESIZER_INCLUDE_DIRS
   )
 
 set(RESIZER_TCL_FILES
-  ${STA_TCL_FILES}
   Resizer.tcl
   )
 
 set(RESIZER_SWIG_FILES
   Resizer.i
-  )
-
-# Dependencies for Resizer.i
-set(STA_SWIG_FILES
-  ${STA_HOME}/tcl/NetworkEdit.i
-  ${STA_HOME}/tcl/StaException.i
-  ${STA_HOME}/dcalc/DelayCalc.i
-  ${STA_HOME}/parasitics/Parasitics.i
-  ${STA_HOME}/verilog/Verilog.i
-  ${STA_HOME}/tcl/StaTcl.i
   )
 
 add_custom_command(OUTPUT ${RESIZER_HOME}/ResizerTclInitVar.cc
@@ -279,7 +242,7 @@ add_custom_command(OUTPUT ${RESIZER_HOME}/Resizer_wrap.cc
   COMMAND ${SWIG_EXECUTABLE} -tcl8 -c++ -namespace -prefix sta -I${STA_HOME}/tcl -I${STA_HOME}/sdf -I${STA_HOME}/dcalc -I${STA_HOME}/parasitics -I${STA_HOME}/verilog -o ${RESIZER_HOME}/Resizer_wrap.cc ${RESIZER_HOME}/Resizer.i
   COMMAND ${STA_HOME}/etc/SwigCleanup.tcl ${RESIZER_HOME}/Resizer_wrap.cc
   WORKING_DIRECTORY ${STA_HOME}
-  DEPENDS ${RESIZER_SWIG_FILES} ${STA_SWIG_FILES}
+  DEPENDS ${RESIZER_SWIG_FILES}
   )
 
 ################################################################
@@ -289,7 +252,7 @@ add_executable(resizer ${RESIZER_SOURCE})
 target_include_directories(resizer PUBLIC ${RESIZER_INCLUDE_DIRS})
 
 target_link_libraries(resizer
-  ${STA_HOME}/app/libOpenSTAnoCmds.a
+  ${STA_HOME}/app/libOpenSTA.a
   ${TCL_LIB}
   ${CUDD_LIB}
   ${LEF_HOME}/lef/liblef.a

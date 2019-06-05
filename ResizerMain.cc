@@ -34,10 +34,12 @@ using sta::sourceTclFile;
 // Swig uses C linkage for init functions.
 extern "C" {
 extern int Resizer_Init(Tcl_Interp *interp);
+extern int Sta_Init(Tcl_Interp *interp);
 }
 
 namespace sta {
 extern const char *resizer_tcl_inits[];
+extern const char *tcl_inits[];
 }
 
 // "Arguments" passed to staTclAppInit.
@@ -104,11 +106,13 @@ resizerTclAppInit(Tcl_Interp *interp)
 
   // Define swig commands.
   Resizer_Init(interp);
+  Sta_Init(interp);
 
   Sta *sta = Sta::sta();
   sta->setTclInterp(interp);
 
   // Eval encoded sta TCL sources.
+  evalTclInit(interp, sta::tcl_inits);
   evalTclInit(interp, sta::resizer_tcl_inits);
 
   if (!findCmdLineFlag(argc, argv, "-no_splash"))
