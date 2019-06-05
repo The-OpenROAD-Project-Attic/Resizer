@@ -14,12 +14,12 @@ if { [regexp "CYGWIN" [exec uname -a]] } {
 } else {
   set app "resizer"
 }
-set app_path [file join $sta_dir "build" $app]
+set resize_dir [find_parent_dir $test_dir]
+set app_path [file join $resize_dir "build" $app]
 # Application options.
 set app_options "-no_init -no_splash"
-set test_dir [file join $sta_dir "test"]
 # Log files for each test are placed in result_dir.
-set result_dir [file join $sta_dir "test/results"]
+set result_dir [file join $test_dir "results"]
 # Collective diffs.
 set diff_file [file join $result_dir "diffs"]
 # File containing list of failed tests.
