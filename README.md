@@ -5,8 +5,8 @@
 Expected directory layout
 
 /resizer - this source tree
-/lef - lef reader/writer
-/def - def reader/writer
+/lef - Si2 lef reader/writer
+/def - Si2 def reader/writer
 /flute - flute steiner tree package
 /opensta - OpenSTA
 
@@ -18,7 +18,7 @@ cmake ..
 make
 
 The default build type is release to compile optimized code.
-The resulting executable is in `resizer`.
+The resulting executable is in `build/resizer`.
 
 Optional CMake variables passed as -D<var>=<value> arguments to CMake are show below.
 
@@ -35,7 +35,8 @@ resizer -help              show help and exit
 Resizer looks for the files ../etc/POWV9.dat and ../etc/PORT9.dat relative
 to the executable when it starts.
 
-Resizer sources the TCL command file ~/.resizer and enters interactive command mode unless the command line option -no_init is specified.
+Resizer sources the TCL command file ~/.resizer and enters interactive
+command mode unless the command line option -no_init is specified.
 
 The resizer is run using TCL scripts. All OpenSTA commands are available.
 Addtional commands are
@@ -54,19 +55,18 @@ based on placed component locations.
 A typical resizer command file is shown below.
 
 ```
-source helpers.tcl
 read_liberty nlc18.lib
 read_lef nlc18.lef
 read_def mea.def
-source mea.sdc
-resize
-write_def mea_sized.def
+read_sdc mea.sdc
+resize -wire_res_per_length 1.67e+05 -wire_cap_per_length 1.33e-10
+write_def mea_resized.def
 ```
 To run this example use the following commands.
 
 ```
 cd test
-../resizer -f resize_mea1.tcl
+../resizer resize_mea1.tcl
 ```
 
 Note that OpenSTA commands can be used to report timing metrics before or after
@@ -84,5 +84,5 @@ puts "WNS before = [format %.2f [worst_negative_slack]]"
 
 ## Authors
 
-* James Cherry
-* Lukas van Ginneken
+* James Cherry (coding)
+* Lukas van Ginneken (algorithm)
