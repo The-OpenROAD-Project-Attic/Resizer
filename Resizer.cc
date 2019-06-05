@@ -560,12 +560,18 @@ Resizer::initFlute(const char *resizer_path)
       if (readFluteInits(resizer_dir))
 	return;
     }
+    else {
+      // try ./etc2
+      resizer_dir = ".";
+      if (readFluteInits(resizer_dir))
+	return;
+    }
   }
   // try ../etc
   resizer_dir = "..";
   if (readFluteInits(resizer_dir))
     return;
-  printf("Error: Could not find FluteLUT files POWV9.dat and PORT9.dat.\n");
+  printf("Error: could not find FluteLUT files POWV9.dat and PORT9.dat.\n");
   exit(EXIT_FAILURE);
 }
 
