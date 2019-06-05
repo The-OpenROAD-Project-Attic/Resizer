@@ -46,27 +46,20 @@ public:
 
 protected:
   virtual void makeNetwork();
-  void instancesSortByLevel(InstanceSeq &insts);
-  void resizeToTargetSlew(InstanceSeq &level_insts,
-			  Corner *corner);
-  void resizeToTargetSlew1(Instance *inst,
-			   Corner *corner);
-  void ensureTargetLoads(Corner *corner);
-  void findTargetLoads(Corner *corner);
+  void initCorner(Corner *corner);
+  void sortInstancesByLevel();
+  void resizeToTargetSlew();
+  void resizeToTargetSlew1(Instance *inst);
+  void ensureTargetLoads();
+  void findTargetLoads();
   void findTargetLoads(LibertyLibrary *library,
-		       float *tgt_slews,
-		       const Pvt *pvt);
+		       float *tgt_slews);
   float findTargetLoad(LibertyCell *cell,
 		       TimingArc *arc,
-		       Slew in_slew,
-		       const Pvt *pvt);
-  void findBufferTargetSlews(const Pvt *pvt,
-			     const MinMax *min_max,
-			     // Return values.
+		       Slew in_slew);
+  void findBufferTargetSlews(// Return values.
 			     float *tgt_slews);
   void findBufferTargetSlews(LibertyLibrary *library,
-			     const Pvt *pvt,
-			     const MinMax *min_max,
 			     // Return values.
 			     float *slews,
 			     int *counts);
@@ -81,7 +74,12 @@ protected:
   bool readFluteInits(string dir);
 
 private:
+  Corner *corner_;
+  const MinMax *min_max_;
+  const DcalcAnalysisPt *dcalc_ap_;
+  const Pvt *pvt_;
   CellTargetLoadMap *target_load_map_;
+  InstanceSeq level_insts_;
 };
 
 } // namespace

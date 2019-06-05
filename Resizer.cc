@@ -116,32 +116,43 @@ Resizer::resize(float wire_res_per_length,
 		float wire_cap_per_length,
 		Corner *corner)
 {
+  initCorner(corner);
+
   // Disable incremental timing.
   graph_delay_calc_->delaysInvalid();
   search_->arrivalsInvalid();
 
   ensureLevelized();
-  InstanceSeq level_insts;
-  instancesSortByLevel(level_insts);
+  sortInstancesByLevel();
 
   // Find a target slew for the libraries and then
   // a target load for each cell that gives the target slew.
-  ensureTargetLoads(corner);
+  ensureTargetLoads();
 
   if (wire_cap_per_length > 0.0)
     makeNetParasitics(wire_res_per_length, wire_cap_per_length);
-  resizeToTargetSlew(level_insts, corner);
+
+  resizeToTargetSlew();
 }
 
 void
-Resizer::instancesSortByLevel(InstanceSeq &insts)
+Resizer::initCorner(Corner *corner)
+{
+  corner_ = corner;
+  min_max_ = MinMax::max();
+  dcalc_ap_ = corner->findDcalcAnalysisPt(min_max_);
+  pvt_ = dcalc_ap_->operatingConditions();
+}
+
+void
+Resizer::sortInstancesByLevel()
 {
   LeafInstanceIterator *leaf_iter = network_->leafInstanceIterator();
   while (leaf_iter->hasNext()) {
     Instance *leaf = leaf_iter->next();
-    insts.push_back(leaf);
+    level_insts_.push_back(leaf);
   }
-  sort(insts, InstanceOutputLevelLess(network_, graph_));
+  sort(level_insts_, InstanceOutputLevelLess(network_, graph_));
   delete leaf_iter;
 }
 
@@ -149,34 +160,31 @@ void
 Resizer::resizeToTargetSlew(Instance *inst,
 			    Corner *corner)
 {
-  ensureTargetLoads(corner);
-  resizeToTargetSlew1(inst, corner);
+  initCorner(corner);
+  ensureTargetLoads();
+  resizeToTargetSlew1(inst);
 }
 
 void
-Resizer::resizeToTargetSlew(InstanceSeq &level_insts,
-			    Corner *corner)
+Resizer::resizeToTargetSlew()
 {
   // Resize by in reverse level order.
-  for (int i = level_insts.size() - 1; i >= 0; i--) {
-    Instance *inst = level_insts[i];
-    resizeToTargetSlew1(inst, corner);
+  for (int i = level_insts_.size() - 1; i >= 0; i--) {
+    Instance *inst = level_insts_[i];
+    resizeToTargetSlew1(inst);
   }
 }
 
 void
-Resizer::resizeToTargetSlew1(Instance *inst,
-			     Corner *corner)
+Resizer::resizeToTargetSlew1(Instance *inst)
 {
-  const MinMax *min_max = MinMax::max();
-  const DcalcAnalysisPt *dcalc_ap = corner->findDcalcAnalysisPt(min_max);
   LibertyCell *cell = network_->libertyCell(inst);
   if (cell) {
     Pin *output = singleOutputPin(inst, network_);
     // Only resize single output gates for now.
     if (output) {
       // Includes net parasitic capacitance.
-      float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap);
+      float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
       LibertyCell *best_cell = nullptr;
       float best_ratio = 0.0;
       auto equiv_cells = cell->equivCells();
@@ -227,37 +235,32 @@ singleOutputPin(const Instance *inst,
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::ensureTargetLoads(Corner *corner)
+Resizer::ensureTargetLoads()
 {
   if (target_load_map_ == nullptr)
-    findTargetLoads(corner);
+    findTargetLoads();
 }
 
 // Find the target load for each library cell that gives the target slew.
 void
-Resizer::findTargetLoads(Corner *corner)
+Resizer::findTargetLoads()
 {
-  const MinMax *min_max = MinMax::max();
-  const DcalcAnalysisPt *dcalc_ap = corner->findDcalcAnalysisPt(min_max);
-  const Pvt *pvt = dcalc_ap->operatingConditions();
-
   // Find target slew across all buffers in the libraries.
   float tgt_slews[TransRiseFall::index_count];
-  findBufferTargetSlews(pvt, min_max, tgt_slews);
+  findBufferTargetSlews(tgt_slews);
 
   target_load_map_ = new CellTargetLoadMap;
   LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
   while (lib_iter->hasNext()) {
     LibertyLibrary *lib = lib_iter->next();
-    findTargetLoads(lib, tgt_slews, pvt);
+    findTargetLoads(lib, tgt_slews);
   }
   delete lib_iter;
 }
 
 void
 Resizer::findTargetLoads(LibertyLibrary *library,
-			 float *tgt_slews,
-			 const Pvt *pvt)
+			 float *tgt_slews)
 {
   LibertyCellIterator cell_iter(library);
   while (cell_iter.hasNext()) {
@@ -276,8 +279,7 @@ Resizer::findTargetLoads(LibertyLibrary *library,
 	  TimingArc *arc = arc_iter.next();
 	  TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
 	  float arc_target_load = findTargetLoad(cell, arc,
-						 tgt_slews[in_tr->index()],
-						 pvt);
+						 tgt_slews[in_tr->index()]);
 	  target_load_sum += arc_target_load;
 	  arc_count++;
 	}
@@ -296,8 +298,7 @@ Resizer::findTargetLoads(LibertyLibrary *library,
 float
 Resizer::findTargetLoad(LibertyCell *cell,
 			TimingArc *arc,
-			Slew in_slew,
-			const Pvt *pvt)
+			Slew in_slew)
 {
   GateTimingModel *model = dynamic_cast<GateTimingModel*>(arc->model());
   if (model) {
@@ -308,7 +309,7 @@ Resizer::findTargetLoad(LibertyCell *cell,
     while (cap_step > cap_tol) {
       ArcDelay arc_delay;
       Slew arc_slew;
-      model->gateDelay(cell, pvt, 0.0, load_cap, 0.0, false,
+      model->gateDelay(cell, pvt_, 0.0, load_cap, 0.0, false,
 		       arc_delay, arc_slew);
       if (arc_slew > in_slew) {
 	load_cap -= cap_step;
@@ -324,9 +325,7 @@ Resizer::findTargetLoad(LibertyCell *cell,
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::findBufferTargetSlews(const Pvt *pvt,
-			       const MinMax *min_max,
-			       // Return values.
+Resizer::findBufferTargetSlews(// Return values.
 			       float *tgt_slews)
 {
   tgt_slews[TransRiseFall::riseIndex()] = 0.0;
@@ -336,7 +335,7 @@ Resizer::findBufferTargetSlews(const Pvt *pvt,
   LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
   while (lib_iter->hasNext()) {
     LibertyLibrary *lib = lib_iter->next();
-    findBufferTargetSlews(lib, pvt, min_max, tgt_slews, counts);
+    findBufferTargetSlews(lib, tgt_slews, counts);
   }
   delete lib_iter;
 
@@ -346,8 +345,6 @@ Resizer::findBufferTargetSlews(const Pvt *pvt,
 
 void
 Resizer::findBufferTargetSlews(LibertyLibrary *library,
-			       const Pvt *pvt,
-			       const MinMax *min_max,
 			       // Return values.
 			       float *slews,
 			       int *counts)
@@ -364,13 +361,13 @@ Resizer::findBufferTargetSlews(LibertyLibrary *library,
 	  GateTimingModel *model = dynamic_cast<GateTimingModel*>(arc->model());
 	  TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
 	  TransRiseFall *out_tr = arc->toTrans()->asRiseFall();
-	  float in_cap = input->capacitance(in_tr, min_max);
+	  float in_cap = input->capacitance(in_tr, min_max_);
 	  float load_cap = in_cap * 10.0; // "factor debatable"
 	  ArcDelay arc_delay;
 	  Slew arc_slew;
-	  model->gateDelay(buffer, pvt, 0.0, load_cap, 0.0, false,
+	  model->gateDelay(buffer, pvt_, 0.0, load_cap, 0.0, false,
 			   arc_delay, arc_slew);
-	  model->gateDelay(buffer, pvt, arc_slew, load_cap, 0.0, false,
+	  model->gateDelay(buffer, pvt_, arc_slew, load_cap, 0.0, false,
 			   arc_delay, arc_slew);
 	  slews[out_tr->index()] += arc_slew;
 	  counts[out_tr->index()]++;
@@ -720,5 +717,157 @@ Resizer::findParasiticNode(SteinerTree *tree,
   else 
     return parasitics_->ensureParasiticNode(parasitic, net, steiner_pt);
 }
+
+////////////////////////////////////////////////////////////////
+
+#if 0
+class RebufferOption
+{
+public:
+  RebufferOption();
+
+private:
+  enum {sink junction wire } Type;
+  float cap_;
+  Required required_;
+  DefPt location_;
+  RebufferOption ref;
+  RebufferOption ref2;
+};
+
+void
+Resizer::rebuffer(float cap_limit)
+{
+  for (int i = level_insts.size() - 1; i >= 0; i--) {
+    Instance *inst = level_insts[i];
+    LibertyCell *cell = network_->libertyCell(inst);
+    if (cell) {
+      Pin *output = singleOutputPin(inst, network_);
+      if (output) {
+	float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap);
+	if (load_cap > cap_limit)
+	  rebuffer(output);
+      }
+    }
+  }
+}
+ 
+void
+Resizer::rebuffer(const Pin *output)
+{
+  Net *net = network_->net(output);
+  SteinerTree *tree = makeSteinerTree(net);
+  RebufferOption Z = bottom_up(Stree.root);
+  Tbest = -infinity;
+  for(auto p : Z) {
+    Tb = p.req - Dbuf - Rbuf * p.cap;
+    if (Tb > Tbest) {
+      Tbest = Tb;
+      best = p;
+    }
+  }
+  top_down(best, net);
+}
+
+// The routing tree is represented a binary tree with the sinks being the leaves
+// of the tree, the junctions being the Steiner nodes and the root being the
+// source of the net.
+Set<RebufferOption>
+bottom_up(SteinerTree k)
+{
+  if (is_sink(k)) {
+    z = new option;
+    z.cap = input_cap(k);
+    z.req = required_time(k);
+    z.xy = k.xy;
+    z.sink = k.pin;
+    z.type = SINK;
+    Z = { z } // capacitance of the sink and the required time
+  } else {
+    Zl = bottom_up(k.left);
+    Zr = bottom_up(k.right);
+    // Now combine the options from both branches
+    Z = { };
+    for p in Zl {
+	for (q in Zr) {
+	  z = new option;
+	  z.cap = p.cap + q.cap;
+	  z.req = min(p.req, q.req);
+	  z.xy = k.xy;
+	  z.ref = p;
+	  z.ref2 = q;
+	  z.type = JUNCTION;
+	}
+    }
+
+    // Prune the options
+    for p in Z {
+	for q in Z {
+	    if(Tp < Tq &amp;&amp; Lp &lt; Lq) { // if q strictly worse than p
+	      delete q; // remove solution q
+	    }
+	}
+    }
+  }
+  Z1 = add_wire_and_buffer(Z, k);
+  return Z1;
+}
+
+define top_down(option choice, net) {
+  switch(choice.type) {
+  case BUFFER:
+    net2 = new NET;
+    buf = new BUFFER;
+    connect(buf.in, net);
+    connect(buf.out, net2);
+    place(buf, choice.xy);
+    top_down(choice.ref, net2);
+    break;
+  case WIRE:
+    top_down(choice.ref, net);
+    break;
+  case JUNCTION:
+    top_down(choice.ref, net);
+    top_down(choice.ref2, net);
+    break;
+  case SINK:
+    connect(choice.sink, net);
+  }
+}
+
+RebufferOption
+Resizer::addWireAndBuffer(RebufferOption Z,
+			  SteinerTree k) 
+{
+  Z1 = { };
+  best = -infinity;
+  for (p in Z) {
+    z = new option;
+    z.req = p.req - rc_delay(k, k.left); // account for wire delay
+    z.cap = p.cap + wireload(k, k.left); // account for wire load
+    z.ref = p;
+    z.xy = p.xy;
+    z.type = WIRE;
+    Z1 = Z1 U { z };
+    // We could add options of different buffer drive strengths here
+    // Which would have different delay Dbuf and input cap Lbuf
+    // for simplicity we only consider one size of buffer
+    rt = z.req - Dbuf - Rbuf * z.cap;
+    if(rt = best) {
+      best = rt;
+      best_ref = p;
+    }
+  }
+  z = new option;
+  z.req = best;
+  z.cap = Cbuf; // buffer input cap
+  z.xy = best_ref.xy;
+  z.ref = best_ref;
+  z.type = BUFFER;
+  Z1 = Z1 U { z };
+  return Z1;
+}
+
+#endif
 
 };
