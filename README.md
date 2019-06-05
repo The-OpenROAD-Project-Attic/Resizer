@@ -26,13 +26,15 @@ CMAKE_BUILD_TYPE DEBUG|RELEASE
 
 #### Running Resizer
 
+```
 resizer -help              show help and exit
         -version           show version and exit
         -no_init           do not read .sta init file
         -no_splash         do not show the license splash at startup
 	cmd_file           source cmd_file and exit
+```
 
-Resizer looks for the files ../etc/POWV9.dat and ../etc/PORT9.dat relative
+Resizer looks for the files POWV9.dat and PORT9.dat in ../etc relative
 to the executable when it starts.
 
 Resizer sources the TCL command file ~/.resizer and enters interactive
@@ -48,10 +50,13 @@ Addtional commands are
          [-corner corner_name]
 * write_def filename
 
-Liberty libraries should be read before LEF and DEF.
-Only one LEF and one DEF file are supported.
-The res (ohms/meter) and cap (farads/meter) args are used to add parasitics
-based on placed component locations.
+Liberty libraries should be read before LEF and DEF.  Only one LEF and
+one DEF file are supported.  The res (ohms/meter) and cap
+(farads/meter) args are used to add parasitics based on placed
+component locations. If res and cap are not specified the
+default_wireload model specified in the first liberty file or with the
+set_wire_load command are used.
+
 A typical resizer command file is shown below.
 
 ```
@@ -73,13 +78,13 @@ Note that OpenSTA commands can be used to report timing metrics before or after
 the resizing.
 
 ```
-puts "TNS before = [format %.2f [total_negative_slack]]"
-puts "WNS before = [format %.2f [worst_negative_slack]]"
+report_tns
+report_wns
 
 resize
 
-puts "TNS before = [format %.2f [total_negative_slack]]"
-puts "WNS before = [format %.2f [worst_negative_slack]]"
+report_tns
+report_wns
 ```
 
 ## Authors
