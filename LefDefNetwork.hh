@@ -104,8 +104,10 @@ public:
 	       defiNet *def_net);
   void connectedPins(const Net *net,
 		     PinSeq &pins);
-
+  void setLocation(Instance *instance,
+		   DefPt location);
   using ConcreteNetwork::connect;
+  using ConcreteNetwork::makeNet;
 
 protected:
   Library *lefToSta(LefLibrary *lib) const;
@@ -148,6 +150,7 @@ class DefComponent : public ConcreteInstance
 public:
   LefMacro *lefMacro();
   defiComponent *defComponent() { return def_component_; }
+  void setDefComponent(defiComponent *def_component);
 
 protected:
   DefComponent(ConcreteCell *cell,

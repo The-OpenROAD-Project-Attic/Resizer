@@ -169,6 +169,18 @@ LefDefNetwork::replaceCell(Instance *inst,
   replaceCellIntenal(inst, ccell);
 }
 
+void
+LefDefNetwork::setLocation(Instance *instance,
+			   DefPt location)
+{
+  DefComponent *component = staToDef(instance);
+  defiComponent *def_component = component->defComponent();
+  if (def_component == nullptr)
+    def_component = new defiComponent(nullptr);
+  def_component->setPlacementStatus(DEFI_COMPONENT_PLACED);
+  def_component->setPlacementLocation(location.x(), location.y());
+}
+
 Pin *
 LefDefNetwork::connect(Instance *inst,
 		       LibertyPort *port,
@@ -197,18 +209,6 @@ LefDefNetwork::makeNet(const char *name,
   DefNet *net = new DefNet(name, top, def_net);
   top->addNet(net);
   return defToSta(net);
-}
-
-void
-LefDefNetwork::connectedPins(const Net *net,
-			     PinSeq &pins)
-{
-  NetConnectedPinIterator *pin_iter = connectedPinIterator(net);
-  while (pin_iter->hasNext()) {
-    Pin *pin = pin_iter->next();
-    pins.push_back(pin);
-  }
-  delete pin_iter;
 }
 
 DefPt
@@ -325,6 +325,12 @@ LefMacro *
 DefComponent::lefMacro()
 {
   return dynamic_cast<LefMacro *>(cell_);
+}
+
+void
+DefComponent::setDefComponent(defiComponent *def_component)
+{
+  def_component_ = def_component;
 }
 
 ////////////////////////////////////////////////////////////////

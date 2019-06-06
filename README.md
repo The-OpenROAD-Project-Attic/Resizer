@@ -7,7 +7,7 @@ Expected directory layout
 /resizer - this source tree
 /lef - Si2 lef reader/writer
 /def - Si2 def reader/writer
-/flute - flute steiner tree package
+/flute - flute steiner tree package version 2. (http://home.eng.iastate.edu/~cnchu/flute.html)
 /opensta - OpenSTA
 
 git clone https://parallax.xp-dev.com/git/resizer
@@ -91,3 +91,4 @@ report_wns
 
 * James Cherry (coding)
 * Lukas van Ginneken (algorithm)
+* Chris Cho (flute steiner tree package)

@@ -23,8 +23,11 @@ namespace sta {
 
 class LefDefNetwork;
 class SteinerTree;
+class RebufferOption;
 
 typedef Map<LibertyCell*, float> CellTargetLoadMap;
+typedef Vector<RebufferOption*> RebufferOptionSeq;
+typedef int SteinerPt;
 
 class Resizer : public Sta
 {
@@ -43,6 +46,12 @@ public:
   SteinerTree *makeSteinerTree(const Net *net);
   void makeNetParasitics(float wire_res_per_length,
 			 float wire_cap_per_length);
+
+  void rebuffer(float cap_limit,
+		LibertyCell *buffer_cell);
+  float bufferDelay(LibertyCell *buffer_cell,
+		    const Pin *in_pin,
+		    float load_cap);
 
 protected:
   virtual void makeNetwork();
@@ -72,6 +81,31 @@ protected:
 				   const Pin *pin,
 				   int steiner_pt);
   bool readFluteInits(string dir);
+  void rebuffer(const Pin *drvr_pin,
+		LibertyCell *buffer_cell);
+  RebufferOptionSeq rebufferBottomUp(SteinerTree *tree,
+				     SteinerPt k,
+				     const Pin *drvr_pin,
+				     LibertyCell *buffer_cell);
+  void rebufferTopDown(RebufferOption *choice,
+		       Net *net,
+		       LibertyCell *buffer_cell);
+  RebufferOptionSeq
+  addWireAndBuffer(RebufferOptionSeq Z,
+		   SteinerTree *tree,
+		   SteinerPt k,
+		   const Pin *drvr_pin,
+		   LibertyCell *buffer_cell);
+  void connectedPins(const Net *net,
+		     PinSeq &pins);
+  float portCapacitance(const LibertyPort *port);
+  float pinCapacitance(const Pin *pin);
+  float bufferInputCapacitance(LibertyCell *buffer_cell);
+  Required pinRequired(const Pin *pin);
+  Required vertexRequired(Vertex *vertex,
+			  const MinMax *min_max);
+  const char *makeUniqueNetName();
+  const char *makeUniqueInstanceName();
 
 private:
   Corner *corner_;
