@@ -40,22 +40,32 @@ public:
   void resize(float wire_res_per_length, // ohms/meter
 	      float wire_cap_per_length, // farads/meter
 	      Corner *corner);
+
+  // The functions below are for testing phases of the resizer.
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
-  SteinerTree *makeSteinerTree(const Net *net,
-			       bool find_left_rights);
+  // Make net wire parasitics based on DEF locations.
   void makeNetParasitics(float wire_res_per_length,  // ohms/meter
 			 float wire_cap_per_length,  // farads/meter
 			 Corner *corner);
+  // Rebuffer instances that over their capacitance limit.
   // Assumes buffer_cell->isBuffer() is true.
-  void rebuffer(float cap_limit,
-		LibertyCell *buffer_cell);
-  float bufferDelay(LibertyCell *buffer_cell,
-		    const Pin *in_pin,
-		    float load_cap);
+  void rebuffer(LibertyCell *buffer_cell,
+		float wire_res_per_length,
+		float wire_cap_per_length,
+		Corner *corner);
+  // Rebuffer instance if it is over its capacitance limit.
+  void rebuffer(Instance *inst,
+		LibertyCell *buffer_cell,
+		float wire_res_per_length,
+		float wire_cap_per_length,
+		Corner *corner);
 
 protected:
+  void init(float wire_res_per_length,
+	    float wire_cap_per_length,
+	    Corner *corner);
   virtual void makeNetwork();
   void initCorner(Corner *corner);
   void sortInstancesByLevel();
@@ -74,6 +84,8 @@ protected:
 			     // Return values.
 			     float *slews,
 			     int *counts);
+  SteinerTree *makeSteinerTree(const Net *net,
+			       bool find_left_rights);
   void makeNetParasitics();
   void makeNetParasitics(const Net *net);
   ParasiticNode *findParasiticNode(SteinerTree *tree,
@@ -82,6 +94,10 @@ protected:
 				   const Pin *pin,
 				   int steiner_pt);
   bool readFluteInits(string dir);
+
+  void rebuffer(LibertyCell *buffer_cell);
+  void rebuffer(Instance *inst,
+		LibertyCell *buffer_cell);
   void rebuffer(const Pin *drvr_pin,
 		LibertyCell *buffer_cell);
   RebufferOptionSeq rebufferBottomUp(SteinerTree *tree,
@@ -105,10 +121,15 @@ protected:
   Required pinRequired(const Pin *pin);
   Required vertexRequired(Vertex *vertex,
 			  const MinMax *min_max);
+  float bufferDelay(LibertyCell *buffer_cell,
+		    const Pin *in_pin,
+		    float load_cap);
   string makeUniqueNetName();
   string makeUniqueBufferName();
 
-private:
+  friend class RebufferOption;
+
+protected:
   Corner *corner_;
   float wire_res_per_length_;
   float wire_cap_per_length_;

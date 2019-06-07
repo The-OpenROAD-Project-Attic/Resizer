@@ -105,4 +105,16 @@ make_net_parasitics(float wire_cap_per_length,
 			     corner);
 }
 
+void
+rebuffer_instance(Instance *inst,
+		LibertyCell *buffer_cell,
+		float wire_res_per_length,
+		float wire_cap_per_length)
+{
+  Resizer *resizer = getResizer();
+  Corner *corner = resizer->cmdCorner();
+  resizer->rebuffer(inst, buffer_cell, wire_cap_per_length,
+		    wire_res_per_length, corner);
+}
+
 %} // inline

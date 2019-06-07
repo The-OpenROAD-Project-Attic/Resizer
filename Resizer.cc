@@ -52,7 +52,9 @@ bool
 fileExists(const std::string &filename);
 
 Resizer::Resizer() :
-  Sta()
+  Sta(),
+  unique_net_index_(1),
+  unique_buffer_index_(1)
 {
 }
 
@@ -114,9 +116,9 @@ InstanceOutputLevelLess::outputLevel(const Instance *inst) const
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::resize(float wire_res_per_length,
-		float wire_cap_per_length,
-		Corner *corner)
+Resizer::init(float wire_res_per_length,
+	      float wire_cap_per_length,
+	      Corner *corner)
 {
   initCorner(corner);
   wire_res_per_length_ = wire_res_per_length;
@@ -128,6 +130,14 @@ Resizer::resize(float wire_res_per_length,
 
   ensureLevelized();
   sortInstancesByLevel();
+}
+
+void
+Resizer::resize(float wire_res_per_length,
+		float wire_cap_per_length,
+		Corner *corner)
+{
+  init(wire_res_per_length, wire_cap_per_length, corner);
 
   // Find a target slew for the libraries and then
   // a target load for each cell that gives the target slew.
@@ -165,7 +175,7 @@ void
 Resizer::resizeToTargetSlew(Instance *inst,
 			    Corner *corner)
 {
-  initCorner(corner);
+  init(0.0, 0.0, corner);
   ensureTargetLoads();
   resizeToTargetSlew1(inst);
 }
@@ -540,12 +550,13 @@ SteinerTree::report(const Network *network)
 	   pt1.y,
 	   name(j, network),
 	   wire_length);
-    SteinerPt left = this->left(i);
-    SteinerPt right = this->right(i);
-    if (left > 0 || right > 0)
+    if (left_.size()) {
+      SteinerPt left = this->left(i);
+      SteinerPt right = this->right(i);
       printf(" left = %s right = %s",
 	     name(left, network),
 	     name(right, network));
+    }
     printf("\n");
   }
 }
@@ -810,29 +821,23 @@ Resizer::connectedPins(const Net *net,
 ////////////////////////////////////////////////////////////////
 
 void
+Resizer::makeNetParasitics(float wire_res_per_length,
+			   float wire_cap_per_length,
+			   Corner *corner)
+{
+  init(wire_res_per_length, wire_cap_per_length, corner);
+  makeNetParasitics();
+}
+
+void
 Resizer::makeNetParasitics()
 {
-  graph_delay_calc_->delaysInvalid();
-  search_->arrivalsInvalid();
-
   NetIterator *net_iter = network_->netIterator(network_->topInstance());
   while (net_iter->hasNext()) {
     Net *net = net_iter->next();
     makeNetParasitics(net);
   }
   delete net_iter;
-}
-
-// Pass in implicit args.
-void
-Resizer::makeNetParasitics(float wire_res_per_length,
-			   float wire_cap_per_length,
-			   Corner *corner)
-{
-  initCorner(corner);
-  wire_res_per_length_ = wire_res_per_length;
-  wire_cap_per_length_ = wire_cap_per_length;
-  makeNetParasitics();
 }
 
 void
@@ -907,7 +912,7 @@ public:
   RebufferOption(Type type,
 		 float cap,
 		 Required required,
-		 const Pin *load_pin,
+		 Pin *load_pin,
 		 DefPt location,
 		 RebufferOption *ref,
 		 RebufferOption *ref2);
@@ -919,7 +924,7 @@ public:
 			  const Pin *drvr_pin,
 			  Resizer *resizer) const;
   DefPt location() const { return location_; }
-  const Pin *loadPin() const { return load_pin_; }
+  Pin *loadPin() const { return load_pin_; }
   RebufferOption *ref() const { return ref_; }
   RebufferOption *ref2() const { return ref2_; }
 
@@ -927,7 +932,7 @@ private:
   Type type_;
   float cap_;
   Required required_;
-  const Pin *load_pin_;
+  Pin *load_pin_;
   DefPt location_;
   RebufferOption *ref_;
   RebufferOption *ref2_;
@@ -936,7 +941,7 @@ private:
 RebufferOption::RebufferOption(Type type,
 			       float cap,
 			       Required required,
-			       const Pin *load_pin,
+			       Pin *load_pin,
 			       DefPt location,
 			       RebufferOption *ref,
 			       RebufferOption *ref2) :
@@ -965,26 +970,50 @@ RebufferOption::bufferRequired(LibertyCell *buffer_cell,
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::rebuffer(float cap_limit,
-		  LibertyCell *buffer_cell)
+Resizer::rebuffer(LibertyCell *buffer_cell,
+		  float wire_res_per_length,
+		  float wire_cap_per_length,
+		  Corner *corner)
 {
-  unique_net_index_ = 1;
-  unique_buffer_index_ = 1;
+  init(wire_res_per_length, wire_cap_per_length, corner);
+  rebuffer(buffer_cell);
+}
 
+void
+Resizer::rebuffer(LibertyCell *buffer_cell)
+{
   for (int i = level_insts_.size() - 1; i >= 0; i--) {
     Instance *inst = level_insts_[i];
-    LibertyCell *cell = network_->libertyCell(inst);
-    if (cell) {
-      Pin *output = singleOutputPin(inst, network_);
-      if (output) {
-	float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
-	LibertyPort *port = network_->libertyPort(output);
-	float cap_limit;
-	bool exists;
-	port->capacitanceLimit(min_max_, cap_limit, exists);
-	if (exists && load_cap > cap_limit)
-	  rebuffer(output, buffer_cell);
-      }
+    rebuffer(inst, buffer_cell);
+  }
+}
+
+void
+Resizer::rebuffer(Instance *inst,
+		  LibertyCell *buffer_cell,
+		  float wire_res_per_length,
+		  float wire_cap_per_length,
+		  Corner *corner)
+{
+  init(wire_res_per_length, wire_cap_per_length, corner);
+  rebuffer(inst, buffer_cell);
+}
+
+void
+Resizer::rebuffer(Instance *inst,
+		  LibertyCell *buffer_cell)
+{
+  LibertyCell *cell = network_->libertyCell(inst);
+  if (cell) {
+    Pin *output = singleOutputPin(inst, network_);
+    if (output) {
+      float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
+      LibertyPort *port = network_->libertyPort(output);
+      float cap_limit;
+      bool exists;
+      port->capacitanceLimit(min_max_, cap_limit, exists);
+      if (exists && load_cap > cap_limit)
+	rebuffer(output, buffer_cell);
     }
   }
 }
@@ -996,19 +1025,25 @@ Resizer::rebuffer(const Pin *drvr_pin,
   Net *net = network_->net(drvr_pin);
   SteinerTree *tree = makeSteinerTree(net, true);
   SteinerPt drvr_pt = tree->drvrPt(network_);
+  // Make sure the net has a driver pin.
   if (drvr_pt >= 0) {
-    RebufferOptionSeq Z = rebufferBottomUp(tree, drvr_pt,
-					   drvr_pin, buffer_cell);
-    Required Tbest = -INF;
-    RebufferOption *best = nullptr;
-    for (auto p : Z) {
-      Required Tb = p->bufferRequired(buffer_cell, drvr_pin, this);
-      if (Tb > Tbest) {
-	Tbest = Tb;
-	best = p;
+    Required drvr_req = pinRequired(drvr_pin);
+    // Make sure the driver is constrained.
+    if (!fuzzyInf(drvr_req)) {
+      RebufferOptionSeq Z = rebufferBottomUp(tree, tree->adjacentPt(drvr_pt),
+					     drvr_pin, buffer_cell);
+      Required Tbest = -INF;
+      RebufferOption *best = nullptr;
+      for (auto p : Z) {
+	Required Tb = p->bufferRequired(buffer_cell, drvr_pin, this);
+	if (Tb > Tbest) {
+	  Tbest = Tb;
+	  best = p;
+	}
       }
+      if (best)
+	rebufferTopDown(best, net, buffer_cell);
     }
-    rebufferTopDown(best, net, buffer_cell);
   }
 }
 
@@ -1023,7 +1058,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 {
   RebufferOptionSeq Z;
   if (tree->isLoad(k, network_)) {
-    const Pin *load_pin = tree->pin(k);
+    Pin *load_pin = tree->pin(k);
     // Load capacitance and required time.
     RebufferOption *z = new RebufferOption(RebufferOption::Type::sink,
 					   pinCapacitance(load_pin),
@@ -1043,13 +1078,15 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
     // Combine the options from both branches.
     for (auto p : Zl) {
       for (auto q : Zr) {
-	RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
-						  p->cap() + q->cap(),
-						  min(p->required(), q->required()),
-						  nullptr,
-						  tree->location(k),
-						  p, q);
-	Z2.push_back(junc);
+	if (p != q) {
+	  RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
+						    p->cap() + q->cap(),
+						    min(p->required(), q->required()),
+						    nullptr,
+						    tree->location(k),
+						    p, q);
+	  Z2.push_back(junc);
+	}
       }
     }
 
@@ -1069,10 +1106,10 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	  qi++;
 	}
       }
-      for (auto p : Z2) {
-	if (p)
-	  Z.push_back(p);
-      }
+    }
+    for (auto p : Z2) {
+      if (p)
+	Z.push_back(p);
     }
   }
   return addWireAndBuffer(Z, tree, k, drvr_pin, buffer_cell);
@@ -1088,7 +1125,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
   LefDefNetwork *network = lefDefNetwork();
   RebufferOptionSeq Z1;
   Required best = -INF;
-  RebufferOption *best_ref;
+  RebufferOption *best_ref = nullptr;
   for (auto p : Z) {
     DefPt k_loc = tree->location(k);
     DefPt k_left_loc = tree->location(tree->left(k));
@@ -1097,12 +1134,13 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
     float wire_length = network->dbuToMeters(wire_length_dbu);
     float wire_cap = wire_length * wire_cap_per_length_;
     float wire_res = wire_length * wire_res_per_length_;
+    // This should include the driver resistance.
     float wire_delay = wire_res * wire_cap;
     RebufferOption *z = new RebufferOption(RebufferOption::Type::wire,
-					   // account for wire delay
-					   p->required() - wire_delay,
 					   // account for wire load
 					   p->cap() + wire_cap,
+					   // account for wire delay
+					   p->required() - wire_delay,
 					   nullptr,
 					   p->location(),
 					   p, nullptr);
@@ -1111,18 +1149,20 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
     // Which would have different delay Dbuf and input cap Lbuf
     // for simplicity we only consider one size of buffer.
     Required rt = z->bufferRequired(buffer_cell, drvr_pin, this);
-    if (rt == best) {
+    if (rt > best) {
       best = rt;
       best_ref = p;
     }
   }
-  RebufferOption *z = new RebufferOption(RebufferOption::Type::buffer,
-					 best,
-					 bufferInputCapacitance(buffer_cell),
-					 nullptr,
-					 best_ref->location(),
-					 best_ref, nullptr);
-  Z1.push_back(z);
+  if (best_ref) {
+    RebufferOption *z = new RebufferOption(RebufferOption::Type::buffer,
+					   bufferInputCapacitance(buffer_cell),
+					   best,
+					   nullptr,
+					   best_ref->location(),
+					   best_ref, nullptr);
+    Z1.push_back(z);
+  }
   return Z1;
 }
 
@@ -1135,14 +1175,18 @@ Resizer::rebufferTopDown(RebufferOption *choice,
   switch(choice->type()) {
   case RebufferOption::Type::buffer: {
     Instance *parent = network->topInstance();
-    string net_name = makeUniqueNetName();
+    string net2_name = makeUniqueNetName();
     string buffer_name = makeUniqueBufferName();
-    Net *net2 = network->makeNet(net_name.c_str(), parent);
+    Net *net2 = network->makeNet(net2_name.c_str(), parent);
     Instance *buffer = network->makeInstance(buffer_cell,
 					     buffer_name.c_str(),
 					     parent);
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
+    debugPrint3(debug_, "rebuffer", 1, "insert %s -> %s -> %s\n",
+		network_->pathName(net),
+		buffer_name.c_str(),
+		net2_name.c_str());
     connectPin(buffer, input, net);
     connectPin(buffer, output, net2);
     network->setLocation(buffer, choice->location());
@@ -1150,16 +1194,22 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     break;
   }
   case RebufferOption::Type::wire:
+    debugPrint0(debug_, "rebuffer", 1, "wire\n");
     rebufferTopDown(choice->ref(), net, buffer_cell);
     break;
   case RebufferOption::Type::junction:
+    debugPrint0(debug_, "rebuffer", 1, "junction\n");
     rebufferTopDown(choice->ref(), net, buffer_cell);
     rebufferTopDown(choice->ref2(), net, buffer_cell);
     break;
   case RebufferOption::Type::sink: {
-    const Pin *load_pin = choice->loadPin();
+    Pin *load_pin = choice->loadPin();
     Instance *load_inst = network->instance(load_pin);
     Port *load_port = network->port(load_pin);
+    debugPrint2(debug_, "rebuffer", 1, "connect %s to %s\n",
+		network_->pathName(load_pin),
+		network_->pathName(net));
+    disconnectPin(load_pin);
     connectPin(load_inst, load_port, net);
   }
   }
