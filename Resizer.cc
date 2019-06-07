@@ -409,7 +409,6 @@ class SteinerTree
 {
 public:
   SteinerTree() {}
-  ~SteinerTree();
   PinSeq &pins() { return pins_; }
   void setTree(Flute::Tree tree,
 	       int pin_map[]);
@@ -423,7 +422,7 @@ public:
 	      Pin *&pin2,
 	      int &steiner_pt2,
 	      int &wire_length);
-  void reportBranches(const Network *network);
+  void report(const Network *network);
   // The steiner tree is binary so the steiner points can be in the
   // same location as the pins.
   void findSteinerPtAliases();
@@ -431,6 +430,9 @@ public:
   Pin *steinerPtAlias(SteinerPt pt);
   // Return the steiner pt connected to the driver pin.
   SteinerPt drvrPt(const Network *network) const;
+
+  const char *name(SteinerPt pt,
+		   const Network *network);
   Pin *pin(SteinerPt k);
   bool isLoad(SteinerPt pt,
 	      const Network *network);
@@ -439,17 +441,17 @@ public:
   SteinerPt right(SteinerPt pt);
 
 private:
+  void findLeftRights();
+
   Flute::Tree tree_;
   PinSeq pins_;
   // steiner pt (tree vertex index) -> pin index
   Vector<int> pin_map_;
   // location -> pin
   UnorderedMap<DefPt, Pin*, DefPtHash, DefPtEqual> steiner_pt_pin_alias_map_;
+  Vector<SteinerPt> left_;
+  Vector<SteinerPt> right_;
 };
-
-SteinerTree::~SteinerTree()
-{
-}
 
 void
 SteinerTree::setTree(Flute::Tree tree,
@@ -462,13 +464,14 @@ SteinerTree::setTree(Flute::Tree tree,
   pin_map_.resize(pin_count);
   for (int i = 0; i < pin_count; i++)
     pin_map_[pin_map[i]] = i;
+
+  findLeftRights();
 }
 
 int
 SteinerTree::branchCount()
 {
-  // branch[deg * 2 - 2 - 1] is the root that has branch.n == branch index.
-  return tree_.deg * 2 - 3;
+  return tree_.deg * 2 - 2;
 }
 
 void
@@ -509,36 +512,25 @@ SteinerTree::branch(int index,
     + abs(branch_pt1.y - branch_pt2.y);
 }
 
-Pin *
-SteinerTree::pin(SteinerPt k)
-{
-  if (k < pins_.size())
-    return pins_[pin_map_[k]];
-  else
-    return nullptr;
-}
-
 void
-SteinerTree::reportBranches(const Network *network)
+SteinerTree::report(const Network *network)
 {
-  int branch_count = branchCount();
+  int branch_count = branchCount() + 1;
   for (int i = 0; i < branch_count; i++) {
-    DefPt pt1, pt2;
-    Pin *pin1, *pin2;
-    int steiner_pt1, steiner_pt2;
-    int wire_length;
-    branch(i,
-	   pt1, pin1, steiner_pt1,
-	   pt2, pin2, steiner_pt2,
-	   wire_length);
-    printf(" branch %s (%d %d) - %s (%d %d) wire_length = %d\n",
-	   pin1 ? network->pathName(pin1) : stringPrintTmp("S%d", steiner_pt1),
-	   pt1.x(),
-	   pt1.y(),
-	   pin2 ? network->pathName(pin2) : stringPrintTmp("S%d", steiner_pt2),
-	   pt2.x(),
-	   pt2.y(),
-	   wire_length);
+    Flute::Branch &pt1 = tree_.branch[i];
+    int j = pt1.n;
+    Flute::Branch &pt2 = tree_.branch[j];
+    int wire_length = abs(pt1.x - pt2.x) + abs(pt1.y - pt2.y);
+    SteinerPt left = this->left(i);
+    SteinerPt right = this->right(i);
+    printf(" %s (%lld %lld) - %s wire_length = %d left = %s right = %s\n",
+	   name(i, network),
+	   pt1.x,
+	   pt1.y,
+	   name(j, network),
+	   wire_length,
+	   name(left, network),
+	   name(right, network));
   }
 }
 
@@ -559,18 +551,26 @@ SteinerTree::steinerPtAlias(SteinerPt pt)
   return steiner_pt_pin_alias_map_[DefPt(branch_pt.x, branch_pt.y)];
 }
 
-SteinerPt
-SteinerTree::left(SteinerPt pt)
+const char *
+SteinerTree::name(SteinerPt pt,
+		  const Network *network)
 {
-  // TBD
-  return 0;
+  const Pin *pin = this->pin(pt);
+  if (pin)
+    return network->pathName(pin);
+  else if (pt >= 0)
+    return stringPrintTmp("S%d", pt);
+  else
+    return "NULL";
 }
 
-SteinerPt
-SteinerTree::right(SteinerPt pt)
+Pin *
+SteinerTree::pin(SteinerPt k)
 {
-  // TBD
-  return 0;
+  if (k >= 0 && k < pins_.size())
+    return pins_[pin_map_[k]];
+  else
+    return nullptr;
 }
 
 SteinerPt
@@ -600,6 +600,39 @@ SteinerTree::location(SteinerPt pt)
 {
   Flute::Branch &branch_pt = tree_.branch[pt];
   return DefPt(branch_pt.x, branch_pt.y);
+}
+
+void
+SteinerTree::findLeftRights()
+{
+  int branch_count = branchCount();
+  left_.resize(branch_count, -1);
+  right_.resize(branch_count, -1);
+  int pin_count = pins_.size();
+  for (int i = 0; i < branch_count; i++) {
+    Flute::Branch &branch_pt = tree_.branch[i];
+    SteinerPt j = branch_pt.n;
+    if (left_[i] < 0)
+      left_[i] = j;
+    else
+      right_[i] = j;
+    if (left_[j] < 0)
+      left_[j] = i;
+    else
+      right_[j] = i;
+  }
+}
+
+SteinerPt
+SteinerTree::left(SteinerPt pt)
+{
+  return left_[pt];
+}
+
+SteinerPt
+SteinerTree::right(SteinerPt pt)
+{
+  return right_[pt];
 }
 
 ////////////////////////////////////////////////////////////////
@@ -691,7 +724,7 @@ Resizer::makeSteinerTree(const Net *net)
 	printf(" %d -> %d\n", i, pin_map[i]);
     }
     if (debug_->check("steiner", 2)) 
-      tree->reportBranches(network);
+      tree->report(network);
     return tree;
   }
   else
@@ -753,23 +786,25 @@ Resizer::makeNetParasitics(const Net *net,
 		   wire_length_dbu);
       ParasiticNode *n1 = findParasiticNode(tree, parasitic, net, pin1, steiner_pt1);
       ParasiticNode *n2 = findParasiticNode(tree, parasitic, net, pin2, steiner_pt2);
-      if (wire_length_dbu == 0)
-	// Use a small resistor to keep the connectivity intact.
-	parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
-      else {
-	float wire_length = network->dbuToMeters(wire_length_dbu);
-	float wire_cap = wire_length * wire_cap_per_length;
-	float wire_res = wire_length * wire_res_per_length;
-	// Make pi model for the wire.
-	debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
-		    parasitics_->name(n1),
-		    units_->capacitanceUnit()->asString(wire_cap / 2.0),
-		    units_->resistanceUnit()->asString(wire_res),
-		    units_->capacitanceUnit()->asString(wire_cap / 2.0),
-		    parasitics_->name(n2));
-	parasitics_->incrCap(n1, wire_cap / 2.0, ap);
-	parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
-	parasitics_->incrCap(n2, wire_cap / 2.0, ap);
+      if (n1 != n2) {
+	if (wire_length_dbu == 0)
+	  // Use a small resistor to keep the connectivity intact.
+	  parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
+	else {
+	  float wire_length = network->dbuToMeters(wire_length_dbu);
+	  float wire_cap = wire_length * wire_cap_per_length;
+	  float wire_res = wire_length * wire_res_per_length;
+	  // Make pi model for the wire.
+	  debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
+		      parasitics_->name(n1),
+		      units_->capacitanceUnit()->asString(wire_cap / 2.0),
+		      units_->resistanceUnit()->asString(wire_res),
+		      units_->capacitanceUnit()->asString(wire_cap / 2.0),
+		      parasitics_->name(n2));
+	  parasitics_->incrCap(n1, wire_cap / 2.0, ap);
+	  parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
+	  parasitics_->incrCap(n2, wire_cap / 2.0, ap);
+	}
       }
     }
     delete tree;
