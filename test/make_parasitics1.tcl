@@ -18,6 +18,6 @@ set m1_edge_cap 57e-12
 # 4 lambda wide wire
 set wire_cap_per_meter [expr $m1_area_cap * $lambda * 4 + $m1_edge_cap * 2]
 set wire_res_per_meter [expr $m1_res_sq / ($lambda * 4)]
-sta::make_parasitics $wire_res_per_meter $wire_cap_per_meter
+sta::make_net_parasitics $wire_res_per_meter $wire_cap_per_meter
 
 report_checks

@@ -119,6 +119,8 @@ Resizer::resize(float wire_res_per_length,
 		Corner *corner)
 {
   initCorner(corner);
+  wire_res_per_length_ = wire_res_per_length;
+  wire_cap_per_length_ = wire_cap_per_length;
 
   // Disable incremental timing.
   graph_delay_calc_->delaysInvalid();
@@ -132,7 +134,7 @@ Resizer::resize(float wire_res_per_length,
   ensureTargetLoads();
 
   if (wire_cap_per_length > 0.0)
-    makeNetParasitics(wire_res_per_length, wire_cap_per_length);
+    makeNetParasitics();
 
   resizeToTargetSlew();
 }
@@ -144,6 +146,7 @@ Resizer::initCorner(Corner *corner)
   min_max_ = MinMax::max();
   dcalc_ap_ = corner->findDcalcAnalysisPt(min_max_);
   pvt_ = dcalc_ap_->operatingConditions();
+  parasitics_ap_ = corner->findParasiticAnalysisPt(min_max_);
 }
 
 void
@@ -807,33 +810,40 @@ Resizer::connectedPins(const Net *net,
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::makeNetParasitics(float wire_res_per_length,
-			   float wire_cap_per_length)
+Resizer::makeNetParasitics()
 {
+  graph_delay_calc_->delaysInvalid();
+  search_->arrivalsInvalid();
+
   NetIterator *net_iter = network_->netIterator(network_->topInstance());
   while (net_iter->hasNext()) {
     Net *net = net_iter->next();
-    makeNetParasitics(net, wire_res_per_length, wire_cap_per_length);
+    makeNetParasitics(net);
   }
   delete net_iter;
+}
 
-  graph_delay_calc_->delaysInvalid();
-  search_->arrivalsInvalid();
+// Pass in implicit args.
+void
+Resizer::makeNetParasitics(float wire_res_per_length,
+			   float wire_cap_per_length,
+			   Corner *corner)
+{
+  initCorner(corner);
+  wire_res_per_length_ = wire_res_per_length;
+  wire_cap_per_length_ = wire_cap_per_length;
+  makeNetParasitics();
 }
 
 void
-Resizer::makeNetParasitics(const Net *net,
-			   float wire_res_per_length,
-			   float wire_cap_per_length)
+Resizer::makeNetParasitics(const Net *net)
 {
-  Corner *corner = cmd_corner_;
-  const MinMax *min_max = MinMax::max();
   LefDefNetwork *network = lefDefNetwork();
-  const ParasiticAnalysisPt *ap = corner->findParasiticAnalysisPt(min_max);
   SteinerTree *tree = makeSteinerTree(net, false);
   if (tree) {
     tree->findSteinerPtAliases();
-    Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false, ap);
+    Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false,
+							     parasitics_ap_);
     int branch_count = tree->branchCount();
     for (int i = 0; i < branch_count; i++) {
       DefPt pt1, pt2;
@@ -849,11 +859,11 @@ Resizer::makeNetParasitics(const Net *net,
       if (n1 != n2) {
 	if (wire_length_dbu == 0)
 	  // Use a small resistor to keep the connectivity intact.
-	  parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, ap);
+	  parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, parasitics_ap_);
 	else {
 	  float wire_length = network->dbuToMeters(wire_length_dbu);
-	  float wire_cap = wire_length * wire_cap_per_length;
-	  float wire_res = wire_length * wire_res_per_length;
+	  float wire_cap = wire_length * wire_cap_per_length_;
+	  float wire_res = wire_length * wire_res_per_length_;
 	  // Make pi model for the wire.
 	  debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
 		      parasitics_->name(n1),
@@ -861,9 +871,9 @@ Resizer::makeNetParasitics(const Net *net,
 		      units_->resistanceUnit()->asString(wire_res),
 		      units_->capacitanceUnit()->asString(wire_cap / 2.0),
 		      parasitics_->name(n2));
-	  parasitics_->incrCap(n1, wire_cap / 2.0, ap);
-	  parasitics_->makeResistor(nullptr, n1, n2, wire_res, ap);
-	  parasitics_->incrCap(n2, wire_cap / 2.0, ap);
+	  parasitics_->incrCap(n1, wire_cap / 2.0, parasitics_ap_);
+	  parasitics_->makeResistor(nullptr, n1, n2, wire_res, parasitics_ap_);
+	  parasitics_->incrCap(n2, wire_cap / 2.0, parasitics_ap_);
 	}
       }
     }
@@ -978,7 +988,7 @@ Resizer::rebuffer(float cap_limit,
     }
   }
 }
- 
+
 void
 Resizer::rebuffer(const Pin *drvr_pin,
 		  LibertyCell *buffer_cell)
@@ -1075,13 +1085,19 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
+  LefDefNetwork *network = lefDefNetwork();
   RebufferOptionSeq Z1;
   Required best = -INF;
   RebufferOption *best_ref;
   for (auto p : Z) {
-    // TBD
-    float wire_delay = 0.0; // rc_delay(k, k.left)
-    float wire_cap = 0.0; // wireload(k, k.left)
+    DefPt k_loc = tree->location(k);
+    DefPt k_left_loc = tree->location(tree->left(k));
+    DBU wire_length_dbu = abs(k_loc.x() - k_left_loc.x())
+      + abs(k_loc.y() - k_left_loc.y());
+    float wire_length = network->dbuToMeters(wire_length_dbu);
+    float wire_cap = wire_length * wire_cap_per_length_;
+    float wire_res = wire_length * wire_res_per_length_;
+    float wire_delay = wire_res * wire_cap;
     RebufferOption *z = new RebufferOption(RebufferOption::Type::wire,
 					   // account for wire delay
 					   p->required() - wire_delay,

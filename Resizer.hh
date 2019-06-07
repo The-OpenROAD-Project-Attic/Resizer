@@ -45,9 +45,10 @@ public:
 			  Corner *corner);
   SteinerTree *makeSteinerTree(const Net *net,
 			       bool find_left_rights);
-  void makeNetParasitics(float wire_res_per_length,
-			 float wire_cap_per_length);
-
+  void makeNetParasitics(float wire_res_per_length,  // ohms/meter
+			 float wire_cap_per_length,  // farads/meter
+			 Corner *corner);
+  // Assumes buffer_cell->isBuffer() is true.
   void rebuffer(float cap_limit,
 		LibertyCell *buffer_cell);
   float bufferDelay(LibertyCell *buffer_cell,
@@ -73,9 +74,8 @@ protected:
 			     // Return values.
 			     float *slews,
 			     int *counts);
-  void makeNetParasitics(const Net *net,
-			 float wire_res_per_length,
-			 float wire_cap_per_length);
+  void makeNetParasitics();
+  void makeNetParasitics(const Net *net);
   ParasiticNode *findParasiticNode(SteinerTree *tree,
 				   Parasitic *parasitic,
 				   const Net *net,
@@ -110,9 +110,13 @@ protected:
 
 private:
   Corner *corner_;
+  float wire_res_per_length_;
+  float wire_cap_per_length_;
+
   const MinMax *min_max_;
   const DcalcAnalysisPt *dcalc_ap_;
   const Pvt *pvt_;
+  const ParasiticAnalysisPt *parasitics_ap_;
   CellTargetLoadMap *target_load_map_;
   InstanceSeq level_insts_;
   int unique_net_index_;

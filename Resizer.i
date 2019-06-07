@@ -96,11 +96,13 @@ resize_to_target_slew(Instance *inst)
 }
 
 void
-make_parasitics(float wire_cap_per_length,
-		float wire_res_per_length)
+make_net_parasitics(float wire_cap_per_length,
+		    float wire_res_per_length)
 {
   Resizer *resizer = getResizer();
-  resizer->makeNetParasitics(wire_cap_per_length, wire_res_per_length);
+  Corner *corner = resizer->cmdCorner();
+  resizer->makeNetParasitics(wire_cap_per_length, wire_res_per_length,
+			     corner);
 }
 
 %} // inline
