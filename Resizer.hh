@@ -104,8 +104,8 @@ protected:
   Required pinRequired(const Pin *pin);
   Required vertexRequired(Vertex *vertex,
 			  const MinMax *min_max);
-  const char *makeUniqueNetName();
-  const char *makeUniqueInstanceName();
+  string makeUniqueNetName();
+  string makeUniqueBufferName();
 
 private:
   Corner *corner_;
@@ -114,6 +114,8 @@ private:
   const Pvt *pvt_;
   CellTargetLoadMap *target_load_map_;
   InstanceSeq level_insts_;
+  int unique_net_index_;
+  int unique_buffer_index_;
 };
 
 } // namespace

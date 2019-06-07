@@ -441,8 +441,9 @@ public:
 private:
   Flute::Tree tree_;
   PinSeq pins_;
-  // tree vertex index -> pin index
+  // steiner pt (tree vertex index) -> pin index
   Vector<int> pin_map_;
+  // location -> pin
   UnorderedMap<DefPt, Pin*, DefPtHash, DefPtEqual> steiner_pt_pin_alias_map_;
 };
 
@@ -485,7 +486,7 @@ SteinerTree::branch(int index,
   int index2 = branch_pt1.n;
   Flute::Branch &branch_pt2 = tree_.branch[index2];
   pt1 = DefPt(branch_pt1.x, branch_pt1.y);
-  if (index < pins_.size() ){
+  if (index < pins_.size()) {
     pin1 = pin(index);
     steiner_pt1 = 0;
   }
@@ -547,7 +548,6 @@ SteinerTree::findSteinerPtAliases()
   int pin_count = pins_.size();
   for(int i = 0; i < pin_count; i++) {
     Flute::Branch &branch_pt1 = tree_.branch[i];
-    // location -> pin
     steiner_pt_pin_alias_map_[DefPt(branch_pt1.x, branch_pt1.y)] = pins_[pin_map_[i]];
   }
 }
@@ -562,14 +562,14 @@ SteinerTree::steinerPtAlias(SteinerPt pt)
 SteinerPt
 SteinerTree::left(SteinerPt pt)
 {
-  // MIA
+  // TBD
   return 0;
 }
 
 SteinerPt
 SteinerTree::right(SteinerPt pt)
 {
-  // MIA
+  // TBD
   return 0;
 }
 
@@ -863,6 +863,9 @@ void
 Resizer::rebuffer(float cap_limit,
 		  LibertyCell *buffer_cell)
 {
+  unique_net_index_ = 1;
+  unique_buffer_index_ = 1;
+
   for (int i = level_insts_.size() - 1; i >= 0; i--) {
     Instance *inst = level_insts_[i];
     LibertyCell *cell = network_->libertyCell(inst);
@@ -981,6 +984,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
   Required best = -INF;
   RebufferOption *best_ref;
   for (auto p : Z) {
+    // TBD
     float wire_delay = 0.0; // rc_delay(k, k.left)
     float wire_cap = 0.0; // wireload(k, k.left)
     RebufferOption *z = new RebufferOption(RebufferOption::Type::wire,
@@ -1020,10 +1024,12 @@ Resizer::rebufferTopDown(RebufferOption *choice,
   switch(choice->type()) {
   case RebufferOption::Type::buffer: {
     Instance *parent = network->topInstance();
-    const char *net_name = makeUniqueNetName();
-    const char *buffer_name = makeUniqueInstanceName();
-    Net *net2 = network->makeNet(net_name, parent);
-    Instance *buffer = network->makeInstance(buffer_cell, buffer_name, parent);
+    string net_name = makeUniqueNetName();
+    string buffer_name = makeUniqueBufferName();
+    Net *net2 = network->makeNet(net_name.c_str(), parent);
+    Instance *buffer = network->makeInstance(buffer_cell,
+					     buffer_name.c_str(),
+					     parent);
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
     connectPin(buffer, input, net);
@@ -1048,18 +1054,25 @@ Resizer::rebufferTopDown(RebufferOption *choice,
   }
 }
 
-const char *
+string
 Resizer::makeUniqueNetName()
 {
-  // MIA
-  return nullptr;
+  string node_name;
+  Instance *top_inst = network_->topInstance();
+  do 
+    stringPrint(node_name, "net%d", unique_net_index_++);
+  while (network_->findNet(top_inst, node_name.c_str()));
+  return node_name;
 }
 
-const char *
-Resizer::makeUniqueInstanceName()
+string
+Resizer::makeUniqueBufferName()
 {
-  // MIA
-  return nullptr;
+  string buffer_name;
+  do 
+    stringPrint(buffer_name, "buffer%d", unique_buffer_index_++);
+  while (network_->findInstance(buffer_name.c_str()));
+  return buffer_name;
 }
 
 float
