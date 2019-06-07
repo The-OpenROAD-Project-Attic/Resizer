@@ -404,6 +404,8 @@ public:
   }
 };
 
+typedef Vector<SteinerPt> SteinerPtSeq;
+
 // Wrapper for Flute::Tree
 class SteinerTree
 {
@@ -412,6 +414,7 @@ public:
   PinSeq &pins() { return pins_; }
   void setTree(Flute::Tree tree,
 	       int pin_map[]);
+  int pinCount() const { return pins_.size(); }
   int branchCount();
   void branch(int index,
 	      // Return values.
@@ -423,8 +426,7 @@ public:
 	      int &steiner_pt2,
 	      int &wire_length);
   void report(const Network *network);
-  // The steiner tree is binary so the steiner points can be in the
-  // same location as the pins.
+  // The steiner points can be in the same location as the pins.
   void findSteinerPtAliases();
   // Return a pin in the same location as the steiner pt if it exists.
   Pin *steinerPtAlias(SteinerPt pt);
@@ -433,24 +435,34 @@ public:
 
   const char *name(SteinerPt pt,
 		   const Network *network);
-  Pin *pin(SteinerPt k);
+  SteinerPt adjacentPt(SteinerPt pt);
+  Pin *pin(SteinerPt pt) const;
   bool isLoad(SteinerPt pt,
 	      const Network *network);
   DefPt location(SteinerPt pt);
   SteinerPt left(SteinerPt pt);
   SteinerPt right(SteinerPt pt);
+  void findLeftRights(const Network *network);
 
-private:
-  void findLeftRights();
+protected:
+  void findLeftRights(SteinerPt from,
+		      SteinerPt to,
+		      SteinerPtSeq &adj1,
+		      SteinerPtSeq &adj2);
+  void findLeftRights(SteinerPt from,
+		      SteinerPt to,
+		      SteinerPt adj,
+		      SteinerPtSeq &adj1,
+		      SteinerPtSeq &adj2);
 
   Flute::Tree tree_;
   PinSeq pins_;
   // steiner pt (tree vertex index) -> pin index
-  Vector<int> pin_map_;
+  SteinerPtSeq pin_map_;
   // location -> pin
   UnorderedMap<DefPt, Pin*, DefPtHash, DefPtEqual> steiner_pt_pin_alias_map_;
-  Vector<SteinerPt> left_;
-  Vector<SteinerPt> right_;
+  SteinerPtSeq left_;
+  SteinerPtSeq right_;
 };
 
 void
@@ -460,12 +472,10 @@ SteinerTree::setTree(Flute::Tree tree,
   tree_ = tree;
 
   // Invert the steiner vertex to pin index map.
-  int pin_count = pins_.size();
+  int pin_count = pinCount();
   pin_map_.resize(pin_count);
   for (int i = 0; i < pin_count; i++)
     pin_map_[pin_map[i]] = i;
-
-  findLeftRights();
 }
 
 int
@@ -489,7 +499,7 @@ SteinerTree::branch(int index,
   int index2 = branch_pt1.n;
   Flute::Branch &branch_pt2 = tree_.branch[index2];
   pt1 = DefPt(branch_pt1.x, branch_pt1.y);
-  if (index < pins_.size()) {
+  if (index < pinCount()) {
     pin1 = pin(index);
     steiner_pt1 = 0;
   }
@@ -499,7 +509,7 @@ SteinerTree::branch(int index,
   }
 
   pt2 = DefPt(branch_pt2.x, branch_pt2.y);
-  if (index2 < pins_.size()) {
+  if (index2 < pinCount()) {
     pin2 = pin(index2);
     steiner_pt2 = 0;
   }
@@ -515,29 +525,32 @@ SteinerTree::branch(int index,
 void
 SteinerTree::report(const Network *network)
 {
-  int branch_count = branchCount() + 1;
+  int branch_count = branchCount();
   for (int i = 0; i < branch_count; i++) {
     Flute::Branch &pt1 = tree_.branch[i];
     int j = pt1.n;
     Flute::Branch &pt2 = tree_.branch[j];
     int wire_length = abs(pt1.x - pt2.x) + abs(pt1.y - pt2.y);
-    SteinerPt left = this->left(i);
-    SteinerPt right = this->right(i);
-    printf(" %s (%lld %lld) - %s wire_length = %d left = %s right = %s\n",
+    printf(" %s (%lld %lld) - %s wire_length = %d",
 	   name(i, network),
 	   pt1.x,
 	   pt1.y,
 	   name(j, network),
-	   wire_length,
-	   name(left, network),
-	   name(right, network));
+	   wire_length);
+    SteinerPt left = this->left(i);
+    SteinerPt right = this->right(i);
+    if (left > 0 || right > 0)
+      printf(" left = %s right = %s",
+	     name(left, network),
+	     name(right, network));
+    printf("\n");
   }
 }
 
 void
 SteinerTree::findSteinerPtAliases()
 {
-  int pin_count = pins_.size();
+  int pin_count = pinCount();
   for(int i = 0; i < pin_count; i++) {
     Flute::Branch &branch_pt1 = tree_.branch[i];
     steiner_pt_pin_alias_map_[DefPt(branch_pt1.x, branch_pt1.y)] = pins_[pin_map_[i]];
@@ -565,10 +578,10 @@ SteinerTree::name(SteinerPt pt,
 }
 
 Pin *
-SteinerTree::pin(SteinerPt k)
+SteinerTree::pin(SteinerPt pt) const
 {
-  if (k >= 0 && k < pins_.size())
-    return pins_[pin_map_[k]];
+  if (pt >= 0 && pt < pinCount())
+    return pins_[pin_map_[pt]];
   else
     return nullptr;
 }
@@ -576,13 +589,11 @@ SteinerTree::pin(SteinerPt k)
 SteinerPt
 SteinerTree::drvrPt(const Network *network) const
 {
-  int pin_count = pins_.size();
+  int pin_count = pinCount();
   for (int i = 0; i < pin_count; i++) {
-    Pin *pin = pins_[pin_map_[i]];
-    if (network->isDriver(pin)) {
-      Flute::Branch &branch_pt = tree_.branch[i];
-      return branch_pt.n;
-    }
+    Pin *pin = this->pin(i);
+    if (network->isDriver(pin))
+      return i;
   }
   return -1;
 }
@@ -603,23 +614,69 @@ SteinerTree::location(SteinerPt pt)
 }
 
 void
-SteinerTree::findLeftRights()
+SteinerTree::findLeftRights(const Network *network)
 {
   int branch_count = branchCount();
   left_.resize(branch_count, -1);
   right_.resize(branch_count, -1);
-  int pin_count = pins_.size();
+  int pin_count = pinCount();
+  SteinerPtSeq adj1(branch_count, -1);
+  SteinerPtSeq adj2(branch_count, -1);
   for (int i = 0; i < branch_count; i++) {
     Flute::Branch &branch_pt = tree_.branch[i];
     SteinerPt j = branch_pt.n;
-    if (left_[i] < 0)
-      left_[i] = j;
+    if (adj1[j] < 0)
+      adj1[j] = i;
     else
-      right_[i] = j;
-    if (left_[j] < 0)
-      left_[j] = i;
-    else
-      right_[j] = i;
+      adj2[j] = i;
+  }
+  SteinerPt root = drvrPt(network);
+  SteinerPt root_adj = adjacentPt(root);
+  findLeftRights(root, root_adj, adj1, adj2);
+}
+
+SteinerPt
+SteinerTree::adjacentPt(SteinerPt pt)
+{
+  return tree_.branch[pt].n;
+}
+
+void
+SteinerTree::findLeftRights(SteinerPt from,
+			    SteinerPt to,
+			    SteinerPtSeq &adj1,
+			    SteinerPtSeq &adj2)
+{
+  if (to >= pinCount()) {
+    SteinerPt adj;
+    adj = adjacentPt(to);
+    if (adj != to)
+      findLeftRights(from, to, adj, adj1, adj2);
+    adj = adj1[to];
+    if (adj >= 0)
+      findLeftRights(from, to, adj, adj1, adj2);
+    adj = adj2[to];
+    if (adj >= 0)
+      findLeftRights(from, to, adj, adj1, adj2);
+  }
+}
+
+void
+SteinerTree::findLeftRights(SteinerPt from,
+			    SteinerPt to,
+			    SteinerPt adj,
+			    SteinerPtSeq &adj1,
+			    SteinerPtSeq &adj2)
+{
+  if (adj != from) {
+    if (left_[to] < 0) {
+      left_[to] = adj;
+      findLeftRights(to, adj, adj1, adj2);
+    }
+    else if (right_[to] < 0) {
+      right_[to] = adj;
+      findLeftRights(to, adj, adj1, adj2);
+    }
   }
 }
 
@@ -691,7 +748,8 @@ fileExists(const std::string &filename)
 }
 
 SteinerTree *
-Resizer::makeSteinerTree(const Net *net)
+Resizer::makeSteinerTree(const Net *net,
+			 bool find_left_rights)
 {
   LefDefNetwork *network = lefDefNetwork();
   debugPrint1(debug_, "steiner", 1, "Net %s\n", network->pathName(net));
@@ -717,13 +775,15 @@ Resizer::makeSteinerTree(const Net *net)
 
     Flute::Tree stree = Flute::flute(pin_count, x, y, FLUTE_ACCURACY, pin_map);
     tree->setTree(stree, pin_map);
+    if (find_left_rights)
+      tree->findLeftRights(network);
     if (debug_->check("steiner", 3)) {
       Flute::printtree(stree);
       printf("pin map\n");
       for (int i = 0; i < pin_count; i++)
 	printf(" %d -> %d\n", i, pin_map[i]);
     }
-    if (debug_->check("steiner", 2)) 
+    if (debug_->check("steiner", 2))
       tree->report(network);
     return tree;
   }
@@ -770,7 +830,7 @@ Resizer::makeNetParasitics(const Net *net,
   const MinMax *min_max = MinMax::max();
   LefDefNetwork *network = lefDefNetwork();
   const ParasiticAnalysisPt *ap = corner->findParasiticAnalysisPt(min_max);
-  SteinerTree *tree = makeSteinerTree(net);
+  SteinerTree *tree = makeSteinerTree(net, false);
   if (tree) {
     tree->findSteinerPtAliases();
     Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false, ap);
@@ -924,7 +984,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
 		  LibertyCell *buffer_cell)
 {
   Net *net = network_->net(drvr_pin);
-  SteinerTree *tree = makeSteinerTree(net);
+  SteinerTree *tree = makeSteinerTree(net, true);
   SteinerPt drvr_pt = tree->drvrPt(network_);
   if (drvr_pt >= 0) {
     RebufferOptionSeq Z = rebufferBottomUp(tree, drvr_pt,

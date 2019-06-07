@@ -43,7 +43,8 @@ public:
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
-  SteinerTree *makeSteinerTree(const Net *net);
+  SteinerTree *makeSteinerTree(const Net *net,
+			       bool find_left_rights);
   void makeNetParasitics(float wire_res_per_length,
 			 float wire_cap_per_length);
 
