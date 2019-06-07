@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+%include "StaException.i"
+
 %{
 
 #include "Machine.hh"
@@ -66,14 +68,14 @@ lef_exists()
 }
 
 void
-read_def_cmd(const char *filename)
+read_def(const char *filename)
 {
   LefDefNetwork *network = lefDefNetwork();
   readDef(filename, true, network);
 }
 
 void
-write_def_cmd(const char *filename)
+write_def(const char *filename)
 {
   LefDefNetwork *network = lefDefNetwork();
   writeDef(filename, network);
@@ -106,10 +108,21 @@ make_net_parasitics(float wire_cap_per_length,
 }
 
 void
+rebuffer(LibertyCell *buffer_cell,
+	 float wire_res_per_length,
+	 float wire_cap_per_length)
+{
+  Resizer *resizer = getResizer();
+  Corner *corner = resizer->cmdCorner();
+  resizer->rebuffer(buffer_cell, wire_cap_per_length,
+		    wire_res_per_length, corner);
+}
+
+void
 rebuffer_instance(Instance *inst,
-		LibertyCell *buffer_cell,
-		float wire_res_per_length,
-		float wire_cap_per_length)
+		  LibertyCell *buffer_cell,
+		  float wire_res_per_length,
+		  float wire_cap_per_length)
 {
   Resizer *resizer = getResizer();
   Corner *corner = resizer->cmdCorner();

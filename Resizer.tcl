@@ -21,28 +21,7 @@ define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}
 
-proc read_def { filename } {
-  if { ![lef_exists] } {
-    sta_error "use LEF file has not been read.\n"
-  }
-  if { ![file readable $filename] } {
-    sta_error "$filename is not readable.\n"
-  }
-  read_def_cmd $filename
-}
-
 define_cmd_args "write_def" {filename}
-
-proc write_def { filename } {
-  if { [file exists $filename] && ![file writable $filename] } {
-    sta_error "$filename is not writeable.\n"
-  }
-  set dir [file dirname $filename]
-  if { ![file writable $dir] } {
-    sta_error "$dir is not writeable.\n"
-  }
-  write_def_cmd $filename
-}
 
 define_cmd_args "resize" {[-wire_res_per_length res]\
 			    [-wire_cap_per_length cap]\
