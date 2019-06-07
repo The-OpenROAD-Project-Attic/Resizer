@@ -951,7 +951,7 @@ RebufferOption::RebufferOption(Type type,
   load_pin_(load_pin),
   location_(location),
   ref_(ref),
-  ref2_(ref)
+  ref2_(ref2)
 {
 }
 
@@ -1030,6 +1030,8 @@ Resizer::rebuffer(const Pin *drvr_pin,
     Required drvr_req = pinRequired(drvr_pin);
     // Make sure the driver is constrained.
     if (!fuzzyInf(drvr_req)) {
+      debugPrint1(debug_, "rebuffer", 1, "driver %s\n",
+		  network_->pathName(drvr_pin));
       RebufferOptionSeq Z = rebufferBottomUp(tree, tree->adjacentPt(drvr_pt),
 					     drvr_pin, buffer_cell);
       Required Tbest = -INF;
@@ -1056,6 +1058,8 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
+  debugPrint2(debug_, "rebuffer", 1, "bottom up %s %d\n",
+	      tree->name(k, network_), k);
   RebufferOptionSeq Z;
   if (tree->isLoad(k, network_)) {
     Pin *load_pin = tree->pin(k);
@@ -1122,15 +1126,16 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
+  debugPrint2(debug_, "rebuffer", 1, "top down %s %d\n",
+	      tree->name(k, network_), k);
   LefDefNetwork *network = lefDefNetwork();
   RebufferOptionSeq Z1;
   Required best = -INF;
   RebufferOption *best_ref = nullptr;
   for (auto p : Z) {
     DefPt k_loc = tree->location(k);
-    DefPt k_left_loc = tree->location(tree->left(k));
-    DBU wire_length_dbu = abs(k_loc.x() - k_left_loc.x())
-      + abs(k_loc.y() - k_left_loc.y());
+    DBU wire_length_dbu = abs(k_loc.x() - p->location().x())
+      + abs(k_loc.y() - p->location().y());
     float wire_length = network->dbuToMeters(wire_length_dbu);
     float wire_cap = wire_length * wire_cap_per_length_;
     float wire_res = wire_length * wire_res_per_length_;
@@ -1194,11 +1199,11 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     break;
   }
   case RebufferOption::Type::wire:
-    debugPrint0(debug_, "rebuffer", 1, "wire\n");
+    debugPrint0(debug_, "rebuffer", 3, "wire\n");
     rebufferTopDown(choice->ref(), net, buffer_cell);
     break;
   case RebufferOption::Type::junction:
-    debugPrint0(debug_, "rebuffer", 1, "junction\n");
+    debugPrint0(debug_, "rebuffer", 3, "junction\n");
     rebufferTopDown(choice->ref(), net, buffer_cell);
     rebufferTopDown(choice->ref2(), net, buffer_cell);
     break;
@@ -1206,7 +1211,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     Pin *load_pin = choice->loadPin();
     Instance *load_inst = network->instance(load_pin);
     Port *load_port = network->port(load_pin);
-    debugPrint2(debug_, "rebuffer", 1, "connect %s to %s\n",
+    debugPrint2(debug_, "rebuffer", 1, "connect load %s to %s\n",
 		network_->pathName(load_pin),
 		network_->pathName(net));
     disconnectPin(load_pin);

@@ -133,6 +133,7 @@ record_resizer_tests {
   make_parasitics1
   read_def1
   read_def2
+  rebuffer1
   resize1
   resize2
   write_def1
