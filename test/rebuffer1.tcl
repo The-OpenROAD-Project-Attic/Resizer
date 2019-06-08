@@ -2,7 +2,7 @@
 source "helpers.tcl"
 read_liberty liberty1.lib
 read_lef liberty1.lef
-read_def reg4.def
+read_def rebuffer1.def
 create_clock clk -period 1
 
 set wire_res_per_meter 1.7e+5
