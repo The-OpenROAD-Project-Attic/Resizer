@@ -19,3 +19,4 @@ Makefile
 
 ResizerTclInitVar.cc
 Resizer_wrap.cc
+ResizerConfig.hh
