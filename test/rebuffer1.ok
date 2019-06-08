@@ -26,7 +26,7 @@ Path Type: max
 
 
 Startpoint: r1 (rising edge-triggered flip-flop clocked by clk)
-Endpoint: r2 (rising edge-triggered flip-flop clocked by clk)
+Endpoint: r5 (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
 Path Type: max
 
@@ -35,22 +35,22 @@ Path Type: max
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
    0.00    0.00 ^ r1/CP (snl_ffqx1)
-   2.17    2.17 v r1/Q (snl_ffqx1)
-   0.63    2.80 v buffer4/Z (snl_bufx2)
-   0.00    2.80 v r2/D (snl_ffqx1)
-           2.80   data arrival time
+  15.02   15.02 v r1/Q (snl_ffqx1)
+   3.46   18.48 v buffer3/Z (snl_bufx2)
+   0.00   18.48 v r5/D (snl_ffqx1)
+          18.48   data arrival time
 
    1.00    1.00   clock clk (rise edge)
    0.00    1.00   clock network delay (ideal)
    0.00    1.00   clock reconvergence pessimism
-           1.00 ^ r2/CP (snl_ffqx1)
-  -0.15    0.85   library setup time
-           0.85   data required time
+           1.00 ^ r5/CP (snl_ffqx1)
+  -0.40    0.60   library setup time
+           0.60   data required time
 ---------------------------------------------------------
-           0.85   data required time
-          -2.80   data arrival time
+           0.60   data required time
+         -18.48   data arrival time
 ---------------------------------------------------------
-          -1.95   slack (VIOLATED)
+         -17.88   slack (VIOLATED)
 
 
 ###############################################################################

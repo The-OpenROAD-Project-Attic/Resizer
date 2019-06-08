@@ -861,6 +861,8 @@ Resizer::makeNetParasitics(const Net *net)
   SteinerTree *tree = makeSteinerTree(net, false);
   if (tree) {
     tree->findSteinerPtAliases();
+    debugPrint1(debug_, "resizer_parasitics", 1, "net %s\n",
+		sdc_network_->pathName(net));
     Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false,
 							     parasitics_ap_);
     int branch_count = tree->branchCount();
@@ -884,7 +886,8 @@ Resizer::makeNetParasitics(const Net *net)
 	  float wire_cap = wire_length * wire_cap_per_length_;
 	  float wire_res = wire_length * wire_res_per_length_;
 	  // Make pi model for the wire.
-	  debugPrint5(debug_, "resizer", 3, "pi %s c2=%s rpi=%s c1=%s %s\n",
+	  debugPrint5(debug_, "resizer_parasitics", 2,
+		      " pi %s c2=%s rpi=%s c1=%s %s\n",
 		      parasitics_->name(n1),
 		      units_->capacitanceUnit()->asString(wire_cap / 2.0),
 		      units_->resistanceUnit()->asString(wire_res),
@@ -1211,6 +1214,8 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     connectPin(buffer, output, net2);
     network->setLocation(buffer, choice->location());
     rebufferTopDown(choice->ref(), net2, buffer_cell);
+    makeNetParasitics(net);
+    makeNetParasitics(net2);
     break;
   }
   case RebufferOption::Type::wire:
