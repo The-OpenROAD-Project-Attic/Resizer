@@ -1,4 +1,4 @@
-# rebuffer
+# rebuffer fanout 4 regs
 source "helpers.tcl"
 read_liberty nlc18.lib
 read_lef nlc18.lef

@@ -175,8 +175,10 @@ LefDefNetwork::setLocation(Instance *instance,
 {
   DefComponent *component = staToDef(instance);
   defiComponent *def_component = component->defComponent();
-  if (def_component == nullptr)
+  if (def_component == nullptr) {
     def_component = new defiComponent(nullptr);
+    component->setDefComponent(def_component);
+  }
   def_component->setPlacementStatus(DEFI_COMPONENT_PLACED);
   def_component->setPlacementLocation(location.x(), location.y());
 }

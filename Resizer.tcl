@@ -31,6 +31,7 @@ proc resize { args } {
   parse_key_args "resize" args \
     keys {-wire_res_per_length -wire_cap_per_length -corner} flags {}
 
+  check_argc_eq0 "resize" $args
   set wire_res_per_length 0.0
   if [info exists keys(-wire_res_per_length)] {
     set wire_res_per_length $keys(-wire_res_per_length)

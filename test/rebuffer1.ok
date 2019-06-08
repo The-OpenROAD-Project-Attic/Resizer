@@ -71,10 +71,14 @@ DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
 
 COMPONENTS 10 ;
-- buffer1 snl_bufx2 ;
-- buffer2 snl_bufx2 ;
-- buffer3 snl_bufx2 ;
-- buffer4 snl_bufx2 ;
+- buffer1 snl_bufx2
++ PLACED ( 100000 300000 ) N ;
+- buffer2 snl_bufx2
++ PLACED ( 100000 400000 ) N ;
+- buffer3 snl_bufx2
++ PLACED ( 100000 500000 ) N ;
+- buffer4 snl_bufx2
++ PLACED ( 100000 200000 ) N ;
 - r1 snl_ffqx1
 + PLACED ( 100000 100000 ) N ;
 - r2 snl_ffqx1
