@@ -39,6 +39,11 @@
 //  Instance levelization and resizing to target slew only support single output gates
 //  skinflute wants to read files which prevents having a stand-alone executable
 //  multi-corner support?
+//  addWireAndBuffer wire delay should include buffer drive resistance
+//  rebuffer1 linear fanout puts buffers at loads which does not help
+//    not accounting for wire delay from driver to inserted buffer
+//  tcl cmds to set liberty pin cap and limit for testing
+//  
 
 namespace sta {
 
@@ -1037,7 +1042,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
   Required drvr_req = pinRequired(drvr_pin);
   // Make sure the driver is constrained.
   if (!fuzzyInf(drvr_req)) {
-    debugPrint1(debug_, "rebuffer", 1, "driver %s\n",
+    debugPrint1(debug_, "rebuffer", 2, "driver %s\n",
 		sdc_network_->pathName(drvr_pin));
     RebufferOptionSeq Z = rebufferBottomUp(tree, tree->left(drvr_pt),
 					   drvr_pin, buffer_cell);
@@ -1045,7 +1050,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
     RebufferOption *best = nullptr;
     for (auto p : Z) {
       Required Tb = p->bufferRequired(buffer_cell, drvr_pin, this);
-      if (Tb > Tbest) {
+      if (fuzzyGreater(Tb, Tbest)) {
 	Tbest = Tb;
 	best = p;
       }
@@ -1065,7 +1070,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 			  LibertyCell *buffer_cell)
 {
   if (k >= 0) {
-    debugPrint2(debug_, "rebuffer", 2, " bottom up %s %d\n",
+    debugPrint2(debug_, "rebuffer", 3, " bottom up %s %d\n",
 		tree->name(k, sdc_network_), k);
     RebufferOptionSeq Z;
     if (tree->isLoad(k, network_)) {
@@ -1110,7 +1115,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	    Required Tq = q->bufferRequired(buffer_cell, drvr_pin, this);
 	    float Lp = p->cap();
 	    float Lq = q->cap();
-	    if (Tp < Tq && Lp < Lq) {
+	    if (fuzzyLess(Tp, Tq) && fuzzyLess(Lp, Lq)) {
 	      // If q is strictly worse than p, remove solution q.
 	      Z2[qi] = nullptr;
 	    }
@@ -1149,7 +1154,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
     float wire_length = network->dbuToMeters(wire_length_dbu);
     float wire_cap = wire_length * wire_cap_per_length_;
     float wire_res = wire_length * wire_res_per_length_;
-    // This should include the driver resistance.
+    // wire_delay should include the buffer drive resistance.
     float wire_delay = wire_res * wire_cap;
     RebufferOption *z = new RebufferOption(RebufferOption::Type::wire,
 					   // account for wire load
@@ -1164,7 +1169,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
     // Which would have different delay Dbuf and input cap Lbuf
     // for simplicity we only consider one size of buffer.
     Required rt = z->bufferRequired(buffer_cell, drvr_pin, this);
-    if (rt > best) {
+    if (fuzzyGreater(rt, best)) {
       best = rt;
       best_ref = p;
     }
@@ -1198,7 +1203,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
 					     parent);
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
-    debugPrint3(debug_, "rebuffer", 2, " insert %s -> %s -> %s\n",
+    debugPrint3(debug_, "rebuffer", 1, " insert %s -> %s -> %s\n",
 		sdc_network_->pathName(net),
 		buffer_name.c_str(),
 		net2_name.c_str());
@@ -1223,7 +1228,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     if (load_net != net) {
       Instance *load_inst = network->instance(load_pin);
       Port *load_port = network->port(load_pin);
-      debugPrint2(debug_, "rebuffer", 2, " connect load %s to %s\n",
+      debugPrint2(debug_, "rebuffer", 1, " connect load %s to %s\n",
 		  sdc_network_->pathName(load_pin),
 		  sdc_network_->pathName(net));
       disconnectPin(load_pin);
