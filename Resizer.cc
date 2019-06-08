@@ -638,10 +638,12 @@ SteinerTree::findLeftRights(const Network *network)
   for (int i = 0; i < branch_count; i++) {
     Flute::Branch &branch_pt = tree_.branch[i];
     SteinerPt j = branch_pt.n;
-    if (adj1[j] < 0)
-      adj1[j] = i;
-    else
-      adj2[j] = i;
+    if (j != i) {
+      if (adj1[j] < 0)
+	adj1[j] = i;
+      else
+	adj2[j] = i;
+    }
   }
   SteinerPt root = drvrPt(network);
   SteinerPt root_adj = adjacentPt(root);
@@ -686,6 +688,8 @@ SteinerTree::findLeftRights(SteinerPt from,
 			    SteinerPtSeq &adj2)
 {
   if (adj != from) {
+    if (adj == to)
+      internalError("steiner left/right failed");
     if (left_[to] < 0) {
       left_[to] = adj;
       findLeftRights(to, adj, adj1, adj2);
@@ -769,7 +773,8 @@ Resizer::makeSteinerTree(const Net *net,
 			 bool find_left_rights)
 {
   LefDefNetwork *network = lefDefNetwork();
-  debugPrint1(debug_, "steiner", 1, "Net %s\n", network->pathName(net));
+  debugPrint1(debug_, "steiner", 1, "Net %s\n",
+	      sdc_network_->pathName(net));
 
   SteinerTree *tree = new SteinerTree();
   PinSeq &pins = tree->pins();
@@ -787,7 +792,8 @@ Resizer::makeSteinerTree(const Net *net,
       x[j] = loc.x();
       y[j] = loc.y();
       debugPrint3(debug_, "steiner", 3, "%s (%d %d)\n",
-		  network->pathName(pin), loc.x(), loc.y());
+		  sdc_network_->pathName(pin),
+		  loc.x(), loc.y());
     }
 
     Flute::Tree stree = Flute::flute(pin_count, x, y, FLUTE_ACCURACY, pin_map);
@@ -801,7 +807,7 @@ Resizer::makeSteinerTree(const Net *net,
 	printf(" %d -> %d\n", i, pin_map[i]);
     }
     if (debug_->check("steiner", 2))
-      tree->report(network);
+      tree->report(sdc_network_);
     return tree;
   }
   else
@@ -1032,7 +1038,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
   // Make sure the driver is constrained.
   if (!fuzzyInf(drvr_req)) {
     debugPrint1(debug_, "rebuffer", 1, "driver %s\n",
-		network_->pathName(drvr_pin));
+		sdc_network_->pathName(drvr_pin));
     RebufferOptionSeq Z = rebufferBottomUp(tree, tree->left(drvr_pt),
 					   drvr_pin, buffer_cell);
     Required Tbest = -INF;
@@ -1058,65 +1064,69 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
-  debugPrint2(debug_, "rebuffer", 2, " bottom up %s %d\n",
-	      tree->name(k, network_), k);
-  RebufferOptionSeq Z;
-  if (tree->isLoad(k, network_)) {
-    Pin *load_pin = tree->pin(k);
-    // Load capacitance and required time.
-    RebufferOption *z = new RebufferOption(RebufferOption::Type::sink,
-					   pinCapacitance(load_pin),
-					   pinRequired(load_pin),
-					   load_pin,
-					   tree->location(k),
-					   nullptr, nullptr);
-    Z.push_back(z);
-  }
-  else {
-    // Steiner pt.
-    RebufferOptionSeq Zl = rebufferBottomUp(tree, tree->left(k),
-					    drvr_pin, buffer_cell);
-    RebufferOptionSeq Zr = rebufferBottomUp(tree, tree->right(k),
-					    drvr_pin, buffer_cell);
-    RebufferOptionSeq Z2;
-    // Combine the options from both branches.
-    for (auto p : Zl) {
-      for (auto q : Zr) {
-	if (p != q) {
-	  RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
-						    p->cap() + q->cap(),
-						    min(p->required(), q->required()),
-						    nullptr,
-						    tree->location(k),
-						    p, q);
-	  Z2.push_back(junc);
-	}
-      }
+  if (k >= 0) {
+    debugPrint2(debug_, "rebuffer", 2, " bottom up %s %d\n",
+		tree->name(k, sdc_network_), k);
+    RebufferOptionSeq Z;
+    if (tree->isLoad(k, network_)) {
+      Pin *load_pin = tree->pin(k);
+      // Load capacitance and required time.
+      RebufferOption *z = new RebufferOption(RebufferOption::Type::sink,
+					     pinCapacitance(load_pin),
+					     pinRequired(load_pin),
+					     load_pin,
+					     tree->location(k),
+					     nullptr, nullptr);
+      Z.push_back(z);
     }
-
-    // Prune the options.
-    for (auto p : Z2) {
-      int qi = 0;
-      for (auto q : Z2) {
-	if (p && q) {
-	  Required Tp = p->bufferRequired(buffer_cell, drvr_pin, this);
-	  Required Tq = q->bufferRequired(buffer_cell, drvr_pin, this);
-	  float Lp = p->cap();
-	  float Lq = q->cap();
-	  if (Tp < Tq && Lp < Lq) {
-	    // If q is strictly worse than p, remove solution q.
-	    Z2[qi] = nullptr;
+    else {
+      // Steiner pt.
+      RebufferOptionSeq Zl = rebufferBottomUp(tree, tree->left(k),
+					      drvr_pin, buffer_cell);
+      RebufferOptionSeq Zr = rebufferBottomUp(tree, tree->right(k),
+					      drvr_pin, buffer_cell);
+      RebufferOptionSeq Z2;
+      // Combine the options from both branches.
+      for (auto p : Zl) {
+	for (auto q : Zr) {
+	  if (p != q) {
+	    RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
+						      p->cap() + q->cap(),
+						      min(p->required(), q->required()),
+						      nullptr,
+						      tree->location(k),
+						      p, q);
+	    Z2.push_back(junc);
 	  }
-	  qi++;
 	}
       }
+
+      // Prune the options.
+      for (auto p : Z2) {
+	int qi = 0;
+	for (auto q : Z2) {
+	  if (p && q) {
+	    Required Tp = p->bufferRequired(buffer_cell, drvr_pin, this);
+	    Required Tq = q->bufferRequired(buffer_cell, drvr_pin, this);
+	    float Lp = p->cap();
+	    float Lq = q->cap();
+	    if (Tp < Tq && Lp < Lq) {
+	      // If q is strictly worse than p, remove solution q.
+	      Z2[qi] = nullptr;
+	    }
+	    qi++;
+	  }
+	}
+      }
+      for (auto p : Z2) {
+	if (p)
+	  Z.push_back(p);
+      }
     }
-    for (auto p : Z2) {
-      if (p)
-	Z.push_back(p);
-    }
+    return addWireAndBuffer(Z, tree, k, drvr_pin, buffer_cell);
   }
-  return addWireAndBuffer(Z, tree, k, drvr_pin, buffer_cell);
+  else
+    return RebufferOptionSeq();
 }
 
 RebufferOptionSeq
@@ -1126,8 +1136,8 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
-  debugPrint2(debug_, "rebuffer", 2, " top down %s %d\n",
-	      tree->name(k, network_), k);
+  debugPrint2(debug_, "rebuffer", 2, " add wire and buffer %s %d\n",
+	      tree->name(k, sdc_network_), k);
   LefDefNetwork *network = lefDefNetwork();
   RebufferOptionSeq Z1;
   Required best = -INF;
@@ -1189,7 +1199,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
     debugPrint3(debug_, "rebuffer", 2, " insert %s -> %s -> %s\n",
-		network_->pathName(net),
+		sdc_network_->pathName(net),
 		buffer_name.c_str(),
 		net2_name.c_str());
     connectPin(buffer, input, net);
@@ -1214,8 +1224,8 @@ Resizer::rebufferTopDown(RebufferOption *choice,
       Instance *load_inst = network->instance(load_pin);
       Port *load_port = network->port(load_pin);
       debugPrint2(debug_, "rebuffer", 2, " connect load %s to %s\n",
-		  network_->pathName(load_pin),
-		  network_->pathName(net));
+		  sdc_network_->pathName(load_pin),
+		  sdc_network_->pathName(net));
       disconnectPin(load_pin);
       connectPin(load_inst, load_port, net);
     }
