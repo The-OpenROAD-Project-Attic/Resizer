@@ -37,8 +37,7 @@
 
 // Outstanding issues
 //  Instance levelization and resizing to target slew only support single output gates
-//  flute wants to read files which prevents having a stand-alone executable
-//  DefRead uses printf for errors.
+//  skinflute wants to read files which prevents having a stand-alone executable
 //  multi-corner support?
 
 namespace sta {
@@ -1058,7 +1057,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
-  debugPrint2(debug_, "rebuffer", 1, "bottom up %s %d\n",
+  debugPrint2(debug_, "rebuffer", 2, " bottom up %s %d\n",
 	      tree->name(k, network_), k);
   RebufferOptionSeq Z;
   if (tree->isLoad(k, network_)) {
@@ -1126,7 +1125,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
-  debugPrint2(debug_, "rebuffer", 1, "top down %s %d\n",
+  debugPrint2(debug_, "rebuffer", 2, " top down %s %d\n",
 	      tree->name(k, network_), k);
   LefDefNetwork *network = lefDefNetwork();
   RebufferOptionSeq Z1;
@@ -1188,7 +1187,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
 					     parent);
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
-    debugPrint3(debug_, "rebuffer", 1, "insert %s -> %s -> %s\n",
+    debugPrint3(debug_, "rebuffer", 2, " insert %s -> %s -> %s\n",
 		network_->pathName(net),
 		buffer_name.c_str(),
 		net2_name.c_str());
@@ -1199,23 +1198,26 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     break;
   }
   case RebufferOption::Type::wire:
-    debugPrint0(debug_, "rebuffer", 3, "wire\n");
+    debugPrint0(debug_, "rebuffer", 3, " wire\n");
     rebufferTopDown(choice->ref(), net, buffer_cell);
     break;
   case RebufferOption::Type::junction:
-    debugPrint0(debug_, "rebuffer", 3, "junction\n");
+    debugPrint0(debug_, "rebuffer", 3, " junction\n");
     rebufferTopDown(choice->ref(), net, buffer_cell);
     rebufferTopDown(choice->ref2(), net, buffer_cell);
     break;
   case RebufferOption::Type::sink: {
     Pin *load_pin = choice->loadPin();
-    Instance *load_inst = network->instance(load_pin);
-    Port *load_port = network->port(load_pin);
-    debugPrint2(debug_, "rebuffer", 1, "connect load %s to %s\n",
-		network_->pathName(load_pin),
-		network_->pathName(net));
-    disconnectPin(load_pin);
-    connectPin(load_inst, load_port, net);
+    Net *load_net = network_->net(load_pin);
+    if (load_net != net) {
+      Instance *load_inst = network->instance(load_pin);
+      Port *load_port = network->port(load_pin);
+      debugPrint2(debug_, "rebuffer", 2, " connect load %s to %s\n",
+		  network_->pathName(load_pin),
+		  network_->pathName(net));
+      disconnectPin(load_pin);
+      connectPin(load_inst, load_port, net);
+    }
   }
   }
 }

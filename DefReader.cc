@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "Machine.hh"
+#include "Report.hh"
 #include "Error.hh"
 #include "PortDirection.hh"
 #include "LefDefNetwork.hh"
@@ -119,6 +120,17 @@ DefReader::DefReader(bool save_def_data,
 #define getNetwork(user) (getDefReader(user)->network())
 #define saveDefData(user) (getDefReader(user)->saveDefData())
 
+static void
+defError(defiUserData user,
+	 const char *fmt, ...)
+{
+  Report *report = getNetwork(user)->report();
+  va_list args;
+  va_start(args, fmt);
+  report->vprintError(fmt, args);
+  va_end(args);
+}
+
 static int
 defDividerCbk(defrCallbackType_e,
 	      const char *divider,
@@ -154,7 +166,7 @@ defComponentCbk(defrCallbackType_e,
     network->makeDefComponent(cell, sta_name,
 			      saveDefData(user) ? def_component : nullptr);
   else
-    printf("Error: component %s macro %s not found.\n", def_name, macro_name);
+    defError(user, "Error: component %s macro %s not found.\n", def_name, macro_name);
   return 0;
 }
 
@@ -230,9 +242,8 @@ defNetCbk(defrCallbackType_e,
 	if (port)
 	  pin = network->makePin(top_inst, port, nullptr);
 	else
-	  printf("Error: net %s connection to PIN %s not found\n",
-		 def_net_name,
-		 pin_name);
+	  defError(user, "Error: net %s connection to PIN %s not found\n",
+		   def_net_name, pin_name);
       }
       if (pin)
 	network->makeTerm(pin, net);
@@ -245,14 +256,14 @@ defNetCbk(defrCallbackType_e,
 	if (port)
 	  network->connect(inst, port, net);
 	else
-	  printf("Error: net %s connection to component %s/%s pin %s not found.\n",
-		 def_net_name,
-		 def_inst_name,
-		 network->name(cell),
-		 pin_name);
+	  defError(user, "Error: net %s connection to component %s/%s pin %s not found.\n",
+		   def_net_name,
+		   def_inst_name,
+		   network->name(cell),
+		   pin_name);
       }
       else
-	printf("Error: net %s connection component %s not found.\n",
+	defError(user, "Error: net %s connection component %s not found.\n",
 	       def_net_name,
 	       def_inst_name);
     }
