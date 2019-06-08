@@ -645,6 +645,10 @@ SteinerTree::findLeftRights(const Network *network)
   }
   SteinerPt root = drvrPt(network);
   SteinerPt root_adj = adjacentPt(root);
+  // Kludge for when the steiner root vertex has non-branch.
+  if (root_adj == root)
+    root_adj = adj1[root];
+  left_[root] = root_adj;
   findLeftRights(root, root_adj, adj1, adj2);
 }
 
@@ -1024,27 +1028,24 @@ Resizer::rebuffer(const Pin *drvr_pin,
   Net *net = network_->net(drvr_pin);
   SteinerTree *tree = makeSteinerTree(net, true);
   SteinerPt drvr_pt = tree->drvrPt(network_);
-  // Make sure the net has a driver pin.
-  if (drvr_pt >= 0) {
-    Required drvr_req = pinRequired(drvr_pin);
-    // Make sure the driver is constrained.
-    if (!fuzzyInf(drvr_req)) {
-      debugPrint1(debug_, "rebuffer", 1, "driver %s\n",
-		  network_->pathName(drvr_pin));
-      RebufferOptionSeq Z = rebufferBottomUp(tree, tree->adjacentPt(drvr_pt),
-					     drvr_pin, buffer_cell);
-      Required Tbest = -INF;
-      RebufferOption *best = nullptr;
-      for (auto p : Z) {
-	Required Tb = p->bufferRequired(buffer_cell, drvr_pin, this);
-	if (Tb > Tbest) {
-	  Tbest = Tb;
-	  best = p;
-	}
+  Required drvr_req = pinRequired(drvr_pin);
+  // Make sure the driver is constrained.
+  if (!fuzzyInf(drvr_req)) {
+    debugPrint1(debug_, "rebuffer", 1, "driver %s\n",
+		network_->pathName(drvr_pin));
+    RebufferOptionSeq Z = rebufferBottomUp(tree, tree->left(drvr_pt),
+					   drvr_pin, buffer_cell);
+    Required Tbest = -INF;
+    RebufferOption *best = nullptr;
+    for (auto p : Z) {
+      Required Tb = p->bufferRequired(buffer_cell, drvr_pin, this);
+      if (Tb > Tbest) {
+	Tbest = Tb;
+	best = p;
       }
-      if (best)
-	rebufferTopDown(best, net, buffer_cell);
     }
+    if (best)
+      rebufferTopDown(best, net, buffer_cell);
   }
 }
 

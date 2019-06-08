@@ -44,7 +44,7 @@ NETS 10 ;
 - clk ( PIN clk ) ( r1 CP ) ( r2 CP ) ( r3 CP ) ;
 - r1q ( r1 Q ) ( u2 A ) ;
 - r2q ( r2 Q ) ( u1 A ) ;
-- u1z ( u1 Z ) ( u2 B ) ;
+- u1z ( u2 B ) ( u1 Z ) ;
 - u2z ( u2 Z ) ( r3 D ) ;
 - out ( r3 Q ) ( PIN out ) ;
 END NETS

@@ -180,7 +180,7 @@ LefDefNetwork::setLocation(Instance *instance,
     component->setDefComponent(def_component);
   }
   def_component->setPlacementStatus(DEFI_COMPONENT_PLACED);
-  def_component->setPlacementLocation(location.x(), location.y());
+  def_component->setPlacementLocation(location.x(), location.y(), 0);
 }
 
 Pin *
