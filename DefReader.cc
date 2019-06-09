@@ -80,22 +80,26 @@ readDef(const char *filename,
   // Make top_instance to act as parent to components.
   // Note that top ports are not known yet because PINS section has not been parsed.
   Library *lef_library = network->lefLibrary();
-  Cell *top_cell = network->makeCell(lef_library, "top", false, filename);
-  Instance *top_instance = network->makeInstance(top_cell, "", nullptr);
-  network->setTopInstance(top_instance);
+  if (lef_library) {
+    Cell *top_cell = network->makeCell(lef_library, "top", false, filename);
+    Instance *top_instance = network->makeInstance(top_cell, "", nullptr);
+    network->setTopInstance(top_instance);
 
-  defrInitSession();
-  registerDefCallbacks();
-  DefReader reader(save_def_data, network);
-  FILE *stream = fopen(filename, "r");
-  if (stream) {
-    bool case_sensitive = true;
-    defrRead(stream, filename, &reader, case_sensitive);
-    defrClear();
-    fclose(stream);
+    defrInitSession();
+    registerDefCallbacks();
+    DefReader reader(save_def_data, network);
+    FILE *stream = fopen(filename, "r");
+    if (stream) {
+      bool case_sensitive = true;
+      defrRead(stream, filename, &reader, case_sensitive);
+      defrClear();
+      fclose(stream);
+    }
+    else
+      throw FileNotReadable(filename);
   }
   else
-    throw FileNotReadable(filename);
+    network->report()->printError("Error; no LEF library has been read.\n");
 }
 
 static void
