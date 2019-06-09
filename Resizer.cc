@@ -57,6 +57,7 @@ fileExists(const std::string &filename);
 
 Resizer::Resizer() :
   Sta(),
+  level_insts_valid_(false),
   unique_net_index_(1),
   unique_buffer_index_(1)
 {
@@ -133,7 +134,7 @@ Resizer::init(float wire_res_per_length,
   search_->arrivalsInvalid();
 
   ensureLevelized();
-  sortInstancesByLevel();
+  ensureLevelInsts();
 }
 
 void
@@ -164,15 +165,19 @@ Resizer::initCorner(Corner *corner)
 }
 
 void
-Resizer::sortInstancesByLevel()
+Resizer::ensureLevelInsts()
 {
-  LeafInstanceIterator *leaf_iter = network_->leafInstanceIterator();
-  while (leaf_iter->hasNext()) {
-    Instance *leaf = leaf_iter->next();
-    level_insts_.push_back(leaf);
+  if (!level_insts_valid_) {
+    level_insts_.clear();
+    LeafInstanceIterator *leaf_iter = network_->leafInstanceIterator();
+    while (leaf_iter->hasNext()) {
+      Instance *leaf = leaf_iter->next();
+      level_insts_.push_back(leaf);
+    }
+    sort(level_insts_, InstanceOutputLevelLess(network_, graph_));
+    delete leaf_iter;
+    level_insts_valid_ = true;
   }
-  sort(level_insts_, InstanceOutputLevelLess(network_, graph_));
-  delete leaf_iter;
 }
 
 void
@@ -1206,6 +1211,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     Instance *buffer = network->makeInstance(buffer_cell,
 					     buffer_name.c_str(),
 					     parent);
+    level_insts_valid_ = false;
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
     debugPrint3(debug_, "rebuffer", 1, " insert %s -> %s -> %s\n",

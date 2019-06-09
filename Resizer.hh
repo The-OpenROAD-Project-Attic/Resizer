@@ -68,7 +68,7 @@ protected:
 	    Corner *corner);
   virtual void makeNetwork();
   void initCorner(Corner *corner);
-  void sortInstancesByLevel();
+  void ensureLevelInsts();
   void resizeToTargetSlew();
   void resizeToTargetSlew1(Instance *inst);
   void ensureTargetLoads();
@@ -140,6 +140,7 @@ protected:
   const ParasiticAnalysisPt *parasitics_ap_;
   CellTargetLoadMap *target_load_map_;
   InstanceSeq level_insts_;
+  bool level_insts_valid_;
   int unique_net_index_;
   int unique_buffer_index_;
 };
