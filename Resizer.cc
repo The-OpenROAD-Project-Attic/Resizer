@@ -78,12 +78,14 @@
 namespace sta {
 
 using std::abs;
+using std::min;
+using std::string;
 
 static Pin *
 singleOutputPin(const Instance *inst,
 		Network *network);
 bool
-fileExists(const std::string &filename);
+fileExists(const string &filename);
 
 Resizer::Resizer() :
   Sta(),
@@ -471,7 +473,7 @@ public:
   void setTree(Flute::Tree tree,
 	       int pin_map[]);
   int pinCount() const { return pins_.size(); }
-  int branchCount();
+  int branchCount() const;
   void branch(int index,
 	      // Return values.
 	      DefPt &pt1,
@@ -499,6 +501,7 @@ public:
   SteinerPt left(SteinerPt pt);
   SteinerPt right(SteinerPt pt);
   void findLeftRights(const Network *network);
+  static SteinerPt null_pt;
 
 protected:
   void findLeftRights(SteinerPt from,
@@ -510,6 +513,7 @@ protected:
 		      SteinerPt adj,
 		      SteinerPtSeq &adj1,
 		      SteinerPtSeq &adj2);
+  void checkSteinerPt(SteinerPt pt) const;
 
   Flute::Tree tree_;
   PinSeq pins_;
@@ -520,6 +524,8 @@ protected:
   SteinerPtSeq left_;
   SteinerPtSeq right_;
 };
+
+SteinerPt SteinerTree::null_pt = -1;
 
 void
 SteinerTree::setTree(Flute::Tree tree,
@@ -535,7 +541,7 @@ SteinerTree::setTree(Flute::Tree tree,
 }
 
 int
-SteinerTree::branchCount()
+SteinerTree::branchCount() const
 {
   return tree_.deg * 2 - 2;
 }
@@ -581,26 +587,27 @@ SteinerTree::branch(int index,
 void
 SteinerTree::report(const Network *network)
 {
+  Report *report = network->report();
   int branch_count = branchCount();
   for (int i = 0; i < branch_count; i++) {
     Flute::Branch &pt1 = tree_.branch[i];
     int j = pt1.n;
     Flute::Branch &pt2 = tree_.branch[j];
     int wire_length = abs(pt1.x - pt2.x) + abs(pt1.y - pt2.y);
-    printf(" %s (%d %d) - %s wire_length = %d",
-	   name(i, network),
-	   static_cast<int>(pt1.x),
-	   static_cast<int>(pt1.y),
-	   name(j, network),
-	   wire_length);
+    report->print(" %s (%d %d) - %s wire_length = %d",
+		  name(i, network),
+		  static_cast<int>(pt1.x),
+		  static_cast<int>(pt1.y),
+		  name(j, network),
+		  wire_length);
     if (left_.size()) {
       SteinerPt left = this->left(i);
       SteinerPt right = this->right(i);
-      printf(" left = %s right = %s",
-	     name(left, network),
-	     name(right, network));
+      report->print(" left = %s right = %s",
+		    name(left, network),
+		    name(right, network));
     }
-    printf("\n");
+    report->print("\n");
   }
 }
 
@@ -625,19 +632,23 @@ const char *
 SteinerTree::name(SteinerPt pt,
 		  const Network *network)
 {
-  const Pin *pin = this->pin(pt);
-  if (pin)
-    return network->pathName(pin);
-  else if (pt >= 0)
-    return stringPrintTmp("S%d", pt);
-  else
+  if (pt == SteinerTree::null_pt)
     return "NULL";
+  else {
+    checkSteinerPt(pt);
+    const Pin *pin = this->pin(pt);
+    if (pin)
+      return network->pathName(pin);
+    else
+      return stringPrintTmp("S%d", pt);
+  }
 }
 
 Pin *
 SteinerTree::pin(SteinerPt pt) const
 {
-  if (pt >= 0 && pt < pinCount())
+  checkSteinerPt(pt);
+  if (pt < pinCount())
     return pins_[pin_map_[pt]];
   else
     return nullptr;
@@ -652,13 +663,21 @@ SteinerTree::drvrPt(const Network *network) const
     if (network->isDriver(pin))
       return i;
   }
-  return -1;
+  return SteinerTree::null_pt;
+}
+
+void
+SteinerTree::checkSteinerPt(SteinerPt pt) const
+{
+  if (pt < 0 || pt >= branchCount())
+    internalError("steiner point index out of range.");
 }
 
 bool
 SteinerTree::isLoad(SteinerPt pt,
 		    const Network *network)
 {
+  checkSteinerPt(pt);
   Pin *pin = this->pin(pt);
   return pin && network->isLoad(pin);
 }
@@ -666,6 +685,7 @@ SteinerTree::isLoad(SteinerPt pt,
 DefPt
 SteinerTree::location(SteinerPt pt)
 {
+  checkSteinerPt(pt);
   Flute::Branch &branch_pt = tree_.branch[pt];
   return DefPt(branch_pt.x, branch_pt.y);
 }
@@ -674,11 +694,11 @@ void
 SteinerTree::findLeftRights(const Network *network)
 {
   int branch_count = branchCount();
-  left_.resize(branch_count, -1);
-  right_.resize(branch_count, -1);
+  left_.resize(branch_count, SteinerTree::null_pt);
+  right_.resize(branch_count, SteinerTree::null_pt);
   int pin_count = pinCount();
-  SteinerPtSeq adj1(branch_count, -1);
-  SteinerPtSeq adj2(branch_count, -1);
+  SteinerPtSeq adj1(branch_count, SteinerTree::null_pt);
+  SteinerPtSeq adj2(branch_count, SteinerTree::null_pt);
   for (int i = 0; i < branch_count; i++) {
     Flute::Branch &branch_pt = tree_.branch[i];
     SteinerPt j = branch_pt.n;
@@ -806,7 +826,7 @@ Resizer::readFluteInits(string dir)
 
 // c++17 std::filesystem::exists
 bool
-fileExists(const std::string &filename)
+fileExists(const string &filename)
 {
   std::ifstream stream(filename.c_str());
   return stream.good();
@@ -1140,8 +1160,8 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	  if (p != q) {
 	    RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
 						      p->cap() + q->cap(),
-						      std::min(p->required(),
-							       q->required()),
+						      min(p->required(),
+							  q->required()),
 						      nullptr,
 						      tree->location(k),
 						      p, q);
@@ -1169,6 +1189,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	  }
 	}
       }
+      // Save the survivors.
       for (auto p : Z2) {
 	if (p)
 	  Z.push_back(p);
