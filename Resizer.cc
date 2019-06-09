@@ -33,7 +33,36 @@
 #include "Search.hh"
 #include "LefDefNetwork.hh"
 #include "Resizer.hh"
-#include "flute.h"
+
+#define FLUTE_2_2
+
+#ifdef FLUTE_2_2
+  #include "flute.h"
+  typedef DBU FluteDbu;
+#endif
+
+#ifdef FLUTE_3_1
+  #define DTYPE sta::DefDbu
+  #include "flute.h"
+
+  // Compatibility attempt. 
+  // Fail on readLUT lacking filename args and flute() missing pin_map arg.
+  // Pretend flute was intellegent enough to use a namespace.
+  namespace Flute {
+    using ::Tree;
+    using ::Branch;
+    using ::readLUT;
+    using ::flute;
+    using ::printtree;
+  };
+  #define FLUTE_ACCURACY ACCURACY
+  typedef sta::DefDbu FluteDbu;
+
+  // Remove flute turds.
+  #undef max
+  #undef min
+  #undef abs
+#endif
 
 // Outstanding issues
 //  Instance levelization and resizing to target slew only support single output gates
@@ -553,10 +582,10 @@ SteinerTree::report(const Network *network)
     int j = pt1.n;
     Flute::Branch &pt2 = tree_.branch[j];
     int wire_length = abs(pt1.x - pt2.x) + abs(pt1.y - pt2.y);
-    printf(" %s (%lld %lld) - %s wire_length = %d",
+    printf(" %s (%d %d) - %s wire_length = %d",
 	   name(i, network),
-	   pt1.x,
-	   pt1.y,
+	   static_cast<int>(pt1.x),
+	   static_cast<int>(pt1.y),
 	   name(j, network),
 	   wire_length);
     if (left_.size()) {
@@ -791,8 +820,8 @@ Resizer::makeSteinerTree(const Net *net,
   connectedPins(net, pins);
   int pin_count = pins.size();
   if (pin_count >= 2) {
-    DBU x[pin_count];
-    DBU y[pin_count];
+    FluteDbu x[pin_count];
+    FluteDbu y[pin_count];
     // map[pin_index] -> steiner tree vertex index
     int pin_map[pin_count];
 
@@ -1105,7 +1134,8 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	  if (p != q) {
 	    RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
 						      p->cap() + q->cap(),
-						      min(p->required(), q->required()),
+						      std::min(p->required(),
+							       q->required()),
 						      nullptr,
 						      tree->location(k),
 						      p, q);
@@ -1159,7 +1189,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
   RebufferOption *best_ref = nullptr;
   for (auto p : Z) {
     DefPt k_loc = tree->location(k);
-    DBU wire_length_dbu = abs(k_loc.x() - p->location().x())
+    DefDbu wire_length_dbu = abs(k_loc.x() - p->location().x())
       + abs(k_loc.y() - p->location().y());
     float wire_length = network->dbuToMeters(wire_length_dbu);
     float wire_cap = wire_length * wire_cap_per_length_;

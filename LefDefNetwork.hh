@@ -32,18 +32,21 @@ class DefNet;
 class LefPin;
 class DefPt;
 
+// Database location type used by DEF parser.
+typedef int DefDbu;
+
 class DefPt
 {
 public:
   DefPt();
-  DefPt(int x,
-	int y);
-  int x() const { return x_; }
-  int y() const { return y_; }
+  DefPt(DefDbu x,
+	DefDbu y);
+  DefDbu x() const { return x_; }
+  DefDbu y() const { return y_; }
 
 private:
-  int x_;
-  int y_;
+  DefDbu x_;
+  DefDbu y_;
 };
 
 // No need to specializing ConcreteLibrary at this point.
