@@ -1,4 +1,4 @@
-# rebuffer fanout 4 reg
+# rebuffer fanout 4 regs in a line
 source "helpers.tcl"
 read_liberty liberty1.lib
 read_lef liberty1.lef
@@ -13,8 +13,10 @@ set buffer_cell [get_lib_cell liberty1/snl_bufx2]
 sta::make_net_parasitics $wire_res_per_meter $wire_cap_per_meter
 report_checks
 
-#     s5  s6  s7
-# r1  r2  r3  r4  r5
+#      s5  s6  s7
+#  r1  r2  r3  r4  r5
+# 1,1 1,2 1,3 1,4 1,5
+sta::set_debug rebuffer 3
 sta::rebuffer_instance [get_cell r1] $buffer_cell $wire_res_per_meter $wire_cap_per_meter
 report_checks
 
