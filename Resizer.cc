@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include "Machine.hh"
+#include "Report.hh"
 #include "Debug.hh"
 #include "PortDirection.hh"
 #include "TimingRole.hh"
@@ -164,6 +165,8 @@ Resizer::init(float wire_res_per_length,
 
   ensureLevelized();
   ensureLevelInsts();
+  resize_count_ = 0;
+  rebuffer_count_ = 0;
 }
 
 void
@@ -181,6 +184,7 @@ Resizer::resize(float wire_res_per_length,
     makeNetParasitics();
 
   resizeToTargetSlew();
+  report_->print("Resized %d instances.\n", resize_count_);
 }
 
 void
@@ -258,6 +262,7 @@ Resizer::resizeToTargetSlew1(Instance *inst)
 		      cell->name(),
 		      best_cell->name());
 	  replaceCell(inst, best_cell);
+	  resize_count_++;
 	}
       }
     }
@@ -1028,6 +1033,7 @@ Resizer::rebuffer(LibertyCell *buffer_cell,
 {
   init(wire_res_per_length, wire_cap_per_length, corner);
   rebuffer(buffer_cell);
+  report_->print("Inserted %d buffers.\n", rebuffer_count_);
 }
 
 void

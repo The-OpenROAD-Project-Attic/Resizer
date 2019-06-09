@@ -16,7 +16,6 @@ report_checks
 #      s5  s6  s7
 #  r1  r2  r3  r4  r5
 # 1,1 1,2 1,3 1,4 1,5
-sta::set_debug rebuffer 3
 sta::rebuffer_instance [get_cell r1] $buffer_cell $wire_res_per_meter $wire_cap_per_meter
 report_checks
 

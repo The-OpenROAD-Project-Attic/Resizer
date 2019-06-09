@@ -143,6 +143,8 @@ protected:
   bool level_insts_valid_;
   int unique_net_index_;
   int unique_buffer_index_;
+  int resize_count_;
+  int rebuffer_count_;
 };
 
 } // namespace
