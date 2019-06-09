@@ -1109,20 +1109,22 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	}
       }
 
-      // Prune the options.
+      // Prune the options. This is fanout^2.
       for (auto p : Z2) {
-	int qi = 0;
-	for (auto q : Z2) {
-	  if (p && q) {
-	    Required Tp = p->bufferRequired(buffer_cell, drvr_pin, this);
-	    Required Tq = q->bufferRequired(buffer_cell, drvr_pin, this);
-	    float Lp = p->cap();
-	    float Lq = q->cap();
-	    if (fuzzyLess(Tp, Tq) && fuzzyLess(Lp, Lq)) {
-	      // If q is strictly worse than p, remove solution q.
-	      Z2[qi] = nullptr;
+	if (p) {
+	  Required Tp = p->bufferRequired(buffer_cell, drvr_pin, this);
+	  float Lp = p->cap();
+	  int qi = 0;
+	  for (auto q : Z2) {
+	    if (q) {
+	      Required Tq = q->bufferRequired(buffer_cell, drvr_pin, this);
+	      float Lq = q->cap();
+	      if (fuzzyLess(Tp, Tq) && fuzzyLess(Lp, Lq)) {
+		// If q is strictly worse than p, remove solution q.
+		Z2[qi] = nullptr;
+	      }
+	      qi++;
 	    }
-	    qi++;
 	  }
 	}
       }

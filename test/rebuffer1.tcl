@@ -13,6 +13,8 @@ set buffer_cell [get_lib_cell liberty1/snl_bufx2]
 sta::make_net_parasitics $wire_res_per_meter $wire_cap_per_meter
 report_checks
 
+#     s5  s6  s7
+# r1  r2  r3  r4  r5
 sta::rebuffer_instance [get_cell r1] $buffer_cell $wire_res_per_meter $wire_cap_per_meter
 report_checks
 

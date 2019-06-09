@@ -1,7 +1,3 @@
-###############################################################################
-# 
-###############################################################################
-
 VERSION 5.5 ; 
 NAMESCASESENSITIVE ON ;
 DIVIDERCHAR "/" ;
@@ -14,17 +10,15 @@ UNITS DISTANCE MICRONS 1000 ;
 
 DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
-
-COMPONENTS 6 ;
+COMPONENTS 5 ;
 - r1 snl_ffqx1 + PLACED   ( 100000 100000 ) N ;
 - r2 snl_ffqx1 + PLACED   ( 100000 200000 ) N ;
 - r3 snl_ffqx1 + PLACED   ( 100000 300000 ) N ;
 - r4 snl_ffqx1 + PLACED   ( 100000 400000 ) N ;
 - r5 snl_ffqx1 + PLACED   ( 100000 500000 ) N ;
-- u1 snl_bufx1 + PLACED   (  50000  50000 ) N ;
 END COMPONENTS
 
-PINS 6 ;
+PINS 1 ;
 - clk + NET clk + DIRECTION INPUT + USE SIGNAL 
   + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 100000 ) N ;
 END PINS
