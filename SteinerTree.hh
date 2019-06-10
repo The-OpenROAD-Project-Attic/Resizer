@@ -26,6 +26,13 @@
 #ifdef FLUTE_2_2
   #include "flute.h"
   typedef DBU FluteDbu;
+  namespace sta { 
+    using Flute::Tree;
+    using Flute::Branch;
+    using Flute::readLUT;
+    using Flute::flute;
+    using Flute::printtree;
+  };
 #endif
 
 #ifdef FLUTE_3_1
@@ -39,10 +46,6 @@
 #endif
 
 namespace sta {
-
-#ifdef FLUTE_2_2
-  using Flute::Tree;
-#endif
 
 using std::string;
 

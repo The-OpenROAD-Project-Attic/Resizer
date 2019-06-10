@@ -39,11 +39,8 @@
 //  Instance levelization and resizing to target slew only support single output gates
 //  skinflute wants to read files which prevents having a stand-alone executable
 //  multi-corner support?
-//  addWireAndBuffer wire delay should include buffer drive resistance
-//  rebuffer1 linear fanout puts buffers at loads which does not help
-//    not accounting for wire delay from driver to inserted buffer
 //  tcl cmds to set liberty pin cap and limit for testing
-//  
+//  unplaced nets should use wireload model parasitic instead of steiner parasitics
 
 namespace sta {
 

@@ -27,14 +27,6 @@ namespace sta {
 
 using std::string;
 
-#ifdef FLUTE_2_2
-  //using Flute::Tree;
-  using Flute::Branch;
-  using Flute::readLUT;
-  using Flute::flute;
-  using Flute::printtree;
-#endif
-
 static bool
 fileExists(const string &filename);
 static void
