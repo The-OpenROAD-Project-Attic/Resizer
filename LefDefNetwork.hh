@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef STA_LEF_DEF_NETWORK_H
-#define STA_LEF_DEF_NETWORK_H
+#ifndef RESIZER_STA_LEF_DEF_NETWORK_H
+#define RESIZER_LEF_DEF_NETWORK_H
 
 #include "UnorderedMap.hh"
 #include "ConcreteLibrary.hh"

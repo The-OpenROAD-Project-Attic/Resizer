@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef STA_DEF_READER_H
-#define STA_DEF_READER_H
+#ifndef RESIZER_DEF_READER_H
+#define RESIZER_DEF_READER_H
 
 namespace sta {
 
