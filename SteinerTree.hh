@@ -25,6 +25,7 @@
 
 #ifdef FLUTE_2_2
   #include "flute.h"
+  typedef DBU FluteDbu;
 #endif
 
 #ifdef FLUTE_3_1
@@ -39,19 +40,24 @@
 
 namespace sta {
 
+#ifdef FLUTE_2_2
+  using Flute::Tree;
+#endif
+
 using std::string;
 
-#ifdef FLUTE_2_2
-  typedef DBU FluteDbu;
-  using Flute::Tree;
-  using Flute::Branch;
-  using Flute::readLUT;
-  using Flute::flute;
-  using Flute::printtree;
-#endif
+class SteinerTree;
+class LefDefNetwork;
+
+typedef int SteinerPt;
+typedef Vector<SteinerPt> SteinerPtSeq;
 
 bool
 readFluteInits(string dir);
+SteinerTree *
+makeSteinerTree(const Net *net,
+		bool find_left_rights,
+		LefDefNetwork *network);
 
 class DefPtHash
 {
@@ -75,9 +81,6 @@ public:
       && pt1.y() == pt2.y();
   }
 };
-
-typedef int SteinerPt;
-typedef Vector<SteinerPt> SteinerPtSeq;
 
 // Wrapper for Tree
 class SteinerTree

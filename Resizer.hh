@@ -18,23 +18,22 @@
 #define RESIZER_RESIZER_H
 
 #include "Sta.hh"
+#include "SteinerTree.hh"
 
 namespace sta {
 
 class LefDefNetwork;
-class SteinerTree;
 class RebufferOption;
 
 typedef Map<LibertyCell*, float> CellTargetLoadMap;
 typedef Vector<RebufferOption*> RebufferOptionSeq;
-typedef int SteinerPt;
 
 class Resizer : public Sta
 {
 public:
   Resizer();
-  void initFlute(const char *resizer_path);
   LefDefNetwork *lefDefNetwork();
+  void initFlute(const char *resizer_path);
 
   // Resize all instances in the network.
   void resize(float wire_res_per_length, // ohms/meter
@@ -84,8 +83,6 @@ protected:
 			     // Return values.
 			     float *slews,
 			     int *counts);
-  SteinerTree *makeSteinerTree(const Net *net,
-			       bool find_left_rights);
   void makeNetParasitics();
   void makeNetParasitics(const Net *net);
   ParasiticNode *findParasiticNode(SteinerTree *tree,
@@ -93,7 +90,6 @@ protected:
 				   const Net *net,
 				   const Pin *pin,
 				   int steiner_pt);
-  bool readFluteInits(string dir);
 
   void rebuffer(LibertyCell *buffer_cell);
   void rebuffer(Instance *inst,
@@ -113,8 +109,6 @@ protected:
 		   SteinerPt k,
 		   const Pin *drvr_pin,
 		   LibertyCell *buffer_cell);
-  void connectedPins(const Net *net,
-		     PinSeq &pins);
   float portCapacitance(const LibertyPort *port);
   float pinCapacitance(const Pin *pin);
   float bufferInputCapacitance(LibertyCell *buffer_cell);

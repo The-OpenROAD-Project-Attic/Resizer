@@ -20,6 +20,7 @@
 #include "Report.hh"
 #include "Error.hh"
 #include "Debug.hh"
+#include "LefDefNetwork.hh"
 #include "SteinerTree.hh"
 
 namespace sta {
@@ -27,16 +28,20 @@ namespace sta {
 using std::string;
 
 #ifdef FLUTE_2_2
-  // Wrapper so arglist is consistent across versions.
-  static Tree
-  flute1(int d, FLUTE_DTYPE x[], FLUTE_DTYPE y[], int acc, int mapping[])
-  {
-    return flute(d, x, y, acc, mapping);
-  }
+  //using Flute::Tree;
+  using Flute::Branch;
+  using Flute::readLUT;
+  using Flute::flute;
+  using Flute::printtree;
 #endif
 
 static bool
 fileExists(const string &filename);
+static void
+connectedPins(const Net *net,
+	      Network *network,
+	      // Return value.
+	      PinSeq &pins);
 
 bool
 readFluteInits(string dir)
@@ -64,6 +69,70 @@ fileExists(const string &filename)
 ////////////////////////////////////////////////////////////////
 
 SteinerPt SteinerTree::null_pt = -1;
+
+SteinerTree *
+makeSteinerTree(const Net *net,
+		bool find_left_rights,
+		LefDefNetwork *network)
+{
+  Network *sdc_network = network->sdcNetwork();
+  Debug *debug = network->debug();
+  Report *report = network->report();
+  debugPrint1(debug, "steiner", 1, "Net %s\n",
+	      sdc_network->pathName(net));
+
+  SteinerTree *tree = new SteinerTree();
+  PinSeq &pins = tree->pins();
+  connectedPins(net, network, pins);
+  int pin_count = pins.size();
+  if (pin_count >= 2) {
+    FluteDbu x[pin_count];
+    FluteDbu y[pin_count];
+    // map[pin_index] -> steiner tree vertex index
+    int pin_map[pin_count];
+
+    for (int i = 0; i < pin_count; i++) {
+      Pin *pin = pins[i];
+      DefPt loc = network->location(pin);
+      x[i] = loc.x();
+      y[i] = loc.y();
+      debugPrint3(debug, "steiner", 3, "%s (%d %d)\n",
+		  sdc_network->pathName(pin),
+		  loc.x(), loc.y());
+    }
+
+    int flute_accuracy = 3;
+    Tree stree = flute(pin_count, x, y, flute_accuracy, pin_map);
+    tree->setTree(stree, pin_map);
+    if (find_left_rights)
+      tree->findLeftRights(network);
+    if (debug->check("steiner", 3)) {
+      printtree(stree);
+      report->print("pin map\n");
+      for (int i = 0; i < pin_count; i++)
+	report->print(" %d -> %d\n", i, pin_map[i]);
+    }
+    if (debug->check("steiner", 2))
+      tree->report(sdc_network);
+    return tree;
+  }
+  else
+    return nullptr;
+}
+
+static void
+connectedPins(const Net *net,
+	      Network *network,
+	      // Return value.
+	      PinSeq &pins)
+{
+  NetConnectedPinIterator *pin_iter = network->connectedPinIterator(net);
+  while (pin_iter->hasNext()) {
+    Pin *pin = pin_iter->next();
+    pins.push_back(pin);
+  }
+  delete pin_iter;
+}
 
 void
 SteinerTree::setTree(Tree tree,

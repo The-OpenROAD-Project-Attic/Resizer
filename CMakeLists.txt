@@ -206,6 +206,7 @@ set(RESIZER_SOURCE
   ResizerMain.cc
   Resizer_wrap.cc
   ResizerTclInitVar.cc
+  SteinerTree.cc
   )
 
 set(RESIZER_HEADERS
@@ -214,6 +215,7 @@ set(RESIZER_HEADERS
   LefReader.hh
   LefDefNetwork.hh
   Resizer.hh
+  SteinerTree.hh
   )
 
 set(RESIZER_INCLUDE_DIRS
