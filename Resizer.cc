@@ -1074,6 +1074,7 @@ Resizer::rebuffer(Instance *inst,
 {
   init(wire_res_per_length, wire_cap_per_length, corner);
   rebuffer(inst, buffer_cell);
+  report_->print("Inserted %d buffers.\n", rebuffer_count_);
 }
 
 void
@@ -1100,6 +1101,10 @@ Resizer::rebuffer(const Pin *drvr_pin,
 		  LibertyCell *buffer_cell)
 {
   Net *net = network_->net(drvr_pin);
+  LibertyCell *drvr_cell = network_->libertyCell(network_->instance(drvr_pin));
+  if (drvr_cell == nullptr)
+    // Top level port. Should use sdc external driver here.
+    drvr_cell = buffer_cell;
   SteinerTree *tree = makeSteinerTree(net, true);
   SteinerPt drvr_pt = tree->drvrPt(network_);
   Required drvr_req = pinRequired(drvr_pin);
@@ -1112,7 +1117,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
     Required Tbest = -INF;
     RebufferOption *best = nullptr;
     for (auto p : Z) {
-      Required Tb = p->bufferRequired(buffer_cell, drvr_pin, this);
+      Required Tb = p->bufferRequired(drvr_cell, drvr_pin, this);
       if (fuzzyGreater(Tb, Tbest)) {
 	Tbest = Tb;
 	best = p;
@@ -1132,22 +1137,23 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
-  if (k >= 0) {
+  if (k != SteinerTree::null_pt) {
     debugPrint2(debug_, "rebuffer", 3, " bottom up %s %d\n",
 		tree->name(k, sdc_network_), k);
-    RebufferOptionSeq Z;
-    if (tree->isLoad(k, network_)) {
-      Pin *load_pin = tree->pin(k);
+    Pin *pin = tree->pin(k);
+    if (pin && network_->isLoad(pin)) {
       // Load capacitance and required time.
       RebufferOption *z = new RebufferOption(RebufferOption::Type::sink,
-					     pinCapacitance(load_pin),
-					     pinRequired(load_pin),
-					     load_pin,
+					     pinCapacitance(pin),
+					     pinRequired(pin),
+					     pin,
 					     tree->location(k),
 					     nullptr, nullptr);
+      RebufferOptionSeq Z;
       Z.push_back(z);
+      return Z;
     }
-    else {
+    else if (pin == nullptr) {
       // Steiner pt.
       RebufferOptionSeq Zl = rebufferBottomUp(tree, tree->left(k),
 					      drvr_pin, buffer_cell);
@@ -1190,15 +1196,15 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	}
       }
       // Save the survivors.
+      RebufferOptionSeq Z;
       for (auto p : Z2) {
 	if (p)
 	  Z.push_back(p);
       }
+      return addWireAndBuffer(Z, tree, k, drvr_pin, buffer_cell);
     }
-    return addWireAndBuffer(Z, tree, k, drvr_pin, buffer_cell);
   }
-  else
-    return RebufferOptionSeq();
+  return RebufferOptionSeq();
 }
 
 RebufferOptionSeq
@@ -1214,15 +1220,15 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
   RebufferOptionSeq Z1;
   Required best = -INF;
   RebufferOption *best_ref = nullptr;
+  DefPt k_loc = tree->location(k);
+  DefPt kl_loc = tree->location(tree->left(k));
+  DefDbu wire_length_dbu = abs(k_loc.x() - kl_loc.x())
+    + abs(k_loc.y() - kl_loc.y());
+  float wire_length = network->dbuToMeters(wire_length_dbu);
+  float wire_cap = wire_length * wire_cap_per_length_;
+  float wire_res = wire_length * wire_res_per_length_;
+  float wire_delay = wire_res * wire_cap;
   for (auto p : Z) {
-    DefPt k_loc = tree->location(k);
-    DefDbu wire_length_dbu = abs(k_loc.x() - p->location().x())
-      + abs(k_loc.y() - p->location().y());
-    float wire_length = network->dbuToMeters(wire_length_dbu);
-    float wire_cap = wire_length * wire_cap_per_length_;
-    float wire_res = wire_length * wire_res_per_length_;
-    // wire_delay should include the buffer drive resistance.
-    float wire_delay = wire_res * wire_cap;
     RebufferOption *z = new RebufferOption(RebufferOption::Type::wire,
 					   // account for wire load
 					   p->cap() + wire_cap,
@@ -1231,6 +1237,12 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 					   nullptr,
 					   p->location(),
 					   p, nullptr);
+    debugPrint5(debug_, "rebuffer", 3, " wire option %s -> (%d %d) cap %s req %s\n",
+		tree->name(k, sdc_network_),
+		p->location().x(),
+		p->location().y(),
+		units_->capacitanceUnit()->asString(z->cap()),
+		delayAsString(z->required(), this));
     Z1.push_back(z);
     // We could add options of different buffer drive strengths here
     // Which would have different delay Dbuf and input cap Lbuf
@@ -1242,6 +1254,9 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
     }
   }
   if (best_ref) {
+    debugPrint2(debug_, "rebuffer", 2, " buffer option %s req %s\n",
+		tree->name(k, sdc_network_),
+		delayAsString(best, this));
     RebufferOption *z = new RebufferOption(RebufferOption::Type::buffer,
 					   bufferInputCapacitance(buffer_cell),
 					   best,
@@ -1281,6 +1296,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     rebufferTopDown(choice->ref(), net2, buffer_cell);
     makeNetParasitics(net);
     makeNetParasitics(net2);
+    rebuffer_count_++;
     break;
   }
   case RebufferOption::Type::wire:

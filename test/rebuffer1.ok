@@ -25,6 +25,7 @@ Path Type: max
          -20.22   slack (VIOLATED)
 
 
+Inserted 2 buffers.
 Startpoint: r1 (rising edge-triggered flip-flop clocked by clk)
 Endpoint: r5 (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
@@ -35,22 +36,23 @@ Path Type: max
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
    0.00    0.00 ^ r1/CP (snl_ffqx1)
-  15.02   15.02 v r1/Q (snl_ffqx1)
-   3.46   18.48 v buffer3/Z (snl_bufx2)
-   0.00   18.48 v r5/D (snl_ffqx1)
-          18.48   data arrival time
+   7.69    7.69 v r1/Q (snl_ffqx1)
+   3.12   10.81 v buffer1/Z (snl_bufx2)
+   1.59   12.40 v buffer2/Z (snl_bufx2)
+   0.01   12.41 v r5/D (snl_ffqx1)
+          12.41   data arrival time
 
    1.00    1.00   clock clk (rise edge)
    0.00    1.00   clock network delay (ideal)
    0.00    1.00   clock reconvergence pessimism
            1.00 ^ r5/CP (snl_ffqx1)
-  -0.40    0.60   library setup time
-           0.60   data required time
+  -0.68    0.32   library setup time
+           0.32   data required time
 ---------------------------------------------------------
-           0.60   data required time
-         -18.48   data arrival time
+           0.32   data required time
+         -12.41   data arrival time
 ---------------------------------------------------------
-         -17.88   slack (VIOLATED)
+         -12.09   slack (VIOLATED)
 
 
 VERSION 5.5 ; 
@@ -65,15 +67,11 @@ UNITS DISTANCE MICRONS 1000 ;
 
 DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
-COMPONENTS 9 ;
+COMPONENTS 7 ;
 - buffer1 snl_bufx2
 + PLACED ( 100000 300000 ) N ;
 - buffer2 snl_bufx2
 + PLACED ( 100000 400000 ) N ;
-- buffer3 snl_bufx2
-+ PLACED ( 100000 500000 ) N ;
-- buffer4 snl_bufx2
-+ PLACED ( 100000 200000 ) N ;
 - r1 snl_ffqx1
 + PLACED ( 100000 100000 ) N ;
 - r2 snl_ffqx1
@@ -99,13 +97,11 @@ SPECIALNETS 2 ;
   + USE POWER ;
 END SPECIALNETS
 
-NETS 6 ;
+NETS 4 ;
 - clk ( PIN clk ) ( r5 CP ) ( r4 CP ) ( r3 CP ) ( r2 CP ) ( r1 CP ) ;
-- net1 ( r3 D ) ( buffer1 Z ) ;
-- net2 ( r4 D ) ( buffer2 Z ) ;
-- net3 ( r5 D ) ( buffer3 Z ) ;
-- net4 ( r2 D ) ( buffer4 Z ) ;
-- r1q ( buffer4 A ) ( buffer3 A ) ( buffer2 A ) ( buffer1 A ) ( r1 Q ) ;
+- net1 ( buffer2 A ) ( r3 D ) ( buffer1 Z ) ;
+- net2 ( r5 D ) ( r4 D ) ( buffer2 Z ) ;
+- r1q ( buffer1 A ) ( r2 D ) ( r1 Q ) ;
 END NETS
 
 
