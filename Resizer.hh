@@ -72,17 +72,15 @@ protected:
   void resizeToTargetSlew1(Instance *inst);
   void ensureTargetLoads();
   void findTargetLoads();
-  void findTargetLoads(LibertyLibrary *library,
-		       float *tgt_slews);
+  void findTargetLoads(LibertyLibrary *library);
   float findTargetLoad(LibertyCell *cell,
 		       TimingArc *arc,
 		       Slew in_slew);
-  void findBufferTargetSlews(// Return values.
-			     float *tgt_slews);
+  void ensureBufferTargetSlews();
+  void findBufferTargetSlews();
   void findBufferTargetSlews(LibertyLibrary *library,
 			     // Return values.
-			     float *slews,
-			     int *counts);
+			     int counts[]);
   void makeNetParasitics();
   void makeNetParasitics(const Net *net);
   ParasiticNode *findParasiticNode(SteinerTree *tree,
@@ -99,7 +97,6 @@ protected:
   RebufferOptionSeq rebufferBottomUp(SteinerTree *tree,
 				     SteinerPt k,
 				     int level,
-				     const Pin *drvr_pin,
 				     LibertyCell *buffer_cell);
   void rebufferTopDown(RebufferOption *choice,
 		       Net *net,
@@ -110,7 +107,6 @@ protected:
 		   SteinerTree *tree,
 		   SteinerPt k,
 		   int level,
-		   const Pin *drvr_pin,
 		   LibertyCell *buffer_cell);
   float portCapacitance(const LibertyPort *port);
   float pinCapacitance(const Pin *pin);
@@ -118,8 +114,9 @@ protected:
   Required pinRequired(const Pin *pin);
   Required vertexRequired(Vertex *vertex,
 			  const MinMax *min_max);
+  float gateDelay(LibertyPort *out_port,
+		  float load_cap);
   float bufferDelay(LibertyCell *buffer_cell,
-		    const Pin *in_pin,
 		    float load_cap);
   string makeUniqueNetName();
   string makeUniqueBufferName();
@@ -138,6 +135,8 @@ protected:
   CellTargetLoadMap *target_load_map_;
   InstanceSeq level_insts_;
   bool level_insts_valid_;
+  Slew tgt_slews_[TransRiseFall::index_count];
+  bool tgt_slews_valid_;
   int unique_net_index_;
   int unique_buffer_index_;
   int resize_count_;

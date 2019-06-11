@@ -55,6 +55,7 @@ singleOutputPin(const Instance *inst,
 Resizer::Resizer() :
   Sta(),
   level_insts_valid_(false),
+  tgt_slews_valid_(false),
   unique_net_index_(1),
   unique_buffer_index_(1)
 {
@@ -271,21 +272,19 @@ void
 Resizer::findTargetLoads()
 {
   // Find target slew across all buffers in the libraries.
-  float tgt_slews[TransRiseFall::index_count];
-  findBufferTargetSlews(tgt_slews);
+  ensureBufferTargetSlews();
 
   target_load_map_ = new CellTargetLoadMap;
   LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
   while (lib_iter->hasNext()) {
     LibertyLibrary *lib = lib_iter->next();
-    findTargetLoads(lib, tgt_slews);
+    findTargetLoads(lib);
   }
   delete lib_iter;
 }
 
 void
-Resizer::findTargetLoads(LibertyLibrary *library,
-			 float *tgt_slews)
+Resizer::findTargetLoads(LibertyLibrary *library)
 {
   LibertyCellIterator cell_iter(library);
   while (cell_iter.hasNext()) {
@@ -304,7 +303,7 @@ Resizer::findTargetLoads(LibertyLibrary *library,
 	  TimingArc *arc = arc_iter.next();
 	  TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
 	  float arc_target_load = findTargetLoad(cell, arc,
-						 tgt_slews[in_tr->index()]);
+						 tgt_slews_[in_tr->index()]);
 	  target_load_sum += arc_target_load;
 	  arc_count++;
 	}
@@ -349,30 +348,38 @@ Resizer::findTargetLoad(LibertyCell *cell,
 
 ////////////////////////////////////////////////////////////////
 
+// Find target slew across all buffers in the libraries.
 void
-Resizer::findBufferTargetSlews(// Return values.
-			       float *tgt_slews)
+Resizer::ensureBufferTargetSlews()
 {
-  tgt_slews[TransRiseFall::riseIndex()] = 0.0;
-  tgt_slews[TransRiseFall::fallIndex()] = 0.0;
+  if (!tgt_slews_valid_) {
+    findBufferTargetSlews();
+    tgt_slews_valid_ = true;
+  }
+}
+
+void
+Resizer::findBufferTargetSlews()
+{
+  tgt_slews_[TransRiseFall::riseIndex()] = 0.0;
+  tgt_slews_[TransRiseFall::fallIndex()] = 0.0;
   int counts[TransRiseFall::index_count]{0};
   
   LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
   while (lib_iter->hasNext()) {
     LibertyLibrary *lib = lib_iter->next();
-    findBufferTargetSlews(lib, tgt_slews, counts);
+    findBufferTargetSlews(lib, counts);
   }
   delete lib_iter;
 
-  tgt_slews[TransRiseFall::riseIndex()] /= counts[TransRiseFall::riseIndex()];
-  tgt_slews[TransRiseFall::fallIndex()] /= counts[TransRiseFall::fallIndex()];
+  tgt_slews_[TransRiseFall::riseIndex()] /= counts[TransRiseFall::riseIndex()];
+  tgt_slews_[TransRiseFall::fallIndex()] /= counts[TransRiseFall::fallIndex()];
 }
 
 void
 Resizer::findBufferTargetSlews(LibertyLibrary *library,
 			       // Return values.
-			       float *slews,
-			       int *counts)
+			       int counts[])
 {
   for (auto buffer : *library->buffers()) {
     LibertyPort *input, *output;
@@ -394,7 +401,7 @@ Resizer::findBufferTargetSlews(LibertyLibrary *library,
 			   arc_delay, arc_slew);
 	  model->gateDelay(buffer, pvt_, arc_slew, load_cap, 0.0, false,
 			   arc_delay, arc_slew);
-	  slews[out_tr->index()] += arc_slew;
+	  tgt_slews_[out_tr->index()] += arc_slew;
 	  counts[out_tr->index()]++;
 	}
       }
@@ -540,7 +547,6 @@ public:
   float cap() const { return cap_; }
   Required required() const { return required_; }
   Required bufferRequired(LibertyCell *buffer_cell,
-			  const Pin *drvr_pin,
 			  Resizer *resizer) const;
   DefPt location() const { return location_; }
   Pin *loadPin() const { return load_pin_; }
@@ -580,10 +586,9 @@ RebufferOption::~RebufferOption()
 
 Required
 RebufferOption::bufferRequired(LibertyCell *buffer_cell,
-			       const Pin *drvr_pin,
 			       Resizer *resizer) const
 {
-  return required_ - resizer->bufferDelay(buffer_cell, drvr_pin, cap_);
+  return required_ - resizer->bufferDelay(buffer_cell, cap_);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -595,6 +600,7 @@ Resizer::rebuffer(LibertyCell *buffer_cell,
 		  Corner *corner)
 {
   init(wire_res_per_length, wire_cap_per_length, corner);
+  ensureBufferTargetSlews();
   rebuffer(buffer_cell);
   report_->print("Inserted %d buffers.\n", rebuffer_count_);
 }
@@ -616,6 +622,7 @@ Resizer::rebuffer(Instance *inst,
 		  Corner *corner)
 {
   init(wire_res_per_length, wire_cap_per_length, corner);
+  ensureBufferTargetSlews();
   rebuffer(inst, buffer_cell);
   report_->print("Inserted %d buffers.\n", rebuffer_count_);
 }
@@ -644,10 +651,12 @@ Resizer::rebuffer(const Pin *drvr_pin,
 		  LibertyCell *buffer_cell)
 {
   Net *net = network_->net(drvr_pin);
-  LibertyCell *drvr_cell = network_->libertyCell(network_->instance(drvr_pin));
-  if (drvr_cell == nullptr)
+  LibertyPort *drvr_port = network_->libertyPort(drvr_pin);
+  if (drvr_port == nullptr) {
     // Top level port. Should use sdc external driver here.
-    drvr_cell = buffer_cell;
+    LibertyPort *input;
+    buffer_cell->bufferPorts(input, drvr_port);
+  }
   LefDefNetwork *network = lefDefNetwork();
   SteinerTree *tree = makeSteinerTree(net, true, network);
   SteinerPt drvr_pt = tree->drvrPt(network_);
@@ -656,12 +665,11 @@ Resizer::rebuffer(const Pin *drvr_pin,
   if (!fuzzyInf(drvr_req)) {
     debugPrint1(debug_, "rebuffer", 2, "driver %s\n",
 		sdc_network_->pathName(drvr_pin));
-    RebufferOptionSeq Z = rebufferBottomUp(tree, drvr_pt, 1,
-					   drvr_pin, buffer_cell);
+    RebufferOptionSeq Z = rebufferBottomUp(tree, drvr_pt, 1, buffer_cell);
     Required Tbest = -INF;
     RebufferOption *best = nullptr;
     for (auto p : Z) {
-      Required Tb = p->bufferRequired(drvr_cell, drvr_pin, this);
+      Required Tb = p->required() - gateDelay(drvr_port, p->cap());
       if (fuzzyGreater(Tb, Tbest)) {
 	Tbest = Tb;
 	best = p;
@@ -679,7 +687,6 @@ RebufferOptionSeq
 Resizer::rebufferBottomUp(SteinerTree *tree,
 			  SteinerPt k,
 			  int level,
-			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
   if (k != SteinerTree::null_pt) {
@@ -688,8 +695,8 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
       // Driver has only left branch so this looks like a degenerate
       // case of a steiner point.
       RebufferOptionSeq Z = rebufferBottomUp(tree, tree->left(k), level + 1,
-					      drvr_pin, buffer_cell);
-      return addWireAndBuffer(Z, tree, k, level, drvr_pin, buffer_cell);
+					      buffer_cell);
+      return addWireAndBuffer(Z, tree, k, level, buffer_cell);
     }
     else if (pin && network_->isLoad(pin)) {
       // Load capacitance and required time.
@@ -711,9 +718,9 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
     else if (pin == nullptr) {
       // Steiner pt.
       RebufferOptionSeq Zl = rebufferBottomUp(tree, tree->left(k), level + 1,
-					      drvr_pin, buffer_cell);
+					      buffer_cell);
       RebufferOptionSeq Zr = rebufferBottomUp(tree, tree->right(k), level + 1,
-					      drvr_pin, buffer_cell);
+					      buffer_cell);
       RebufferOptionSeq Z2;
       // Combine the options from both branches.
       for (auto p : Zl) {
@@ -734,17 +741,19 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
       // Prune the options. This is fanout^2.
       for (auto p : Z2) {
 	if (p) {
-	  Required Tp = p->bufferRequired(buffer_cell, drvr_pin, this);
+	  Required Tp = p->bufferRequired(buffer_cell, this);
 	  float Lp = p->cap();
 	  int qi = 0;
 	  for (auto q : Z2) {
 	    if (q) {
-	      Required Tq = q->bufferRequired(buffer_cell, drvr_pin, this);
+	      Required Tq = q->bufferRequired(buffer_cell, this);
 	      float Lq = q->cap();
-	      if (fuzzyLess(Tp, Tq) && fuzzyLess(Lp, Lq)) {
+#if 0
+	      if (fuzzyLess(Tq, Tp) && fuzzyGreater(Lq, Lp)) {
 		// If q is strictly worse than p, remove solution q.
 		Z2[qi] = nullptr;
 	      }
+#endif
 	      qi++;
 	    }
 	  }
@@ -761,7 +770,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	  Z.push_back(p);
 	}
       }
-      return addWireAndBuffer(Z, tree, k, level, drvr_pin, buffer_cell);
+      return addWireAndBuffer(Z, tree, k, level, buffer_cell);
     }
   }
   return RebufferOptionSeq();
@@ -772,7 +781,6 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 			  SteinerTree *tree,
 			  SteinerPt k,
 			  int level,
-			  const Pin *drvr_pin,
 			  LibertyCell *buffer_cell)
 {
   LefDefNetwork *network = lefDefNetwork();
@@ -807,7 +815,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
     // We could add options of different buffer drive strengths here
     // Which would have different delay Dbuf and input cap Lbuf
     // for simplicity we only consider one size of buffer.
-    Required rt = z->bufferRequired(buffer_cell, drvr_pin, this);
+    Required rt = z->bufferRequired(buffer_cell, this);
     if (fuzzyGreater(rt, best)) {
       best = rt;
       best_ref = p;
@@ -820,12 +828,12 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 					   nullptr,
 					   tree->location(k),
 					   best_ref, nullptr);
-    Z1.push_back(z);
     debugPrint5(debug_, "rebuffer", 3, "%*sbuffer %s cap %s req %s\n",
 		level, "",
 		tree->name(k, sdc_network_),
 		units_->capacitanceUnit()->asString(z->cap()),
 		delayAsString(z->required(), this));
+    Z1.push_back(z);
   }
   return Z1;
 }
@@ -961,33 +969,40 @@ Resizer::vertexRequired(Vertex *vertex,
 
 float
 Resizer::bufferDelay(LibertyCell *buffer_cell,
-		     const Pin *in_pin,
 		     float load_cap)
 {
-  // Average rise/fall delays.
-  ArcDelay arc_delays = 0.0;
-  int arc_count = 0;
-  LibertyCellTimingArcSetIterator set_iter(buffer_cell);
-  TimingArcSet *arc_set = set_iter.next();
-  TimingArcSetArcIterator arc_iter(arc_set);
-  while (arc_iter.hasNext()) {
-    TimingArc *arc = arc_iter.next();
-    TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
-    Vertex *in_vertex = graph_->pinLoadVertex(in_pin);
-    float in_slew = graph_->slew(in_vertex, in_tr, dcalc_ap_->index());
-    ArcDelay gate_delay;
-    Slew drvr_slew;
-    arc_delay_calc_->gateDelay(buffer_cell, arc, in_slew, load_cap,
-			       nullptr, 0.0, pvt_, dcalc_ap_,
-			       gate_delay,
-			       drvr_slew);
-    arc_delays += gate_delay;
-    arc_count++;
+  LibertyPort *input, *output;
+  buffer_cell->bufferPorts(input, output);
+  return gateDelay(output, load_cap);
+}
+
+float
+Resizer::gateDelay(LibertyPort *out_port,
+		   float load_cap)
+{
+  LibertyCell *cell = out_port->libertyCell();
+  // Max rise/fall delays.
+  ArcDelay max_delay = -INF;
+  LibertyCellTimingArcSetIterator set_iter(cell);
+  while (set_iter.hasNext()) {
+    TimingArcSet *arc_set = set_iter.next();
+    if (arc_set->to() == out_port) {
+      TimingArcSetArcIterator arc_iter(arc_set);
+      while (arc_iter.hasNext()) {
+	TimingArc *arc = arc_iter.next();
+	TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
+	float in_slew = tgt_slews_[in_tr->index()];
+	ArcDelay gate_delay;
+	Slew drvr_slew;
+	arc_delay_calc_->gateDelay(cell, arc, in_slew, load_cap,
+				   nullptr, 0.0, pvt_, dcalc_ap_,
+				   gate_delay,
+				   drvr_slew);
+	max_delay = max(max_delay, gate_delay);
+      }
+    }
   }
-  if (arc_count > 0)
-    return arc_delays / arc_count;
-  else
-    return 0.0;
+  return max_delay;
 }
 
 };
