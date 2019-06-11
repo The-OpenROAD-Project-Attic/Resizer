@@ -98,15 +98,18 @@ protected:
 		LibertyCell *buffer_cell);
   RebufferOptionSeq rebufferBottomUp(SteinerTree *tree,
 				     SteinerPt k,
+				     int level,
 				     const Pin *drvr_pin,
 				     LibertyCell *buffer_cell);
   void rebufferTopDown(RebufferOption *choice,
 		       Net *net,
+		       int level,
 		       LibertyCell *buffer_cell);
   RebufferOptionSeq
   addWireAndBuffer(RebufferOptionSeq Z,
 		   SteinerTree *tree,
 		   SteinerPt k,
+		   int level,
 		   const Pin *drvr_pin,
 		   LibertyCell *buffer_cell);
   float portCapacitance(const LibertyPort *port);
