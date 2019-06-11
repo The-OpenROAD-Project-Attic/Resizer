@@ -52,10 +52,13 @@ Addtional commands are
 
 Liberty libraries should be read before LEF and DEF.  Only one LEF and
 one DEF file are supported.  The res (ohms/meter) and cap
-(farads/meter) args are used to add parasitics based on placed
-component locations. If res and cap are not specified the
-default_wireload model specified in the first liberty file or with the
-set_wire_load command are used.
+(farads/meter) args are used to add wire parasitics based on placed
+component locations. The resistance and capacitance are per meter of a
+routing wire. They should be an average of metal layer resistance and
+capacitance values for routing.  If -wire_res_per_length and
+-wire_cap_per_length are not specified the default_wireload model
+specified in the first liberty file or with the SDC set_wire_load
+command are used.
 
 A typical resizer command file is shown below.
 
