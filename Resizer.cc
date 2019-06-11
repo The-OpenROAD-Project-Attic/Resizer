@@ -748,12 +748,10 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	    if (q) {
 	      Required Tq = q->bufferRequired(buffer_cell, this);
 	      float Lq = q->cap();
-#if 0
 	      if (fuzzyLess(Tq, Tp) && fuzzyGreater(Lq, Lp)) {
 		// If q is strictly worse than p, remove solution q.
 		Z2[qi] = nullptr;
 	      }
-#endif
 	      qi++;
 	    }
 	  }
