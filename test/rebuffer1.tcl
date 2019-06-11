@@ -1,4 +1,4 @@
-# rebuffer fanout 4 regs in a line
+# rebuffer fanout 4 regs in a line driven from one end
 source "helpers.tcl"
 read_liberty liberty1.lib
 read_lef liberty1.lef
