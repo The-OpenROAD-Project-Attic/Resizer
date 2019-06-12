@@ -10,7 +10,7 @@ set_input_delay -clock clk 0 {in1 in2}
 set_load .2 u1z
 
 report_checks
-resize
+resize -resize
 report_checks
 
 set def_file [make_result_file resize2.def]

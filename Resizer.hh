@@ -35,38 +35,31 @@ public:
   LefDefNetwork *lefDefNetwork();
   void initFlute(const char *resizer_path);
 
+  // Set the resistance and capacitance used for parasitics.
+  // Make net wire parasitics based on DEF locations.
+  void setWireRC(float wire_res, // ohms/meter
+		 float wire_cap, // farads/meter
+		 Corner *corner);
   // Resize all instances in the network.
-  void resize(float wire_res_per_length, // ohms/meter
-	      float wire_cap_per_length, // farads/meter
-	      Corner *corner);
+  void resize(bool resize,
+	      bool repair_max_cap,
+	      bool repair_max_slew,
+	      LibertyCell *buffer_cell);
 
   // The functions below are for testing phases of the resizer.
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
-  // Make net wire parasitics based on DEF locations.
-  void makeNetParasitics(float wire_res_per_length,  // ohms/meter
-			 float wire_cap_per_length,  // farads/meter
-			 Corner *corner);
+
+  // Rebuffer instance output net.
   // Assumes buffer_cell->isBuffer() is true.
-  void rebuffer(bool repair_max_cap,
-		bool repair_max_slew,
-		LibertyCell *buffer_cell,
-		float wire_res_per_length,
-		float wire_cap_per_length,
-		Corner *corner);
-  // Rebuffer instance if it is over its capacitance limit.
   void rebuffer(Instance *inst,
-		LibertyCell *buffer_cell,
-		float wire_res_per_length,
-		float wire_cap_per_length,
-		Corner *corner);
+		LibertyCell *buffer_cell);
 
 protected:
-  void init(float wire_res_per_length,
-	    float wire_cap_per_length,
-	    Corner *corner);
   virtual void makeNetwork();
+  void init();
+  void ensureCorner();
   void initCorner(Corner *corner);
   void ensureLevelInsts();
   void resizeToTargetSlew();
@@ -90,10 +83,9 @@ protected:
 				   const Pin *pin,
 				   int steiner_pt);
 
+  // Assumes buffer_cell->isBuffer() is true.
   void rebuffer(bool repair_max_cap,
 		bool repair_max_slew,
-		LibertyCell *buffer_cell);
-  void rebuffer(Instance *inst,
 		LibertyCell *buffer_cell);
   void rebuffer(const Pin *drvr_pin,
 		LibertyCell *buffer_cell);
@@ -130,10 +122,9 @@ protected:
 
   friend class RebufferOption;
 
-protected:
   Corner *corner_;
-  float wire_res_per_length_;
-  float wire_cap_per_length_;
+  float wire_res_;
+  float wire_cap_;
 
   const MinMax *min_max_;
   const DcalcAnalysisPt *dcalc_ap_;

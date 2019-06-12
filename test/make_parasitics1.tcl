@@ -16,8 +16,9 @@ set m1_area_cap 39e-6
 # Farads/meter.
 set m1_edge_cap 57e-12
 # 4 lambda wide wire
-set wire_cap_per_meter [expr $m1_area_cap * $lambda * 4 + $m1_edge_cap * 2]
-set wire_res_per_meter [expr $m1_res_sq / ($lambda * 4)]
-sta::make_net_parasitics $wire_res_per_meter $wire_cap_per_meter
+# res/cap are per meter of wire length
+set wire_cap [expr $m1_area_cap * $lambda * 4 + $m1_edge_cap * 2]
+set wire_res [expr $m1_res_sq / ($lambda * 4)]
+set_wire_rc -resistance $wire_res -capacitance $wire_cap
 
 report_checks

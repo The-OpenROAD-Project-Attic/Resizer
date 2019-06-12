@@ -59,6 +59,9 @@ singleOutputPin(const Instance *inst,
 
 Resizer::Resizer() :
   Sta(),
+  corner_(nullptr),
+  wire_res_(0.0),
+  wire_cap_(0.0),
   level_insts_valid_(false),
   tgt_slews_valid_(false),
   unique_net_index_(1),
@@ -124,14 +127,8 @@ InstanceOutputLevelLess::outputLevel(const Instance *inst) const
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::init(float wire_res_per_length,
-	      float wire_cap_per_length,
-	      Corner *corner)
+Resizer::init()
 {
-  initCorner(corner);
-  wire_res_per_length_ = wire_res_per_length;
-  wire_cap_per_length_ = wire_cap_per_length;
-
   // Disable incremental timing.
   graph_delay_calc_->delaysInvalid();
   search_->arrivalsInvalid();
@@ -143,21 +140,45 @@ Resizer::init(float wire_res_per_length,
 }
 
 void
-Resizer::resize(float wire_res_per_length,
-		float wire_cap_per_length,
-		Corner *corner)
+Resizer::setWireRC(float wire_res,
+		   float wire_cap,
+		   Corner *corner)
 {
-  init(wire_res_per_length, wire_cap_per_length, corner);
+  wire_res_ = wire_res;
+  wire_cap_ = wire_cap;
+  initCorner(corner);
+  // Disable incremental timing.
+  graph_delay_calc_->delaysInvalid();
+  search_->arrivalsInvalid();
+  makeNetParasitics();
+}
 
+void
+Resizer::resize(bool resize,
+		bool repair_max_cap,
+		bool repair_max_slew,
+		LibertyCell *buffer_cell)
+{
+  init();
+  ensureCorner();
   // Find a target slew for the libraries and then
   // a target load for each cell that gives the target slew.
   ensureTargetLoads();
+  if (resize) {
+    resizeToTargetSlew();
+    report_->print("Resized %d instances.\n", resize_count_);
+  }
+  if (repair_max_cap || repair_max_slew) {
+    rebuffer(repair_max_cap, repair_max_slew, buffer_cell);
+    report_->print("Inserted %d buffers.\n", rebuffer_count_);
+  }
+}
 
-  if (wire_cap_per_length > 0.0)
-    makeNetParasitics();
-
-  resizeToTargetSlew();
-  report_->print("Resized %d instances.\n", resize_count_);
+void
+Resizer::ensureCorner()
+{
+  if (corner_ == nullptr)
+    initCorner(cmd_corner_);
 }
 
 void
@@ -190,7 +211,7 @@ void
 Resizer::resizeToTargetSlew(Instance *inst,
 			    Corner *corner)
 {
-  init(0.0, 0.0, corner);
+  initCorner(corner);
   ensureTargetLoads();
   resizeToTargetSlew1(inst);
 }
@@ -449,15 +470,6 @@ Resizer::initFlute(const char *resizer_path)
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::makeNetParasitics(float wire_res_per_length,
-			   float wire_cap_per_length,
-			   Corner *corner)
-{
-  init(wire_res_per_length, wire_cap_per_length, corner);
-  makeNetParasitics();
-}
-
-void
 Resizer::makeNetParasitics()
 {
   NetIterator *net_iter = network_->netIterator(network_->topInstance());
@@ -497,8 +509,8 @@ Resizer::makeNetParasitics(const Net *net)
 	  parasitics_->makeResistor(nullptr, n1, n2, 1.0e-3, parasitics_ap_);
 	else {
 	  float wire_length = network->dbuToMeters(wire_length_dbu);
-	  float wire_cap = wire_length * wire_cap_per_length_;
-	  float wire_res = wire_length * wire_res_per_length_;
+	  float wire_cap = wire_length * wire_cap_;
+	  float wire_res = wire_length * wire_res_;
 	  // Make pi model for the wire.
 	  debugPrint5(debug_, "resizer_parasitics", 2,
 		      " pi %s c2=%s rpi=%s c1=%s %s\n",
@@ -598,20 +610,6 @@ RebufferOption::bufferRequired(LibertyCell *buffer_cell,
 
 ////////////////////////////////////////////////////////////////
 
-void
-Resizer::rebuffer(bool repair_max_cap,
-		  bool repair_max_slew,
-		  LibertyCell *buffer_cell,
-		  float wire_res_per_length,
-		  float wire_cap_per_length,
-		  Corner *corner)
-{
-  init(wire_res_per_length, wire_cap_per_length, corner);
-  ensureBufferTargetSlews();
-  rebuffer(repair_max_cap, repair_max_slew, buffer_cell);
-  report_->print("Inserted %d buffers.\n", rebuffer_count_);
-}
-
 // EvalPred unless (no dynamic loop breaking)
 //  latch D->Q edge
 class SearchThru1 : public EvalPred
@@ -692,12 +690,10 @@ Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
 
 void
 Resizer::rebuffer(Instance *inst,
-		  LibertyCell *buffer_cell,
-		  float wire_res_per_length,
-		  float wire_cap_per_length,
-		  Corner *corner)
+		  LibertyCell *buffer_cell)
 {
-  init(wire_res_per_length, wire_cap_per_length, corner);
+  init();
+  ensureCorner();
   ensureBufferTargetSlews();
   LibertyCell *cell = network_->libertyCell(inst);
   if (cell) {
@@ -706,25 +702,6 @@ Resizer::rebuffer(Instance *inst,
       rebuffer(output, buffer_cell);
   }
   report_->print("Inserted %d buffers.\n", rebuffer_count_);
-}
-
-void
-Resizer::rebuffer(Instance *inst,
-		  LibertyCell *buffer_cell)
-{
-  LibertyCell *cell = network_->libertyCell(inst);
-  if (cell) {
-    Pin *output = singleOutputPin(inst, network_);
-    if (output) {
-      float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
-      LibertyPort *port = network_->libertyPort(output);
-      float cap_limit;
-      bool exists;
-      port->capacitanceLimit(min_max_, cap_limit, exists);
-      if (exists && load_cap > cap_limit)
-	rebuffer(output, buffer_cell);
-    }
-  }
 }
 
 void
@@ -867,8 +844,8 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
   DefDbu wire_length_dbu = abs(k_loc.x() - prev_loc.x())
     + abs(k_loc.y() - prev_loc.y());
   float wire_length = network->dbuToMeters(wire_length_dbu);
-  float wire_cap = wire_length * wire_cap_per_length_;
-  float wire_res = wire_length * wire_res_per_length_;
+  float wire_cap = wire_length * wire_cap_;
+  float wire_res = wire_length * wire_res_;
   float wire_delay = wire_res * wire_cap;
   for (auto p : Z) {
     RebufferOption *z = new RebufferOption(RebufferOption::Type::wire,

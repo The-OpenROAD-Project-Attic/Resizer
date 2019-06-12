@@ -7,7 +7,7 @@ Expected directory layout
 /resizer - this source tree
 /lef - Si2 lef reader/writer
 /def - Si2 def reader/writer
-/flute - flute steiner tree package version 2. (http://home.eng.iastate.edu/~cnchu/flute.html)
+/flute - flute steiner tree package version 2.2
 /opensta - OpenSTA
 
 git clone https://parallax.xp-dev.com/git/resizer
@@ -45,20 +45,31 @@ Addtional commands are
 
 * read_lef filename
 * read_def filename
-* resize [-wire_res_per_length res]
-         [-wire_cap_per_length cap]
-         [-corner corner_name]
+* set_wire_rc [-resistance res ] [-capacitance cap] [-corner corner_name]
+* resize [-resize]
+	 [-repair_max_cap]
+	 [-repair_max_slew]
+	 [-buffer_cell buffer_cell]
 * write_def filename
 
 Liberty libraries should be read before LEF and DEF.  Only one LEF and
-one DEF file are supported.  The res (ohms/meter) and cap
-(farads/meter) args are used to add wire parasitics based on placed
-component locations. The resistance and capacitance are per meter of a
-routing wire. They should be an average of metal layer resistance and
-capacitance values for routing.  If -wire_res_per_length and
--wire_cap_per_length are not specified the default_wireload model
-specified in the first liberty file or with the SDC set_wire_load
-command are used.
+one DEF file are supported.  
+
+The set_wire_rc command set the resistance (ohms/meter) and
+capacitance (farads/meter) of routing wires. It adds parasitics based
+on placed component locations.  The resistance and capacitance are per
+meter of a routing wire. They should represent "average" routing layer
+resistance and capacitance.  If the set_wire_rc command is not called
+before resizing, the default_wireload model specified in the first
+liberty file or with the SDC set_wire_load command is used to make
+parasitics.
+
+The resize command resizes gates and then uses buffer insertion to
+repair maximum capacitance and slew violations. Use the 
+-resize, -repair_max_cap and -repair_max_slew options to invoke
+a single mode. With none of the options specified all are done.
+The -buffer_cell argument is required for buffer insertion 
+(-repair_max_cap or -repair_max_slew).
 
 A typical resizer command file is shown below.
 
@@ -67,7 +78,8 @@ read_liberty nlc18.lib
 read_lef nlc18.lef
 read_def mea.def
 read_sdc mea.sdc
-resize -wire_res_per_length 1.67e+05 -wire_cap_per_length 1.33e-10
+set_wire_rc -resistance 1.67e+05 -capacitance 1.33e-10
+resize
 write_def mea_resized.def
 ```
 To run this example use the following commands.
@@ -81,6 +93,7 @@ Note that OpenSTA commands can be used to report timing metrics before or after
 the resizing.
 
 ```
+set_wire_rc -resistance 1.67e+05 -capacitance 1.33e-10
 report_tns
 report_wns
 

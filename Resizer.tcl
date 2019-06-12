@@ -23,28 +23,56 @@ define_cmd_args "read_def" {filename}
 
 define_cmd_args "write_def" {filename}
 
-define_cmd_args "resize" {[-wire_res_per_length res]\
-			    [-wire_cap_per_length cap]\
-			    [-corner corner_name]}
+define_cmd_args "set_wire_rc" {[-resistance res ][-capacitance cap]\
+				 [-corner corner_name]}
+
+proc set_wire_rc { args } {
+   parse_key_args "set_wire_rc" args \
+    keys {-resistance -capacitance -corner} flags {}
+
+  set wire_res 0.0
+  if [info exists keys(-resistance)] {
+    set res $keys(-resistance)
+    check_positive_float "-resistance" $res
+  }
+  set wire_cap 0.0
+  if [info exists keys(-capacitance)] {
+    set cap $keys(-capacitance)
+    check_positive_float "-capacitance" $cap
+  }
+  set corner [parse_corner keys]
+  check_argc_eq0 "set_wire_rc" $args
+  set_wire_rc_cmd $res $cap $corner
+}
+
+define_cmd_args "resize" {[-resize]\
+			    [-repair_max_cap]\
+			    [-repair_max_slew]\
+			    [-buffer_cell buffer_cell]}
 
 proc resize { args } {
   parse_key_args "resize" args \
-    keys {-wire_res_per_length -wire_cap_per_length -corner} flags {}
+    keys {-buffer_cell} flags {-resize -repair_max_cap -repair_max_slew}
 
+  set resize [info exists flags(-resize)]
+  set repair_max_cap [info exists flags(-repair_max_cap)]
+  set repair_max_slew [info exists flags(-repair_max_slew)]
+  if { !($resize || $repair_max_cap || $repair_max_slew) } {
+    set resize 1
+    set repair_max_cap 1
+    set repair_max_slew 1
+  }
+  if { [info exists keys(-buffer_cell)] } {
+    set buffer_cell [get_lib_cell $keys(-buffer_cell)]
+  } else {
+    set buffer_cell "NULL"
+    if { $repair_max_cap || $repair_max_slew } {
+      sta_error "Error: resize -buffer_cell required for buffer insertion."
+    }
+  }
   check_argc_eq0 "resize" $args
-  set wire_res_per_length 0.0
-  if [info exists keys(-wire_res_per_length)] {
-    set wire_res_per_length $keys(-wire_res_per_length)
-    check_positive_float "-wire_res_per_length" $wire_res_per_length
-  }
-  set wire_cap_per_length 0.0
-  if [info exists keys(-wire_cap_per_length)] {
-    set wire_cap_per_length $keys(-wire_cap_per_length)
-    check_positive_float "-wire_cap_per_length" $wire_cap_per_length
-  }
-  set corner [parse_corner keys]
 
-  resize_cmd $wire_res_per_length $wire_cap_per_length $corner
+  resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell
 }
 
 # sta namespace end
