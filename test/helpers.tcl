@@ -1,6 +1,7 @@
 # Helper functions common to multiple regressions.
 
-set result_dir "/tmp"
+set test_dir [file dirname [file normalize [info script]]]
+set result_dir [file join $test_dir "results"]
 
 # puts [exec cat $file] without forking.
 proc report_file { file } {
