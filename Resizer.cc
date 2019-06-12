@@ -41,6 +41,8 @@
 //  multi-corner support?
 //  tcl cmds to set liberty pin cap and limit for testing
 //  unplaced nets should use wireload model parasitic instead of steiner parasitics
+//  check lef/liberty cells match
+//  check one lef, one def
 
 namespace sta {
 

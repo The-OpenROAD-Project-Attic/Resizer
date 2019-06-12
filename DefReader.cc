@@ -18,6 +18,7 @@
 #include "Report.hh"
 #include "Error.hh"
 #include "PortDirection.hh"
+#include "ParseBus.hh"
 #include "LefDefNetwork.hh"
 #include "defrReader.hpp"
 
@@ -280,24 +281,9 @@ static const char *
 defToSta(const char *token,
 	 Network *network)
 {
-  char path_escape = network->pathEscape();
   char path_divider = network->pathDivider();
-  char *escaped = makeTmpString(strlen(token) + 1);
-  char *e = escaped;
-  for (const char *s = token; *s ; s++) {
-    char ch = *s;
-
-    if (ch == path_divider) {
-      // Insert escape for divider.
-      *e++ = path_escape;
-      *e++ = path_divider;
-    }
-    else
-      // Just the normal noises.
-      *e++ = ch;
-  }
-  *e = '\0';
-  return escaped;
+  char path_escape = network->pathEscape();
+  return escapeChars(token, path_escape, '\0', path_escape);
 }
 
 } // namespace
