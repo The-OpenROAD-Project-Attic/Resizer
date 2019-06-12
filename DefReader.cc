@@ -283,7 +283,7 @@ defToSta(const char *token,
 {
   char path_divider = network->pathDivider();
   char path_escape = network->pathEscape();
-  return escapeChars(token, path_escape, '\0', path_escape);
+  return escapeChars(token, path_divider, '\0', path_escape);
 }
 
 } // namespace
