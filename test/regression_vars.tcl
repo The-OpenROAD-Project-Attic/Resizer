@@ -135,6 +135,7 @@ record_resizer_tests {
   read_def2
   rebuffer1
   rebuffer2
+  rebuffer4
   resize1
   resize2
   write_def1

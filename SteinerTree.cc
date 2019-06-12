@@ -96,14 +96,14 @@ makeSteinerTree(const Net *net,
     int flute_accuracy = 3;
     Tree stree = flute(pin_count, x, y, flute_accuracy, pin_map);
     tree->setTree(stree, pin_map);
-    if (find_left_rights)
-      tree->findLeftRights(network);
     if (debug->check("steiner", 3)) {
       printtree(stree);
       report->print("pin map\n");
       for (int i = 0; i < pin_count; i++)
 	report->print(" %d -> %d\n", i, pin_map[i]);
     }
+    if (find_left_rights)
+      tree->findLeftRights(network);
     if (debug->check("steiner", 2))
       tree->report(sdc_network);
     return tree;
@@ -293,29 +293,50 @@ SteinerTree::location(SteinerPt pt) const
 void
 SteinerTree::findLeftRights(const Network *network)
 {
+  Debug *debug = network->debug();
   int branch_count = branchCount();
   left_.resize(branch_count, SteinerTree::null_pt);
   right_.resize(branch_count, SteinerTree::null_pt);
   int pin_count = pinCount();
   SteinerPtSeq adj1(branch_count, SteinerTree::null_pt);
   SteinerPtSeq adj2(branch_count, SteinerTree::null_pt);
+  SteinerPtSeq adj3(branch_count, SteinerTree::null_pt);
   for (int i = 0; i < branch_count; i++) {
     Branch &branch_pt = tree_.branch[i];
     SteinerPt j = branch_pt.n;
     if (j != i) {
-      if (adj1[j] < 0)
-	adj1[j] = i;
+      if (adj1[i] == SteinerTree::null_pt)
+	adj1[i] = j;
+      else if (adj2[i] == SteinerTree::null_pt)
+	adj2[i] = j;
       else
+	adj3[i] = j;
+
+      if (adj1[j] == SteinerTree::null_pt)
+	adj1[j] = i;
+      else if (adj2[j] == SteinerTree::null_pt)
 	adj2[j] = i;
+      else
+	adj3[j] = i;
+    }
+  }
+  if (debug->check("steiner", 3)) {
+    printf("adjacent\n");
+    for (int i = 0; i < branch_count; i++) {
+      printf("%d:", i);
+      if (adj1[i] != SteinerTree::null_pt)
+	printf(" %d", adj1[i]);
+      if (adj2[i] != SteinerTree::null_pt)
+	printf(" %d", adj2[i]);
+      if (adj3[i] != SteinerTree::null_pt)
+	printf(" %d", adj3[i]);
+      printf("\n");
     }
   }
   SteinerPt root = drvrPt(network);
-  SteinerPt root_adj = adjacentPt(root);
-  // Kludge for when the steiner root vertex has non-branch.
-  if (root_adj == root)
-    root_adj = adj1[root];
+  SteinerPt root_adj = adj1[root];
   left_[root] = root_adj;
-  findLeftRights(root, root_adj, adj1, adj2);
+  findLeftRights(root, root_adj, adj1, adj2, adj3);
 }
 
 SteinerPt
@@ -328,19 +349,17 @@ void
 SteinerTree::findLeftRights(SteinerPt from,
 			    SteinerPt to,
 			    SteinerPtSeq &adj1,
-			    SteinerPtSeq &adj2)
+			    SteinerPtSeq &adj2,
+			    SteinerPtSeq &adj3)
 {
   if (to >= pinCount()) {
     SteinerPt adj;
-    adj = adjacentPt(to);
-    if (adj != to)
-      findLeftRights(from, to, adj, adj1, adj2);
     adj = adj1[to];
-    if (adj >= 0)
-      findLeftRights(from, to, adj, adj1, adj2);
+    findLeftRights(from, to, adj, adj1, adj2, adj3);
     adj = adj2[to];
-    if (adj >= 0)
-      findLeftRights(from, to, adj, adj1, adj2);
+    findLeftRights(from, to, adj, adj1, adj2, adj3);
+    adj = adj3[to];
+    findLeftRights(from, to, adj, adj1, adj2, adj3);
   }
 }
 
@@ -349,18 +368,19 @@ SteinerTree::findLeftRights(SteinerPt from,
 			    SteinerPt to,
 			    SteinerPt adj,
 			    SteinerPtSeq &adj1,
-			    SteinerPtSeq &adj2)
+			    SteinerPtSeq &adj2,
+			    SteinerPtSeq &adj3)
 {
-  if (adj != from) {
+  if (adj != from && adj != SteinerTree::null_pt) {
     if (adj == to)
       internalError("steiner left/right failed");
-    if (left_[to] < 0) {
+    if (left_[to] == SteinerTree::null_pt) {
       left_[to] = adj;
-      findLeftRights(to, adj, adj1, adj2);
+      findLeftRights(to, adj, adj1, adj2, adj3);
     }
-    else if (right_[to] < 0) {
+    else if (right_[to] == SteinerTree::null_pt) {
       right_[to] = adj;
-      findLeftRights(to, adj, adj1, adj2);
+      findLeftRights(to, adj, adj1, adj2, adj3);
     }
   }
 }

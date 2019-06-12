@@ -128,12 +128,14 @@ protected:
   void findLeftRights(SteinerPt from,
 		      SteinerPt to,
 		      SteinerPtSeq &adj1,
-		      SteinerPtSeq &adj2);
+		      SteinerPtSeq &adj2,
+		      SteinerPtSeq &adj3);
   void findLeftRights(SteinerPt from,
 		      SteinerPt to,
 		      SteinerPt adj,
 		      SteinerPtSeq &adj1,
-		      SteinerPtSeq &adj2);
+		      SteinerPtSeq &adj2,
+		      SteinerPtSeq &adj3);
   void checkSteinerPt(SteinerPt pt) const;
 
   Tree tree_;

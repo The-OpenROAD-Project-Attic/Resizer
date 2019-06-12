@@ -727,19 +727,16 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
       // Combine the options from both branches.
       for (auto p : Zl) {
 	for (auto q : Zr) {
-	  if (p != q) {
-	    RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
-						      p->cap() + q->cap(),
-						      min(p->required(),
-							  q->required()),
-						      nullptr,
-						      tree->location(k),
-						      p, q);
-	    Z2.push_back(junc);
-	  }
+	  RebufferOption *junc = new RebufferOption(RebufferOption::Type::junction,
+						    p->cap() + q->cap(),
+						    min(p->required(),
+							q->required()),
+						    nullptr,
+						    tree->location(k),
+						    p, q);
+	  Z2.push_back(junc);
 	}
       }
-
       // Prune the options. This is fanout^2.
       for (auto p : Z2) {
 	if (p) {
@@ -829,12 +826,14 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 					   best,
 					   nullptr,
 					   // Locate buffer at opposite end of wire.
-					   tree->location(prev),
+					   prev_loc,
 					   best_ref, nullptr);
-    debugPrint5(debug_, "rebuffer", 3, "%*sbuffer %s cap %s req %s\n",
+    debugPrint7(debug_, "rebuffer", 3, "%*sbuffer %s cap %s req %s -> cap %s req %s\n",
 		level, "",
 		tree->name(prev, sdc_network_),
-		units_->capacitanceUnit()->asString(z->ref()->cap()),
+		units_->capacitanceUnit()->asString(best_ref->cap()),
+		delayAsString(best_ref->required(), this),
+		units_->capacitanceUnit()->asString(z->cap()),
 		delayAsString(z->required(), this));
     Z1.push_back(z);
   }
