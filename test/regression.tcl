@@ -460,6 +460,11 @@ proc test_log_file { test } {
   return [file join $result_dir "$test.log"]
 }
 
+proc test_tmp_file { test } {
+  global result_dir
+  return [file join $result_dir $test.tmp]
+}
+
 proc test_valgrind_file { test } {
   global result_dir
   return [file join $result_dir $test.valgrind]
