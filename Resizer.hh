@@ -48,9 +48,10 @@ public:
   void makeNetParasitics(float wire_res_per_length,  // ohms/meter
 			 float wire_cap_per_length,  // farads/meter
 			 Corner *corner);
-  // Rebuffer instances that over their capacitance limit.
   // Assumes buffer_cell->isBuffer() is true.
-  void rebuffer(LibertyCell *buffer_cell,
+  void rebuffer(bool repair_max_cap,
+		bool repair_max_slew,
+		LibertyCell *buffer_cell,
 		float wire_res_per_length,
 		float wire_cap_per_length,
 		Corner *corner);
@@ -89,11 +90,15 @@ protected:
 				   const Pin *pin,
 				   int steiner_pt);
 
-  void rebuffer(LibertyCell *buffer_cell);
+  void rebuffer(bool repair_max_cap,
+		bool repair_max_slew,
+		LibertyCell *buffer_cell);
   void rebuffer(Instance *inst,
 		LibertyCell *buffer_cell);
   void rebuffer(const Pin *drvr_pin,
 		LibertyCell *buffer_cell);
+  bool hasMaxCapViolation(const Pin *drvr_pin);
+  bool hasMaxSlewViolation(const Pin *drvr_pin);
   RebufferOptionSeq rebufferBottomUp(SteinerTree *tree,
 				     SteinerPt k,
 				     SteinerPt prev,

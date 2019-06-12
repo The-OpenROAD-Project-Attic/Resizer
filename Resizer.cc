@@ -30,6 +30,8 @@
 #include "GraphDelayCalc.hh"
 #include "Parasitics.hh"
 #include "PathVertex.hh"
+#include "SearchPred.hh"
+#include "Bfs.hh"
 #include "Search.hh"
 #include "LefDefNetwork.hh"
 #include "SteinerTree.hh"
@@ -43,6 +45,7 @@
 //  unplaced nets should use wireload model parasitic instead of steiner parasitics
 //  check lef/liberty cells match
 //  check one lef, one def
+//  test rebuffering on input ports
 
 namespace sta {
 
@@ -596,24 +599,95 @@ RebufferOption::bufferRequired(LibertyCell *buffer_cell,
 ////////////////////////////////////////////////////////////////
 
 void
-Resizer::rebuffer(LibertyCell *buffer_cell,
+Resizer::rebuffer(bool repair_max_cap,
+		  bool repair_max_slew,
+		  LibertyCell *buffer_cell,
 		  float wire_res_per_length,
 		  float wire_cap_per_length,
 		  Corner *corner)
 {
   init(wire_res_per_length, wire_cap_per_length, corner);
   ensureBufferTargetSlews();
-  rebuffer(buffer_cell);
+  rebuffer(repair_max_cap, repair_max_slew, buffer_cell);
   report_->print("Inserted %d buffers.\n", rebuffer_count_);
 }
 
-void
-Resizer::rebuffer(LibertyCell *buffer_cell)
+// EvalPred unless (no dynamic loop breaking)
+//  latch D->Q edge
+class SearchThru1 : public EvalPred
 {
-  for (int i = level_insts_.size() - 1; i >= 0; i--) {
-    Instance *inst = level_insts_[i];
-    rebuffer(inst, buffer_cell);
+public:
+  SearchThru1(const StaState *sta);
+  virtual bool searchThru(Edge *edge);
+
+private:
+  DISALLOW_COPY_AND_ASSIGN(SearchThru1);
+};
+
+SearchThru1::SearchThru1(const StaState *sta) :
+  EvalPred(sta)
+{
+}
+
+bool
+SearchThru1::searchThru(Edge *edge)
+{
+  const Graph *graph = sta_->graph();
+  const Sdc *sdc = sta_->sdc();
+  Search *search = sta_->search();
+  return EvalPred::searchThru(edge)
+    && edge->role() != TimingRole::latchDtoQ();
+}
+
+void
+Resizer::rebuffer(bool repair_max_cap,
+		  bool repair_max_slew,
+		  LibertyCell *buffer_cell)
+{
+  SearchThru1 search_adj(this);
+  BfsBkwdIterator bfs(BfsIndex::other, &search_adj, this);
+  while (bfs.hasNext()) {
+    Vertex *vertex = bfs.next();
+    if (vertex->isDriver(network_)) {
+      Pin *drvr_pin = vertex->pin();
+      if ((repair_max_cap
+	   && hasMaxCapViolation(drvr_pin))
+	  || (repair_max_slew
+	      && hasMaxSlewViolation(drvr_pin)))
+	rebuffer(drvr_pin, buffer_cell);
+    }
   }
+}
+
+bool
+Resizer::hasMaxCapViolation(const Pin *drvr_pin)
+{
+  float load_cap = graph_delay_calc_->loadCap(drvr_pin, dcalc_ap_);
+  LibertyPort *port = network_->libertyPort(drvr_pin);
+  float cap_limit;
+  bool exists;
+  port->capacitanceLimit(MinMax::max(), cap_limit, exists);
+  return exists && load_cap > cap_limit;
+}
+
+bool
+Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
+{
+  LibertyPort *port = network_->libertyPort(drvr_pin);
+  float slew_limit;
+  bool exists;
+  port->slewLimit(MinMax::max(), slew_limit, exists);
+  Vertex *vertex = graph_->pinDrvrVertex(drvr_pin);
+  if (exists) {
+    TransRiseFallIterator tr_iter;
+    while (tr_iter.hasNext()) {
+      TransRiseFall *tr = tr_iter.next();
+      Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
+	if (slew > slew_limit)
+	  return true;
+    }
+  }
+  return false;
 }
 
 void

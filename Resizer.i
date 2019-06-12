@@ -114,7 +114,8 @@ rebuffer(LibertyCell *buffer_cell,
 {
   Resizer *resizer = getResizer();
   Corner *corner = resizer->cmdCorner();
-  resizer->rebuffer(buffer_cell, wire_res_per_length,
+  resizer->rebuffer(true, true,
+		    buffer_cell, wire_res_per_length,
 		    wire_cap_per_length, corner);
 }
 
