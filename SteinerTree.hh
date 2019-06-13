@@ -111,10 +111,11 @@ public:
   Pin *steinerPtAlias(SteinerPt pt);
   // Return the steiner pt connected to the driver pin.
   SteinerPt drvrPt(const Network *network) const;
+  bool isPlaced(LefDefNetwork *network) const;
 
+  // "Accessors" for SteinerPts.
   const char *name(SteinerPt pt,
 		   const Network *network);
-  SteinerPt adjacentPt(SteinerPt pt);
   Pin *pin(SteinerPt pt) const;
   bool isLoad(SteinerPt pt,
 	      const Network *network);

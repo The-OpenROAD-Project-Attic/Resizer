@@ -94,10 +94,14 @@ public:
 			   LibertyCell *cell);
   // In DBUs.
   DefPt location(const Pin *pin);
+  void setLocation(Instance *instance,
+		   DefPt location);
   // Set top level pin/port location.
   void setLocation(Port *port,
 		   int x,
 		   int y);
+  bool isPlaced(const Pin *pin) const;
+
   virtual Pin *connect(Instance *inst,
 		       LibertyPort *port,
 		       Net *net);
@@ -107,8 +111,6 @@ public:
 	       defiNet *def_net);
   void connectedPins(const Net *net,
 		     PinSeq &pins);
-  void setLocation(Instance *instance,
-		   DefPt location);
   using ConcreteNetwork::connect;
   using ConcreteNetwork::makeNet;
 

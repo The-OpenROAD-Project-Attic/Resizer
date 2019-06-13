@@ -42,8 +42,8 @@
 //  skinflute wants to read files which prevents having a stand-alone executable
 //  multi-corner support?
 //  tcl cmds to set liberty pin cap and limit for testing
-//  check lef/liberty cells match
 //  check one lef, one def
+//  check lef/liberty cells match
 //  test rebuffering on input ports
 //  option to place buffer between driver and load to fix max slew/cap violations
 //  report rebuffer net count
@@ -486,7 +486,7 @@ Resizer::makeNetParasitics(const Net *net)
 {
   LefDefNetwork *network = lefDefNetwork();
   SteinerTree *tree = makeSteinerTree(net, false, network);
-  if (tree) {
+  if (tree && tree->isPlaced(network)) {
     tree->findSteinerPtAliases();
     debugPrint1(debug_, "resizer_parasitics", 1, "net %s\n",
 		sdc_network_->pathName(net));

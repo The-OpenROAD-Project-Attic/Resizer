@@ -244,6 +244,20 @@ LefDefNetwork::setLocation(Port *port,
   port_locations_[port] = {x, y};
 }
 
+bool
+LefDefNetwork::isPlaced(const Pin *pin) const
+{
+  Instance *inst = instance(pin);
+  if (inst == top_instance_)
+    return port_locations_.hasKey(port(pin));
+  else {
+    DefComponent *component = staToDef(inst);
+    defiComponent *def_component = component->defComponent();
+    return def_component
+      && def_component->isPlaced();
+  }
+}
+
 ////////////////////////////////////////////////////////////////
 
 Library *

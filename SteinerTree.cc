@@ -140,6 +140,16 @@ SteinerTree::setTree(Tree tree,
   findSteinerPtAliases();
 }
 
+bool
+SteinerTree::isPlaced(LefDefNetwork *network) const
+{
+  for (auto pin : pins_) {
+    if (network->isPlaced(pin))
+      return true;
+  }
+  return false;
+}
+
 int
 SteinerTree::branchCount() const
 {
@@ -337,12 +347,6 @@ SteinerTree::findLeftRights(const Network *network)
   SteinerPt root_adj = adj1[root];
   left_[root] = root_adj;
   findLeftRights(root, root_adj, adj1, adj2, adj3);
-}
-
-SteinerPt
-SteinerTree::adjacentPt(SteinerPt pt)
-{
-  return tree_.branch[pt].n;
 }
 
 void

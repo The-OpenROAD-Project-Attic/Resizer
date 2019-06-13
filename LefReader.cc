@@ -120,8 +120,6 @@ LefReader::LefReader(const char *filename,
 #define getLefReader(user) (reinterpret_cast<LefReader *>(user))
 #define saveLefData(user) (getLefReader(user)->saveLefData())
 
-
-
 static int
 macroBeginCbk(lefrCallbackType_e,
 	      const char *macro_name,
