@@ -1,7 +1,11 @@
 # Helper functions common to multiple regressions.
 
-set test_dir [file dirname [file normalize [info script]]]
-set result_dir [file join $test_dir "results"]
+if { [info exists env("RESIZER")] } {
+  set result_dir [file join $env("RESIZER") "test" "results"]
+} else {
+  set test_dir [file dirname [file normalize [info script]]]
+  set result_dir [file join $test_dir "results"]
+}
 
 # puts [exec cat $file] without forking.
 proc report_file { file } {

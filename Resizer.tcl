@@ -63,7 +63,7 @@ proc resize { args } {
     set repair_max_slew 1
   }
   if { [info exists keys(-buffer_cell)] } {
-    set buffer_cell [get_lib_cell $keys(-buffer_cell)]
+    set buffer_cell [get_lib_cell_warn "-buffer_cell" $keys(-buffer_cell)]
   } else {
     set buffer_cell "NULL"
     if { $repair_max_cap || $repair_max_slew } {

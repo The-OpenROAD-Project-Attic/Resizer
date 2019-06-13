@@ -144,6 +144,7 @@ record_resizer_tests {
 
 # Record tests in $STAX/designs
 record_test_design {
+  aes2/aes2_rebuffer1
   aes2/aes2_resize1
   mea/mea_resize1
 }
@@ -157,6 +158,7 @@ record_test_design {
 define_test_group med {
   mea_resize1
   aes2_resize1
+  aes2_rebuffer1
 }
 
 set fast [group_tests all]
