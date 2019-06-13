@@ -62,14 +62,23 @@ proc resize { args } {
     set repair_max_cap 1
     set repair_max_slew 1
   }
+  set buffer_cell "NULL"
   if { [info exists keys(-buffer_cell)] } {
-    set buffer_cell [get_lib_cell_warn "-buffer_cell" $keys(-buffer_cell)]
-  } else {
-    set buffer_cell "NULL"
-    if { $repair_max_cap || $repair_max_slew } {
-      sta_error "Error: resize -buffer_cell required for buffer insertion."
+    set buffer_cell_name $keys(-buffer_cell)
+    # check for -buffer_cell [get_lib_cell arg] return ""
+    if { $buffer_cell_name != "" } {
+      set buffer_cell [get_lib_cell_error "-buffer_cell" $buffer_cell_name]
+      if { $buffer_cell != "NULL" } {
+	if { ![get_property $buffer_cell is_buffer] } {
+	  sta_error "Error: [get_name $buffer_cell] is not a buffer."
+	}
+      }
     }
   }
+  if { $buffer_cell == "NULL" && ($repair_max_cap || $repair_max_slew) } {
+    sta_error "Error: resize -buffer_cell required for buffer insertion."
+  }
+
   check_argc_eq0 "resize" $args
 
   resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell
