@@ -136,6 +136,7 @@ record_resizer_tests {
   rebuffer1
   rebuffer2
   rebuffer4
+  rebuffer5
   resize1
   resize2
   write_def1
@@ -147,6 +148,7 @@ record_test_design {
   aes2/aes2_rebuffer1
   aes2/aes2_resize1
   mea/mea_resize1
+  jpeg/jpeg_resize1
 }
 
 ################################################################
@@ -159,6 +161,7 @@ define_test_group med {
   mea_resize1
   aes2_resize1
   aes2_rebuffer1
+  jpeg_resize1
 }
 
 set fast [group_tests all]

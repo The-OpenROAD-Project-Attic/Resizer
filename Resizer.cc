@@ -42,10 +42,11 @@
 //  skinflute wants to read files which prevents having a stand-alone executable
 //  multi-corner support?
 //  tcl cmds to set liberty pin cap and limit for testing
-//  unplaced nets should use wireload model parasitic instead of steiner parasitics
 //  check lef/liberty cells match
 //  check one lef, one def
 //  test rebuffering on input ports
+//  option to place buffer between driver and load to fix max slew/cap violations
+//  report rebuffer net count
 
 namespace sta {
 
@@ -642,8 +643,11 @@ Resizer::rebuffer(bool repair_max_cap,
 		  bool repair_max_slew,
 		  LibertyCell *buffer_cell)
 {
+  findDelays();
   SearchThru1 search_adj(this);
   BfsBkwdIterator bfs(BfsIndex::other, &search_adj, this);
+  for (auto vertex : *search_->endpoints())
+    bfs.enqueue(vertex);
   while (bfs.hasNext()) {
     Vertex *vertex = bfs.next();
     if (vertex->isDriver(network_)) {
@@ -654,35 +658,41 @@ Resizer::rebuffer(bool repair_max_cap,
 	      && hasMaxSlewViolation(drvr_pin)))
 	rebuffer(drvr_pin, buffer_cell);
     }
+    bfs.enqueueAdjacentVertices(vertex);
   }
 }
 
 bool
 Resizer::hasMaxCapViolation(const Pin *drvr_pin)
 {
-  float load_cap = graph_delay_calc_->loadCap(drvr_pin, dcalc_ap_);
   LibertyPort *port = network_->libertyPort(drvr_pin);
-  float cap_limit;
-  bool exists;
-  port->capacitanceLimit(MinMax::max(), cap_limit, exists);
-  return exists && load_cap > cap_limit;
+  if (port) {
+    float load_cap = graph_delay_calc_->loadCap(drvr_pin, dcalc_ap_);
+    float cap_limit;
+    bool exists;
+    port->capacitanceLimit(MinMax::max(), cap_limit, exists);
+    return exists && load_cap > cap_limit;
+  }
+  return false;
 }
 
 bool
 Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
 {
   LibertyPort *port = network_->libertyPort(drvr_pin);
-  float slew_limit;
-  bool exists;
-  port->slewLimit(MinMax::max(), slew_limit, exists);
-  Vertex *vertex = graph_->pinDrvrVertex(drvr_pin);
-  if (exists) {
-    TransRiseFallIterator tr_iter;
-    while (tr_iter.hasNext()) {
-      TransRiseFall *tr = tr_iter.next();
-      Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
+  if (port) {
+    float slew_limit;
+    bool exists;
+    port->slewLimit(MinMax::max(), slew_limit, exists);
+    Vertex *vertex = graph_->pinDrvrVertex(drvr_pin);
+    if (exists) {
+      TransRiseFallIterator tr_iter;
+      while (tr_iter.hasNext()) {
+	TransRiseFall *tr = tr_iter.next();
+	Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
 	if (slew > slew_limit)
 	  return true;
+      }
     }
   }
   return false;
