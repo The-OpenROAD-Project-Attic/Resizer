@@ -255,13 +255,16 @@ proc run_test_plain { test cmd_file log_file } {
 proc run_test_valgrind { test cmd_file log_file } {
   global app_path app_options valgrind_options result_dir errorCode
   
-  # Use -x instead of script so cmds don't end up in logfile.
-  set cmd [concat "cd [file dirname $cmd_file];" \
-	     "source [file tail $cmd_file];" \
-	     "sta::delete_all_memory;" \
-	     "exit"]
-  if [catch [concat exec valgrind $valgrind_options $app_path $app_options \
-	       -x \"$cmd\" >& $log_file]] {
+  set vg_cmd_file [test_valgrind_cmd_file $test]
+  set vg_stream [open $vg_cmd_file "w"]
+  puts $vg_stream "cd [file dirname $cmd_file]"
+  puts $vg_stream "source [file tail $cmd_file]"
+  puts $vg_stream "sta::delete_all_memory"
+  close $vg_stream
+
+  set cmd [concat exec valgrind $valgrind_options \
+	     $app_path $app_options $vg_cmd_file >& $log_file]
+  if { [catch $cmd] } {
     set error [lindex $errorCode 3]
     cleanse_valgrind_logfile $test $log_file
     cleanse_logfile $test $log_file
@@ -463,6 +466,11 @@ proc test_log_file { test } {
 proc test_tmp_file { test } {
   global result_dir
   return [file join $result_dir $test.tmp]
+}
+
+proc test_valgrind_cmd_file { test } {
+  global result_dir
+  return [file join $result_dir $test.vg_cmd]
 }
 
 proc test_valgrind_file { test } {
