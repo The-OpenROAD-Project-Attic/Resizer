@@ -2,20 +2,24 @@ max_transition
 
 Pin                                    Limit   Trans   Slack
 ------------------------------------------------------------
+out                                     1.00    5.16   -4.16 (VIOLATED)
 r3/Q                                    1.50    5.16   -3.66 (VIOLATED)
 u1/Z                                    1.50    3.85   -2.35 (VIOLATED)
 u2/B                                    2.00    3.85   -1.85 (VIOLATED)
 u2/Z                                    1.50    1.97   -0.47 (VIOLATED)
+in1                                     1.00    1.33   -0.33 (VIOLATED)
 r1/Q                                    1.50    1.77   -0.27 (VIOLATED)
 r2/Q                                    1.50    1.77   -0.27 (VIOLATED)
 
-Inserted 4 buffers in 5 nets.
+Inserted 4 buffers in 6 nets.
 max_transition
 
 Pin                                    Limit   Trans   Slack
 ------------------------------------------------------------
+out                                     1.00    5.16   -4.16 (VIOLATED)
 r3/Q                                    1.50    5.16   -3.66 (VIOLATED)
 buffer2/Z                               1.50    1.94   -0.44 (VIOLATED)
+in1                                     1.00    1.33   -0.33 (VIOLATED)
 
 Startpoint: r2 (rising edge-triggered flip-flop clocked by clk)
 Endpoint: r3 (rising edge-triggered flip-flop clocked by clk)
@@ -55,7 +59,7 @@ Path Type: max
 
 
 ###############################################################################
-# 
+# reg1 with clock pins tied together and placement
 ###############################################################################
 
 VERSION 5.5 ; 
@@ -94,8 +98,8 @@ END COMPONENTS
 
 
 PINS 6 ;
-- in1 + NET in1 + DIRECTION INPUT ;
-- in2 + NET in2 + DIRECTION INPUT ;
+- in1 + NET in1 + DIRECTION INPUT + USE SIGNAL 
+  + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 200000 ) N ;
 - clk + NET clk + DIRECTION INPUT + USE SIGNAL 
   + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 100000 ) N ;
 - out + NET out + DIRECTION OUTPUT ;
@@ -108,10 +112,9 @@ SPECIALNETS 2 ;
   + USE POWER ;
 END SPECIALNETS
 
-NETS 12 ;
+NETS 11 ;
 - clk ( PIN clk ) ( r3 CP ) ( r2 CP ) ( r1 CP ) ;
-- in1 ( PIN in1 ) ( r1 D ) ;
-- in2 ( PIN in2 ) ( r2 D ) ;
+- in1 ( PIN in1 ) ( r2 D ) ( r1 D ) ;
 - net1 ( r3 D ) ( buffer1 Z ) ;
 - net2 ( u2 B ) ( buffer2 Z ) ;
 - net3 ( u2 A ) ( buffer3 Z ) ;

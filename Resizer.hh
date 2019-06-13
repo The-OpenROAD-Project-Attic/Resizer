@@ -91,6 +91,13 @@ protected:
 		LibertyCell *buffer_cell);
   bool hasMaxCapViolation(const Pin *drvr_pin);
   bool hasMaxSlewViolation(const Pin *drvr_pin);
+  void slewLimit(const Pin *pin,
+		 const TransRiseFall *tr,
+		 const MinMax *min_max,
+		 // Return values.
+		 float &limit,
+		 bool &exists) const;
+			
   RebufferOptionSeq rebufferBottomUp(SteinerTree *tree,
 				     SteinerPt k,
 				     SteinerPt prev,

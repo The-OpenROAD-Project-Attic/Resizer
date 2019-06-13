@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+# reg1 with clock pins tied together and placement
 ###############################################################################
 
 VERSION 5.5 ; 
@@ -24,8 +24,8 @@ COMPONENTS 5 ;
 END COMPONENTS
 
 PINS 6 ;
-- in1 + NET in1 + DIRECTION INPUT ;
-- in2 + NET in2 + DIRECTION INPUT ;
+- in1 + NET in1 + DIRECTION INPUT + USE SIGNAL 
+  + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 200000 ) N ;
 - clk + NET clk + DIRECTION INPUT + USE SIGNAL 
   + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 100000 ) N ;
 - out + NET out + DIRECTION OUTPUT ;
@@ -39,8 +39,7 @@ SPECIALNETS 2 ;
 END SPECIALNETS
 
 NETS 10 ;
-- in1 ( PIN in1 ) ( r1 D ) ;
-- in2 ( PIN in2 ) ( r2 D ) ;
+- in1 ( PIN in1 ) ( r1 D ) ( r2 D ) ;
 - clk ( PIN clk ) ( r1 CP ) ( r2 CP ) ( r3 CP ) ;
 - r1q ( r1 Q ) ( u2 A ) ;
 - r2q ( r2 Q ) ( u1 A ) ;

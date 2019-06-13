@@ -1,6 +1,6 @@
 Inserted 1 buffers.
 ###############################################################################
-# 
+# reg1 with clock pins tied together and placement
 ###############################################################################
 
 VERSION 5.5 ; 
@@ -33,8 +33,8 @@ END COMPONENTS
 
 
 PINS 6 ;
-- in1 + NET in1 + DIRECTION INPUT ;
-- in2 + NET in2 + DIRECTION INPUT ;
+- in1 + NET in1 + DIRECTION INPUT + USE SIGNAL 
+  + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 200000 ) N ;
 - clk + NET clk + DIRECTION INPUT + USE SIGNAL 
   + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 100000 ) N ;
 - out + NET out + DIRECTION OUTPUT ;
@@ -47,10 +47,9 @@ SPECIALNETS 2 ;
   + USE POWER ;
 END SPECIALNETS
 
-NETS 9 ;
+NETS 8 ;
 - clk ( PIN clk ) ( r3 CP ) ( r2 CP ) ( r1 CP ) ;
-- in1 ( PIN in1 ) ( r1 D ) ;
-- in2 ( PIN in2 ) ( r2 D ) ;
+- in1 ( PIN in1 ) ( r2 D ) ( r1 D ) ;
 - net1 ( u2 B ) ( buffer1 Z ) ;
 - out ( PIN out ) ( r3 Q ) ;
 - r1q ( u2 A ) ( r1 Q ) ;

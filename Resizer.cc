@@ -29,6 +29,7 @@
 #include "ArcDelayCalc.hh"
 #include "GraphDelayCalc.hh"
 #include "Parasitics.hh"
+#include "Sdc.hh"
 #include "PathVertex.hh"
 #include "SearchPred.hh"
 #include "Bfs.hh"
@@ -45,7 +46,10 @@
 //  check one lef, one def
 //  check lef/liberty cells match
 //  test rebuffering on input ports
-//  option to place buffer between driver and load to fix max slew/cap violations
+//  option to place buffers between driver and load on long wires
+//   to fix max slew/cap violations
+// sorted instances only needed for resize
+// use sorted nets for rebuffer
 
 namespace sta {
 
@@ -681,23 +685,79 @@ Resizer::hasMaxCapViolation(const Pin *drvr_pin)
 bool
 Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
 {
-  LibertyPort *port = network_->libertyPort(drvr_pin);
-  if (port) {
-    float slew_limit;
+  Vertex *vertex = graph_->pinDrvrVertex(drvr_pin);
+  TransRiseFallIterator tr_iter;
+  while (tr_iter.hasNext()) {
+    TransRiseFall *tr = tr_iter.next();
+    Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
+    float limit;
     bool exists;
-    port->slewLimit(MinMax::max(), slew_limit, exists);
-    Vertex *vertex = graph_->pinDrvrVertex(drvr_pin);
-    if (exists) {
-      TransRiseFallIterator tr_iter;
-      while (tr_iter.hasNext()) {
-	TransRiseFall *tr = tr_iter.next();
-	Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
-	if (slew > slew_limit)
-	  return true;
+    slewLimit(drvr_pin, tr, MinMax::max(), limit, exists);
+    if (slew > limit)
+      return true;
+  }
+  return false;
+}
+
+void
+Resizer::slewLimit(const Pin *pin,
+		   const TransRiseFall *tr,
+		   const MinMax *min_max,
+		   // Return values.
+		   float &limit,
+		   bool &exists) const
+			
+{
+  exists = false;
+  Cell *top_cell = network_->cell(network_->topInstance());
+  float top_limit;
+  bool top_limit_exists;
+  sdc_->slewLimit(top_cell, min_max,
+		  top_limit, top_limit_exists);
+
+  // Default to top ("design") limit.
+  exists = top_limit_exists;
+  limit = top_limit;
+  if (network_->isTopLevelPort(pin)) {
+    Port *port = network_->port(pin);
+    float port_limit;
+    bool port_limit_exists;
+    sdc_->slewLimit(port, min_max, port_limit, port_limit_exists);
+    // Use the tightest limit.
+    if (port_limit_exists
+	&& (!exists
+	    || min_max->compare(limit, port_limit))) {
+      limit = port_limit;
+      exists = true;
+    }
+  }
+  else {
+    float pin_limit;
+    bool pin_limit_exists;
+    sdc_->slewLimit(pin, min_max,
+		    pin_limit, pin_limit_exists);
+    // Use the tightest limit.
+    if (pin_limit_exists
+	&& (!exists
+	    || min_max->compare(limit, pin_limit))) {
+      limit = pin_limit;
+      exists = true;
+    }
+
+    float port_limit;
+    bool port_limit_exists;
+    LibertyPort *port = network_->libertyPort(pin);
+    if (port) {
+      port->slewLimit(min_max, port_limit, port_limit_exists);
+      // Use the tightest limit.
+      if (port_limit_exists
+	  && (!exists
+	      || min_max->compare(limit, port_limit))) {
+	limit = port_limit;
+	exists = true;
       }
     }
   }
-  return false;
 }
 
 void
@@ -717,12 +777,17 @@ void
 Resizer::rebuffer(const Pin *drvr_pin,
 		  LibertyCell *buffer_cell)
 {
-  Net *net = network_->net(drvr_pin);
-  LibertyPort *drvr_port = network_->libertyPort(drvr_pin);
-  if (drvr_port == nullptr) {
-    // Top level port. Should use sdc external driver here.
+  Net *net;
+  LibertyPort *drvr_port;
+  if (network_->isTopLevelPort(drvr_pin)) {
+    net = network_->net(network_->term(drvr_pin));
+    // Should use sdc external driver here.
     LibertyPort *input;
     buffer_cell->bufferPorts(input, drvr_port);
+  }
+  else {
+    net = network_->net(drvr_pin);
+    drvr_port = network_->libertyPort(drvr_pin);
   }
   LefDefNetwork *network = lefDefNetwork();
   SteinerTree *tree = makeSteinerTree(net, true, network);
