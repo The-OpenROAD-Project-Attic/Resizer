@@ -46,7 +46,6 @@
 //  check lef/liberty cells match
 //  test rebuffering on input ports
 //  option to place buffer between driver and load to fix max slew/cap violations
-//  report rebuffer net count
 
 namespace sta {
 
@@ -137,7 +136,8 @@ Resizer::init()
   ensureLevelized();
   ensureLevelInsts();
   resize_count_ = 0;
-  rebuffer_count_ = 0;
+  inserted_buffer_count_ = 0;
+  rebuffer_net_count_ = 0;
 }
 
 void
@@ -171,7 +171,9 @@ Resizer::resize(bool resize,
   }
   if (repair_max_cap || repair_max_slew) {
     rebuffer(repair_max_cap, repair_max_slew, buffer_cell);
-    report_->print("Inserted %d buffers.\n", rebuffer_count_);
+    report_->print("Inserted %d buffers in %d nets.\n",
+		   inserted_buffer_count_,
+		   rebuffer_net_count_);
   }
 }
 
@@ -711,7 +713,7 @@ Resizer::rebuffer(Instance *inst,
     if (output)
       rebuffer(output, buffer_cell);
   }
-  report_->print("Inserted %d buffers.\n", rebuffer_count_);
+  report_->print("Inserted %d buffers.\n", inserted_buffer_count_);
 }
 
 void
@@ -748,6 +750,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
     if (best)
       rebufferTopDown(best, net, 1, buffer_cell);
   }
+  rebuffer_net_count_++;
 }
 
 // The routing tree is represented a binary tree with the sinks being the leaves
@@ -933,7 +936,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     rebufferTopDown(choice->ref(), net2, level + 1, buffer_cell);
     makeNetParasitics(net);
     makeNetParasitics(net2);
-    rebuffer_count_++;
+    inserted_buffer_count_++;
     break;
   }
   case RebufferOption::Type::wire:

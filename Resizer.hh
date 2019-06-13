@@ -138,7 +138,8 @@ protected:
   int unique_net_index_;
   int unique_buffer_index_;
   int resize_count_;
-  int rebuffer_count_;
+  int inserted_buffer_count_;
+  int rebuffer_net_count_;
 };
 
 } // namespace

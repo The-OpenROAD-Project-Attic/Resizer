@@ -64,7 +64,7 @@ Path Type: max
 
 
 Resized 9480 instances.
-Inserted 198 buffers.
+Inserted 198 buffers in 24 nets.
 Startpoint: u0/w_reg_3__19_ (rising edge-triggered flip-flop clocked by clk)
 Endpoint: u0/w_reg_3__31_ (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk

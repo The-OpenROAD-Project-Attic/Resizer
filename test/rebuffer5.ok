@@ -9,7 +9,7 @@ u2/Z                                    1.50    1.97   -0.47 (VIOLATED)
 r1/Q                                    1.50    1.77   -0.27 (VIOLATED)
 r2/Q                                    1.50    1.77   -0.27 (VIOLATED)
 
-Inserted 4 buffers.
+Inserted 4 buffers in 5 nets.
 max_transition
 
 Pin                                    Limit   Trans   Slack

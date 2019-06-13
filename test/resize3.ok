@@ -4,6 +4,6 @@ Warning: resize3.tcl, 7 library 'xxx' not found.
 Error: resize3.tcl, 7 Error: resize -buffer_cell required for buffer insertion.
 Error: resize3.tcl, 8 Error: snl_nor02x1 is not a buffer.
 Resized 0 instances.
-Inserted 0 buffers.
+Inserted 0 buffers in 0 nets.
 Resized 0 instances.
-Inserted 0 buffers.
+Inserted 0 buffers in 0 nets.
