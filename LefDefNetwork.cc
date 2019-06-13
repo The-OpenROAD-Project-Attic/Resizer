@@ -295,6 +295,7 @@ LefMacro::LefMacro(ConcreteLibrary *library,
 		   bool is_leaf,
 		   const char *filename) :
   ConcreteCell(library, name, is_leaf, filename),
+  lef_macro_(nullptr),
   liberty_cell_(nullptr)
 {
 }
