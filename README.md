@@ -55,20 +55,20 @@ Addtional commands are
 Liberty libraries should be read before LEF and DEF.  Only one LEF and
 one DEF file are supported.  
 
-The set_wire_rc command set the resistance (ohms/meter) and
+The set_wire_rc command sets the resistance (ohms/meter) and
 capacitance (farads/meter) of routing wires. It adds parasitics based
-on placed component locations.  The resistance and capacitance are per
-meter of a routing wire. They should represent "average" routing layer
-resistance and capacitance.  If the set_wire_rc command is not called
-before resizing, the default_wireload model specified in the first
-liberty file or with the SDC set_wire_load command is used to make
-parasitics.
+on placed component pin locations.  The resistance and capacitance are
+per meter of a routing wire. They should represent "average" routing
+layer resistance and capacitance.  If the set_wire_rc command is not
+called before resizing, the default_wireload model specified in the
+first liberty file or with the SDC set_wire_load command is used to
+make parasitics.
 
 The resize command resizes gates and then uses buffer insertion to
-repair maximum capacitance and slew violations. Use the 
--resize, -repair_max_cap and -repair_max_slew options to invoke
-a single mode. With none of the options specified all are done.
-The -buffer_cell argument is required for buffer insertion 
+repair maximum capacitance and slew violations. Use the -resize,
+-repair_max_cap and -repair_max_slew options to invoke a single
+mode. With none of the options specified all are done.  The
+-buffer_cell argument is required for buffer insertion
 (-repair_max_cap or -repair_max_slew).
 
 A typical resizer command file is shown below.
@@ -79,26 +79,23 @@ read_lef nlc18.lef
 read_def mea.def
 read_sdc mea.sdc
 set_wire_rc -resistance 1.67e+05 -capacitance 1.33e-10
-resize
+resize -buffer_cell [get_lib_cell nlc18_worst/snl_bufx4]
 write_def mea_resized.def
 ```
-To run this example use the following commands.
 
-```
-cd test
-../resizer resize_mea1.tcl
-```
-
-Note that OpenSTA commands can be used to report timing metrics before or after
-the resizing.
+Note that OpenSTA commands can be used to report timing metrics before
+or after the resizing.
 
 ```
 set_wire_rc -resistance 1.67e+05 -capacitance 1.33e-10
+report_checks
 report_tns
 report_wns
+report_checks
 
 resize
 
+report_checks
 report_tns
 report_wns
 ```
