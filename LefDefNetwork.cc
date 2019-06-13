@@ -299,6 +299,11 @@ LefMacro::LefMacro(ConcreteLibrary *library,
 {
 }
 
+LefMacro::~LefMacro()
+{
+  delete lef_macro_;
+}
+
 void
 LefMacro::setLefMacro(lefiMacro *lef_macro)
 {
@@ -323,6 +328,11 @@ DefComponent::DefComponent(ConcreteCell *cell,
 {
 }
 
+DefComponent::~DefComponent()
+{
+  delete def_component_;
+}
+
 LefMacro *
 DefComponent::lefMacro()
 {
@@ -345,6 +355,11 @@ DefNet::DefNet(const char *name,
 {
   if (def_net)
     def_net_ = new defiNet(*def_net);
+}
+
+DefNet::~DefNet()
+{
+  delete def_net_;
 }
 
 ////////////////////////////////////////////////////////////////

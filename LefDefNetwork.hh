@@ -132,6 +132,7 @@ protected:
 class LefMacro : public ConcreteCell
 {
 public:
+  ~LefMacro();
   void setLefMacro(lefiMacro *lef_macro);
   LibertyCell *libertyCell() { return liberty_cell_; }
 
@@ -151,6 +152,7 @@ protected:
 class DefComponent : public ConcreteInstance
 {
 public:
+  ~DefComponent();
   LefMacro *lefMacro();
   defiComponent *defComponent() { return def_component_; }
   void setDefComponent(defiComponent *def_component);
@@ -170,6 +172,7 @@ private:
 class DefNet : public ConcreteNet
 {
 public:
+  ~DefNet();
 
 protected:
   DefNet(const char *name,
