@@ -51,9 +51,9 @@ public:
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
 
-  // Rebuffer instance output net.
+  // Rebuffer net.
   // Assumes buffer_cell->isBuffer() is true.
-  void rebuffer(Instance *inst,
+  void rebuffer(Net *net,
 		LibertyCell *buffer_cell);
 
 protected:

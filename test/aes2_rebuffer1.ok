@@ -126,7 +126,6 @@ Path Type: max
                   -0.02   slack (VIOLATED)
 
 
-Inserted 0 buffers.
 Inserted 11 buffers.
 Inserted 12 buffers.
 Startpoint: u0/w_reg_3__20_ (rising edge-triggered flip-flop clocked by clk)

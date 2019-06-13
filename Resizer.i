@@ -108,12 +108,12 @@ resize_to_target_slew(Instance *inst)
 }
 
 void
-rebuffer_instance(Instance *inst,
-		  LibertyCell *buffer_cell)
+rebuffer_net(Net *net,
+	     LibertyCell *buffer_cell)
 {
   Resizer *resizer = getResizer();
   Corner *corner = resizer->cmdCorner();
-  resizer->rebuffer(inst, buffer_cell);
+  resizer->rebuffer(net, buffer_cell);
 }
 
 %} // inline

@@ -701,18 +701,15 @@ Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
 }
 
 void
-Resizer::rebuffer(Instance *inst,
+Resizer::rebuffer(Net *net,
 		  LibertyCell *buffer_cell)
 {
   init();
   ensureCorner();
   ensureBufferTargetSlews();
-  LibertyCell *cell = network_->libertyCell(inst);
-  if (cell) {
-    Pin *output = singleOutputPin(inst, network_);
-    if (output)
-      rebuffer(output, buffer_cell);
-  }
+  PinSet *drvrs = network_->drivers(net);
+  for (auto drvr : *drvrs)
+    rebuffer(drvr, buffer_cell);
   report_->print("Inserted %d buffers.\n", inserted_buffer_count_);
 }
 
