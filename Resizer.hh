@@ -61,7 +61,7 @@ protected:
   void init();
   void ensureCorner();
   void initCorner(Corner *corner);
-  void ensureLevelInsts();
+  void ensureLevelDrvrVerticies();
   void resizeToTargetSlew();
   void resizeToTargetSlew1(Instance *inst);
   void ensureTargetLoads();
@@ -103,10 +103,10 @@ protected:
 				     SteinerPt prev,
 				     int level,
 				     LibertyCell *buffer_cell);
-  void rebufferTopDown(RebufferOption *choice,
-		       Net *net,
-		       int level,
-		       LibertyCell *buffer_cell);
+  int rebufferTopDown(RebufferOption *choice,
+		      Net *net,
+		      int level,
+		      LibertyCell *buffer_cell);
   RebufferOptionSeq
   addWireAndBuffer(RebufferOptionSeq Z,
 		   SteinerTree *tree,
@@ -138,8 +138,8 @@ protected:
   const Pvt *pvt_;
   const ParasiticAnalysisPt *parasitics_ap_;
   CellTargetLoadMap *target_load_map_;
-  InstanceSeq level_insts_;
-  bool level_insts_valid_;
+  VertexSeq level_drvr_verticies_;
+  bool level_drvr_verticies_valid_;
   Slew tgt_slews_[TransRiseFall::index_count];
   bool tgt_slews_valid_;
   int unique_net_index_;

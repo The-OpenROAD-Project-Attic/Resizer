@@ -11,7 +11,7 @@ in1                                     1.00    1.33   -0.33 (VIOLATED)
 r1/Q                                    1.50    1.77   -0.27 (VIOLATED)
 r2/Q                                    1.50    1.77   -0.27 (VIOLATED)
 
-Inserted 4 buffers in 6 nets.
+Inserted 4 buffers in 4 nets.
 max_transition
 
 Pin                                    Limit   Trans   Slack
@@ -32,8 +32,8 @@ Path Type: max
                    0.00    0.00   clock network delay (ideal)
            0.00    0.00    0.00 ^ r2/CP (snl_ffqx1)
    0.00    0.09    0.12    0.12 ^ r2/Q (snl_ffqx1)
-           0.09    0.00    0.12 ^ buffer4/A (snl_bufx2)
-   0.26    0.67    0.47    0.59 ^ buffer4/Z (snl_bufx2)
+           0.09    0.00    0.12 ^ buffer3/A (snl_bufx2)
+   0.26    0.67    0.47    0.59 ^ buffer3/Z (snl_bufx2)
            0.67    0.00    0.60 ^ u1/A (snl_bufx1)
    0.00    0.10    0.19    0.78 ^ u1/Z (snl_bufx1)
            0.10    0.00    0.78 ^ buffer2/A (snl_bufx2)
@@ -81,9 +81,9 @@ COMPONENTS 9 ;
 - buffer2 snl_bufx2
 + PLACED ( 400000 100000 ) N ;
 - buffer3 snl_bufx2
-+ PLACED ( 100000 200000 ) N ;
-- buffer4 snl_bufx2
 + PLACED ( 200000 100000 ) N ;
+- buffer4 snl_bufx2
++ PLACED ( 100000 200000 ) N ;
 - r1 snl_ffqx1
 + PLACED ( 100000 200000 ) N ;
 - r2 snl_ffqx1
@@ -117,11 +117,11 @@ NETS 11 ;
 - in1 ( PIN in1 ) ( r2 D ) ( r1 D ) ;
 - net1 ( r3 D ) ( buffer1 Z ) ;
 - net2 ( u2 B ) ( buffer2 Z ) ;
-- net3 ( u2 A ) ( buffer3 Z ) ;
-- net4 ( u1 A ) ( buffer4 Z ) ;
+- net3 ( u1 A ) ( buffer3 Z ) ;
+- net4 ( u2 A ) ( buffer4 Z ) ;
 - out ( PIN out ) ( r3 Q ) ;
-- r1q ( buffer3 A ) ( r1 Q ) ;
-- r2q ( buffer4 A ) ( r2 Q ) ;
+- r1q ( buffer4 A ) ( r1 Q ) ;
+- r2q ( buffer3 A ) ( r2 Q ) ;
 - u1z ( buffer2 A ) ( u1 Z ) ;
 - u2z ( buffer1 A ) ( u2 Z ) ;
 END NETS

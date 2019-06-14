@@ -48,8 +48,7 @@
 //  test rebuffering on input ports
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
-// sorted instances only needed for resize
-// use sorted nets for rebuffer
+// replace cell cmd use lef cell and rm LefDefNetwork::replaceCell
 
 namespace sta {
 
@@ -66,7 +65,7 @@ Resizer::Resizer() :
   corner_(nullptr),
   wire_res_(0.0),
   wire_cap_(0.0),
-  level_insts_valid_(false),
+  level_drvr_verticies_valid_(false),
   tgt_slews_valid_(false),
   unique_net_index_(1),
   unique_buffer_index_(1)
@@ -87,58 +86,43 @@ Resizer::lefDefNetwork()
 
 ////////////////////////////////////////////////////////////////
 
-class InstanceOutputLevelLess
+class VertexLevelLess
 {
 public:
-  InstanceOutputLevelLess(Network *network,
-			  Graph *graph);
-  bool operator()(const Instance *inst1,
-		  const Instance *inst2) const;
+  VertexLevelLess(const Network *network);
+  bool operator()(const Vertex *vertex1,
+		  const Vertex *vertex2) const;
 
 protected:
-  Level outputLevel(const Instance *inst) const;
-
-  Network *network_;
-  Graph *graph_;
+  const Network *network_;
 };
 
-InstanceOutputLevelLess::InstanceOutputLevelLess(Network *network,
-						 Graph *graph) :
-  network_(network),
-  graph_(graph)
+VertexLevelLess::VertexLevelLess(const Network *network) :
+  network_(network)
 {
 }
 
 bool
-InstanceOutputLevelLess::operator()(const Instance *inst1,
-				    const Instance *inst2) const
+VertexLevelLess::operator()(const Vertex *vertex1,
+			    const Vertex *vertex2) const
 {
-  return outputLevel(inst1) < outputLevel(inst2);
+  Level level1 = vertex1->level();
+  Level level2 = vertex2->level();
+  return (level1 < level2)
+    || (level1 == level2
+	// Break ties for stable results.
+	&& stringLess(network_->pathName(vertex1->pin()),
+		      network_->pathName(vertex2->pin())));
 }
 
-Level
-InstanceOutputLevelLess::outputLevel(const Instance *inst) const
-{
-  Pin *output = singleOutputPin(inst, network_);
-  if (output) {
-    Vertex *vertex = graph_->pinDrvrVertex(output);
-    return vertex->level();
-  }
-  else
-    return 0;
-}
 
 ////////////////////////////////////////////////////////////////
 
 void
 Resizer::init()
 {
-  // Disable incremental timing.
-  graph_delay_calc_->delaysInvalid();
-  search_->arrivalsInvalid();
-
   ensureLevelized();
-  ensureLevelInsts();
+  ensureLevelDrvrVerticies();
   resize_count_ = 0;
   inserted_buffer_count_ = 0;
   rebuffer_net_count_ = 0;
@@ -199,18 +183,17 @@ Resizer::initCorner(Corner *corner)
 }
 
 void
-Resizer::ensureLevelInsts()
+Resizer::ensureLevelDrvrVerticies()
 {
-  if (!level_insts_valid_) {
-    level_insts_.clear();
-    LeafInstanceIterator *leaf_iter = network_->leafInstanceIterator();
-    while (leaf_iter->hasNext()) {
-      Instance *leaf = leaf_iter->next();
-      level_insts_.push_back(leaf);
+  if (!level_drvr_verticies_valid_) {
+    level_drvr_verticies_.clear();
+    VertexIterator vertex_iter(graph_);
+    while (vertex_iter.hasNext()) {
+      Vertex *vertex = vertex_iter.next();
+      level_drvr_verticies_.push_back(vertex);
     }
-    sort(level_insts_, InstanceOutputLevelLess(network_, graph_));
-    delete leaf_iter;
-    level_insts_valid_ = true;
+    sort(level_drvr_verticies_, VertexLevelLess(network_));
+    level_drvr_verticies_valid_ = true;
   }
 }
 
@@ -226,9 +209,11 @@ Resizer::resizeToTargetSlew(Instance *inst,
 void
 Resizer::resizeToTargetSlew()
 {
-  // Resize by in reverse level order.
-  for (int i = level_insts_.size() - 1; i >= 0; i--) {
-    Instance *inst = level_insts_[i];
+  // Resize in reverse level order.
+  for (int i = level_drvr_verticies_.size() - 1; i >= 0; i--) {
+    Vertex *vertex = level_drvr_verticies_[i];
+    Pin *drvr_pin = vertex->pin();
+    Instance *inst = network_->instance(drvr_pin);
     resizeToTargetSlew1(inst);
   }
 }
@@ -617,46 +602,17 @@ RebufferOption::bufferRequired(LibertyCell *buffer_cell,
 
 ////////////////////////////////////////////////////////////////
 
-// EvalPred unless (no dynamic loop breaking)
-//  latch D->Q edge
-class SearchThru1 : public EvalPred
-{
-public:
-  SearchThru1(const StaState *sta);
-  virtual bool searchThru(Edge *edge);
-
-private:
-  DISALLOW_COPY_AND_ASSIGN(SearchThru1);
-};
-
-SearchThru1::SearchThru1(const StaState *sta) :
-  EvalPred(sta)
-{
-}
-
-bool
-SearchThru1::searchThru(Edge *edge)
-{
-  const Graph *graph = sta_->graph();
-  const Sdc *sdc = sta_->sdc();
-  Search *search = sta_->search();
-  return EvalPred::searchThru(edge)
-    && edge->role() != TimingRole::latchDtoQ();
-}
-
 void
 Resizer::rebuffer(bool repair_max_cap,
 		  bool repair_max_slew,
 		  LibertyCell *buffer_cell)
 {
   findDelays();
-  SearchThru1 search_adj(this);
-  BfsBkwdIterator bfs(BfsIndex::other, &search_adj, this);
-  for (auto vertex : *search_->endpoints())
-    bfs.enqueue(vertex);
-  while (bfs.hasNext()) {
-    Vertex *vertex = bfs.next();
-    if (vertex->isDriver(network_)) {
+  // Rebuffer in reverse level order.
+  for (int i = level_drvr_verticies_.size() - 1; i >= 0; i--) {
+    Vertex *vertex = level_drvr_verticies_[i];
+    // Hands off the clock tree.
+    if (!search_->isClock(vertex)) {
       Pin *drvr_pin = vertex->pin();
       if ((repair_max_cap
 	   && hasMaxCapViolation(drvr_pin))
@@ -664,7 +620,6 @@ Resizer::rebuffer(bool repair_max_cap,
 	      && hasMaxSlewViolation(drvr_pin)))
 	rebuffer(drvr_pin, buffer_cell);
     }
-    bfs.enqueueAdjacentVertices(vertex);
   }
 }
 
@@ -809,10 +764,14 @@ Resizer::rebuffer(const Pin *drvr_pin,
 	best = p;
       }
     }
-    if (best)
-      rebufferTopDown(best, net, 1, buffer_cell);
+    if (best) {
+      int insert_count = rebufferTopDown(best, net, 1, buffer_cell);
+      if (insert_count > 0) {
+	inserted_buffer_count_ += insert_count;
+	rebuffer_net_count_++;
+      }
+    }
   }
-  rebuffer_net_count_++;
 }
 
 // The routing tree is represented a binary tree with the sinks being the leaves
@@ -968,7 +927,8 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
   return Z1;
 }
 
-void
+// Return inserted buffer count.
+int
 Resizer::rebufferTopDown(RebufferOption *choice,
 			 Net *net,
 			 int level,
@@ -984,7 +944,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     Instance *buffer = network->makeInstance(buffer_cell,
 					     buffer_name.c_str(),
 					     parent);
-    level_insts_valid_ = false;
+    level_drvr_verticies_valid_ = false;
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
     debugPrint5(debug_, "rebuffer", 3, "%*sinsert %s -> %s -> %s\n",
@@ -998,18 +958,17 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     rebufferTopDown(choice->ref(), net2, level + 1, buffer_cell);
     makeNetParasitics(net);
     makeNetParasitics(net2);
-    inserted_buffer_count_++;
-    break;
+    return 1;
   }
   case RebufferOption::Type::wire:
     debugPrint2(debug_, "rebuffer", 3, "%*swire\n", level, "");
-    rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
-    break;
-  case RebufferOption::Type::junction:
+    return rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
+  case RebufferOption::Type::junction: {
     debugPrint2(debug_, "rebuffer", 3, "%*sjunction\n", level, "");
-    rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
-    rebufferTopDown(choice->ref2(), net, level + 1, buffer_cell);
-    break;
+    int insert_count1 = rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
+    int insert_count2 = rebufferTopDown(choice->ref2(), net, level + 1, buffer_cell);
+    return insert_count1 + insert_count2;
+  }
   case RebufferOption::Type::sink: {
     Pin *load_pin = choice->loadPin();
     Net *load_net = network_->net(load_pin);
@@ -1023,6 +982,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
       disconnectPin(load_pin);
       connectPin(load_inst, load_port, net);
     }
+    return 0;
   }
   }
 }
@@ -1060,7 +1020,10 @@ float
 Resizer::pinCapacitance(const Pin *pin)
 {
   LibertyPort *port = network_->libertyPort(pin);
-  return portCapacitance(port);
+  if (port)
+    return portCapacitance(port);
+  else
+    return 0.0;
 }
 
 float
