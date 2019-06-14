@@ -44,11 +44,10 @@
 //  multi-corner support?
 //  tcl cmds to set liberty pin cap and limit for testing
 //  check one lef, one def
-//  check lef/liberty cells match
+//  check lef/liberty library cell ports match
 //  test rebuffering on input ports
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
-// replace cell cmd use lef cell and rm LefDefNetwork::replaceCell
 
 namespace sta {
 
