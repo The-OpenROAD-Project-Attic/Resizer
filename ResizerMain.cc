@@ -50,10 +50,6 @@ static void
 showUseage(char *prog);
 static int
 resizerTclAppInit(Tcl_Interp *interp);
-static char *
-findCmdLineArg(int argc,
-	       char **argv,
-	       int arg_index);
 
 int
 main(int argc,
@@ -127,27 +123,20 @@ resizerTclAppInit(Tcl_Interp *interp)
     sourceTclFile(init_filename, true, false, interp);
   }
 
-  char *cmd_file = findCmdLineArg(argc, argv, 0);
-  if (cmd_file) {
-    sourceTclFile(cmd_file, false, false, interp);
-    exit(EXIT_SUCCESS);
-  }
-  return TCL_OK;
-}
+  bool exit_after_cmd_file = findCmdLineFlag(argc, argv, "-exit");
 
-static char *
-findCmdLineArg(int argc,
-	       char **argv,
-	       int arg_index)
-{
-  int a = 0;
-  for (int argi = 1; argi < argc; argi++) {
-    char *arg = argv[argi];
-    if (arg[0] != '-') {
-      if (a == arg_index)
-	return arg;
-      a++;
+  if (argc > 2 ||
+      (argc > 1 && argv[1][0] == '-'))
+    showUseage(argv[0]);
+  else {
+    if (argc == 2) {
+      char *cmd_file = argv[1];
+      if (cmd_file) {
+	sourceTclFile(cmd_file, false, false, interp);
+	if (exit_after_cmd_file)
+	  exit(EXIT_SUCCESS);
+      }
     }
   }
-  return nullptr;
+  return TCL_OK;
 }

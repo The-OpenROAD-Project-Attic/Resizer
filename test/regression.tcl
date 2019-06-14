@@ -228,8 +228,8 @@ proc run_test_plain { test cmd_file log_file } {
   } else {
     set save_dir [pwd]
     cd [file dirname $cmd_file]
-    if [catch [concat exec $app_path $app_options \
-		 [file tail $cmd_file] >& $log_file]] {
+    if { [catch [concat exec $app_path $app_options \
+		   [file tail $cmd_file] >& $log_file]] } {
       cd $save_dir
       set signal [lindex $errorCode 2]
       set error [lindex $errorCode 3]

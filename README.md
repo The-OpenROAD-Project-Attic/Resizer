@@ -31,17 +31,22 @@ resizer -help              show help and exit
         -version           show version and exit
         -no_init           do not read .sta init file
         -no_splash         do not show the license splash at startup
-	cmd_file           source cmd_file and exit
+        -exit              exit after reading cmd_file
+	cmd_file           source cmd_file
 ```
 
 Resizer looks for the files POWV9.dat and PORT9.dat in ../etc relative
 to the executable when it starts.
 
-Resizer sources the TCL command file ~/.resizer and enters interactive
-command mode unless the command line option -no_init is specified.
+Resizer sources the TCL command file ~/.resizer unless the command
+line option -no_init is specified.
+
+Resizer then sources the command file cmd_file.  Unless the -exit
+command line flag is specified it enters and interactive TCL command
+interpreter.
 
 The resizer is run using TCL scripts. All OpenSTA commands are available.
-Addtional commands are
+Addtional commands are shown below.
 
 * read_lef filename
 * read_def filename
