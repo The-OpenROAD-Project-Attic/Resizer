@@ -26,10 +26,6 @@
 
 namespace sta {
 
-class LefMacro;
-class DefComponent;
-class DefNet;
-class LefPin;
 class DefPt;
 
 // Database location type used by DEF parser.
@@ -50,9 +46,10 @@ private:
 };
 
 // No need to specializing ConcreteLibrary at this point.
-typedef ConcreteLibrary LefLibrary;
 typedef UnorderedMap<Cell*, LibertyCell*> LibertyCellMap;
 typedef UnorderedMap<Port*, DefPt> DefPortLocations;
+typedef UnorderedMap<Instance*, defiComponent *> InstanceDefComponentMap;
+typedef UnorderedMap<Cell*, lefiMacro*> CellLefMacroMap;
 
 class LefDefNetwork : public ConcreteNetwork
 {
@@ -68,28 +65,22 @@ public:
   void setDefUnits(double def_units);
   double dbuToMeters(int dbu) const;
 
-  virtual Library *makeLibrary(const char *name,
-			       const char *filename);
-  virtual Cell *makeCell(Library *library,
-			 const char *name,
-			 bool is_leaf,
-			 const char *filename);
-  virtual LibertyCell *libertyCell(Cell *cell) const;
+  Library *makeLefLibrary(const char *name,
+			  const char *filename);
+  Library *lefLibrary();
+  Library *lefLibrary(Cell *cell);
 
+  lefiMacro *lefMacro(Cell *cell);
+  void setLefMacro(Cell *cell,
+		   lefiMacro *lef_macro);
+  virtual LibertyCell *libertyCell(Cell *cell) const;
   virtual LibertyPort *libertyPort(Port *port) const;
 
-  Library *lefLibrary();
-  LefLibrary *lefLib() { return lef_library_; }
   void initTopInstancePins();
-  virtual Instance *makeInstance(Cell *cell,
-				 const char *name,
-				 Instance *parent);
-  virtual Instance *makeInstance(LibertyCell *cell,
-				 const char *name,
-				 Instance *parent);
-  DefComponent *makeDefComponent(Cell *cell,
-				 const char *name,
-				 defiComponent *def_component);
+  Instance *makeDefComponent(Cell *cell,
+			     const char *name,
+			     defiComponent *def_component);
+  defiComponent *defComponent(Instance *inst) const;
   virtual void replaceCell(Instance *inst,
 			   LibertyCell *cell);
   // In DBUs.
@@ -98,94 +89,20 @@ public:
 		   DefPt location);
   // Set top level pin/port location.
   void setLocation(Port *port,
-		   int x,
-		   int y);
+		   DefPt location);
   bool isPlaced(const Pin *pin) const;
 
-  virtual Pin *connect(Instance *inst,
-		       LibertyPort *port,
-		       Net *net);
-  // DEF instances all have top_instance as the parent.
-  Instance *findInstance(const char *name) const;
-  Net *makeNet(const char *name,
-	       defiNet *def_net);
   void connectedPins(const Net *net,
 		     PinSeq &pins);
   using ConcreteNetwork::connect;
-  using ConcreteNetwork::makeNet;
 
 protected:
-  Library *lefToSta(LefLibrary *lib) const;
-  LefLibrary *staToLef(Library *lib) const;
-  Cell *lefToSta(LefMacro *macro) const;
-  LefMacro *staToLef(Cell *cell) const;
-  DefComponent *staToDef(Instance *inst) const;
-  Instance *defToSta(DefComponent *component) const;
-  Net *defToSta(DefNet *net) const;
-
   const char *filename_;
-  LefLibrary *lef_library_;
+  Library *lef_library_;
   float def_units_;		// dbu/micron
   DefPortLocations port_locations_;
-};
-
-////////////////////////////////////////////////////////////////
-
-class LefMacro : public ConcreteCell
-{
-public:
-  ~LefMacro();
-  void setLefMacro(lefiMacro *lef_macro);
-  LibertyCell *libertyCell() { return liberty_cell_; }
-
-protected:
-  LefMacro(ConcreteLibrary *library,
-	   const char *name,
-	   bool is_leaf,
-	   const char *filename);
-  void setLibertyCell(LibertyCell *cell);
-
-  lefiMacro *lef_macro_;
-  LibertyCell *liberty_cell_;
-
-  friend class LefDefNetwork;
-};
-
-class DefComponent : public ConcreteInstance
-{
-public:
-  ~DefComponent();
-  LefMacro *lefMacro();
-  defiComponent *defComponent() { return def_component_; }
-  void setDefComponent(defiComponent *def_component);
-
-protected:
-  DefComponent(ConcreteCell *cell,
-	       const char *name,
-	       ConcreteInstance *top_instance,
-	       defiComponent *def_component);
-
-private:
-  defiComponent *def_component_;
-
-  friend class LefDefNetwork;
-};
-
-class DefNet : public ConcreteNet
-{
-public:
-  ~DefNet();
-
-protected:
-  DefNet(const char *name,
-	 ConcreteInstance *top_instance,
-	 defiNet *def_net);
-  defiNet *defNet(){ return def_net_; }
-
-private:
-  defiNet *def_net_;
-
-  friend class LefDefNetwork;
+  InstanceDefComponentMap def_component_map_;
+  CellLefMacroMap lef_macro_map_;
 };
 
 } // namespace

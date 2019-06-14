@@ -30,6 +30,8 @@ LefDefNetwork::LefDefNetwork() :
 LefDefNetwork::~LefDefNetwork()
 {
   stringDelete(filename_);
+  def_component_map_.deleteContents();
+  lef_macro_map_.deleteContents();
 }
 
 void
@@ -66,159 +68,114 @@ LefDefNetwork::setFilename(const char *filename)
 }
 
 Library *
-LefDefNetwork::makeLibrary(const char *name,
-			   const char *filename)
+LefDefNetwork::makeLefLibrary(const char *name,
+			      const char *filename)
 {
-  lef_library_ = new LefLibrary(name, filename);
-  addLibrary(lef_library_);
-  return lefToSta(lef_library_);
+  lef_library_ = ConcreteNetwork::makeLibrary(name, filename);
+  return lef_library_;
 }
 
 Library *
 LefDefNetwork::lefLibrary()
 {
-  return lefToSta(lef_library_);
+  return lef_library_;
 }
 
-Cell *
-LefDefNetwork::makeCell(Library *library,
-			const char *name,
-			bool is_leaf,
-			const char *filename)
+void
+LefDefNetwork::setLefMacro(Cell *cell,
+			   lefiMacro *lef_macro)
 {
-  LefLibrary *lef_lib = staToLef(library);
-  LefMacro *macro = new LefMacro(lef_lib, name, is_leaf, filename);
-  lef_lib->addCell(macro);
+  lef_macro_map_[cell] = lef_macro;
+}
 
-  // Find corresponding liberty cell.
-  // This assumes liberty libraries are read before LEF.
-  LibertyCell *lib_cell = findLibertyCell(name);
-  macro->setLibertyCell(lib_cell);
-  return lefToSta(macro);
+lefiMacro *
+LefDefNetwork::lefMacro(Cell *cell)
+{
+  return lef_macro_map_.findKey(cell);
 }
 
 LibertyCell *
 LefDefNetwork::libertyCell(Cell *cell) const
 {
-  LefMacro *macro = staToLef(cell);
-  return macro->libertyCell();
+  ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(cell);
+  LibertyCell *lib_cell = dynamic_cast<LibertyCell*>(ccell);
+  if (lib_cell)
+    return lib_cell;
+  else
+    return findLibertyCell(ccell->name());
 }
 
 LibertyPort *
 LefDefNetwork::libertyPort(Port *port) const
 {
-  Cell *cell = this->cell(port);
-  LibertyCell *liberty_cell = libertyCell(cell);
-  if (liberty_cell) {
-    const char *port_name = this->name(port);
-    return liberty_cell->findLibertyPort(port_name);
+  ConcretePort *cport = reinterpret_cast<ConcretePort*>(port);
+  LibertyPort *lib_port = dynamic_cast<LibertyPort*>(cport);
+  if (lib_port)
+    return lib_port;
+  else {
+    LibertyCell *lib_cell = libertyCell(cport->cell());
+    if (lib_cell)
+      return lib_cell->findLibertyPort(cport->name());
   }
-  else
-    return nullptr;
+  return nullptr;
 }
 
 void
 LefDefNetwork::initTopInstancePins()
 {
-  staToDef(top_instance_)->initPins();
+  ConcreteInstance *ctop_inst = reinterpret_cast<ConcreteInstance*>(top_instance_);
+  ctop_inst->initPins();
 }
 
 Instance *
-LefDefNetwork::makeInstance(Cell *cell,
-			    const char *name,
-			    Instance *)
-{
-  DefComponent *component = makeDefComponent(cell, name, nullptr);
-  return defToSta(component);
-}
-
-Instance *
-LefDefNetwork::makeInstance(LibertyCell *cell,
-			    const char *name,
-			    Instance *parent)
-{
-  // Keep it all in the family.
-  ConcreteCell *ccell = lef_library_->findCell(cell->name());
-  if (ccell) {
-    Cell *macro_cell = reinterpret_cast<Cell*>(ccell);
-    return makeInstance(macro_cell, name, parent);
-  }
-  else
-    return nullptr;
-}
-
-DefComponent *
 LefDefNetwork::makeDefComponent(Cell *cell,
 				const char *name,
 				defiComponent *def_component)
 {
-  LefMacro *macro = staToLef(cell);
-  DefComponent *top = staToDef(top_instance_);
-  DefComponent *component = new DefComponent(macro, name, top, def_component);
-  if (top_instance_)
-    top->addChild(component);
-  return component;
+  Instance *inst = makeInstance(cell, name, top_instance_);
+  if (def_component)
+    def_component_map_[inst] = def_component;
+  return inst;
+}
+
+defiComponent *
+LefDefNetwork::defComponent(Instance *inst) const
+{
+  return def_component_map_.findKey(inst);
 }
 
 void
 LefDefNetwork::replaceCell(Instance *inst,
 			   LibertyCell *cell)
 {
-  // Keep it all in the family.
-  ConcreteCell *ccell = lef_library_->findCell(cell->name());
-  replaceCellIntenal(inst, ccell);
+  if (library(this->cell(inst)) == lef_library_) {
+    // Replace lef with lef so ports stay lined up.
+    Cell *lef_cell = findCell(lef_library_, cell->name());
+    ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(lef_cell);
+    replaceCellIntenal(inst, ccell);
+  }
+  else
+    ConcreteNetwork::replaceCell(inst, cell);
 }
 
 void
 LefDefNetwork::setLocation(Instance *instance,
 			   DefPt location)
 {
-  DefComponent *component = staToDef(instance);
-  defiComponent *def_component = component->defComponent();
+  defiComponent *def_component = defComponent(instance);
   if (def_component == nullptr) {
     def_component = new defiComponent(nullptr);
-    component->setDefComponent(def_component);
+    def_component_map_[instance] = def_component;
   }
   def_component->setPlacementStatus(DEFI_COMPONENT_PLACED);
   def_component->setPlacementLocation(location.x(), location.y(), 0);
-}
-
-Pin *
-LefDefNetwork::connect(Instance *inst,
-		       LibertyPort *port,
-		       Net *net)
-{
-  DefComponent *component = staToDef(inst);
-  // Connect the corresponding LEF pin.
-  LefMacro *lef_macro = component->lefMacro();
-  ConcretePort *lef_pin = lef_macro->findPort(port->name());
-  Port *port1 = reinterpret_cast<Port*>(lef_pin);
-  return ConcreteNetwork::connect(inst, port1, net);
-}
-
-Instance *
-LefDefNetwork::findInstance(const char *name) const
-{
-  DefComponent *top = staToDef(top_instance_);
-  return top->findChild(name);
-}
-
-Net *
-LefDefNetwork::makeNet(const char *name,
-		       defiNet *def_net)
-{
-  DefComponent *top = staToDef(top_instance_);
-  DefNet *net = new DefNet(name, top, def_net);
-  top->addNet(net);
-  return defToSta(net);
 }
 
 DefPt
 LefDefNetwork::location(const Pin *pin)
 {
   Instance *inst = instance(pin);
-  DefComponent *component = staToDef(inst);
-  defiComponent *def_component = component->defComponent();
+  defiComponent *def_component = def_component_map_.findKey(inst);
   if (def_component
       && def_component->isPlaced()) {
     // Component location is good enough for now.
@@ -238,10 +195,9 @@ LefDefNetwork::location(const Pin *pin)
 
 void
 LefDefNetwork::setLocation(Port *port,
-			   int x,
-			   int y)
+			   DefPt location)
 {
-  port_locations_[port] = {x, y};
+  port_locations_[port] = location;
 }
 
 bool
@@ -251,130 +207,10 @@ LefDefNetwork::isPlaced(const Pin *pin) const
   if (inst == top_instance_)
     return port_locations_.hasKey(port(pin));
   else {
-    DefComponent *component = staToDef(inst);
-    defiComponent *def_component = component->defComponent();
+    defiComponent *def_component = defComponent(inst);
     return def_component
       && def_component->isPlaced();
   }
-}
-
-////////////////////////////////////////////////////////////////
-
-Library *
-LefDefNetwork::lefToSta(LefLibrary *lib) const
-{
-  return reinterpret_cast<Library*>(lib);
-}
-
-LefLibrary *
-LefDefNetwork::staToLef(Library *lib) const
-{
-  return reinterpret_cast<LefLibrary*>(lib);
-}
-
-Cell *
-LefDefNetwork::lefToSta(LefMacro *macro) const
-{
-  return reinterpret_cast<Cell*>(macro);
-}
-
-LefMacro *
-LefDefNetwork::staToLef(Cell *cell) const
-{
-  return reinterpret_cast<LefMacro*>(cell);
-}
-
-DefComponent *
-LefDefNetwork::staToDef(Instance *inst) const
-{
-  return reinterpret_cast<DefComponent*>(inst);
-}
-
-Instance *
-LefDefNetwork::defToSta(DefComponent *component) const
-{
-  return reinterpret_cast<Instance*>(component);
-}
-
-Net *
-LefDefNetwork::defToSta(DefNet *net) const
-{
-  return reinterpret_cast<Net*>(net);
-}
-
-////////////////////////////////////////////////////////////////
-
-LefMacro::LefMacro(ConcreteLibrary *library,
-		   const char *name,
-		   bool is_leaf,
-		   const char *filename) :
-  ConcreteCell(library, name, is_leaf, filename),
-  lef_macro_(nullptr),
-  liberty_cell_(nullptr)
-{
-}
-
-LefMacro::~LefMacro()
-{
-  delete lef_macro_;
-}
-
-void
-LefMacro::setLefMacro(lefiMacro *lef_macro)
-{
-  if (lef_macro)
-    lef_macro_ = new lefiMacro(*lef_macro);
-}
-
-void
-LefMacro::setLibertyCell(LibertyCell *cell)
-{
-  liberty_cell_ = cell;
-}
-
-////////////////////////////////////////////////////////////////
-
-DefComponent::DefComponent(ConcreteCell *cell,
-			   const char *name,
-			   ConcreteInstance *parent,
-			   defiComponent *component) :
-  ConcreteInstance(cell, name, parent),
-  def_component_(component ? new defiComponent(*component) : nullptr)
-{
-}
-
-DefComponent::~DefComponent()
-{
-  delete def_component_;
-}
-
-LefMacro *
-DefComponent::lefMacro()
-{
-  return dynamic_cast<LefMacro *>(cell_);
-}
-
-void
-DefComponent::setDefComponent(defiComponent *def_component)
-{
-  def_component_ = def_component;
-}
-
-////////////////////////////////////////////////////////////////
-
-DefNet::DefNet(const char *name,
-	       ConcreteInstance *top_instance,
-	       defiNet *def_net) :
-  ConcreteNet(name, top_instance),
-  def_net_(nullptr)
-{
-  if (def_net)
-    def_net_ = new defiNet(*def_net);
-}
-
-DefNet::~DefNet()
-{
-  delete def_net_;
 }
 
 ////////////////////////////////////////////////////////////////

@@ -169,7 +169,9 @@ defComponentCbk(defrCallbackType_e,
   Cell *cell = network->findCell(lef_lib, macro_name);
   if (cell)
     network->makeDefComponent(cell, sta_name,
-			      saveDefData(user) ? def_component : nullptr);
+			      saveDefData(user)
+			      ? new defiComponent(*def_component)
+			      : nullptr);
   else
     defError(user, "Error: component %s macro %s not found.\n", def_name, macro_name);
   return 0;
@@ -209,7 +211,7 @@ defPinCbk(defrCallbackType_e,
   network->setDirection(port, dir);
 
   if (def_pin->isPlaced() || def_pin->isFixed() || def_pin->isCover())
-    network->setLocation(port, def_pin->placementX(), def_pin->placementY());
+    network->setLocation(port, DefPt(def_pin->placementX(), def_pin->placementY()));
   return 0;
 }
 
@@ -233,7 +235,7 @@ defNetCbk(defrCallbackType_e,
   LefDefNetwork *network = getNetwork(user);
   const char *def_net_name = def_net->name();
   const char *sta_net_name = defToSta(def_net_name, network);
-  Net *net = network->makeNet(sta_net_name, saveDefData(user) ? def_net : nullptr);
+  Net *net = network->makeNet(sta_net_name, network->topInstance());
   for (int i = 0; i < def_net->numConnections(); i++) {
     const char *def_inst_name = def_net->instance(i);
     const char *sta_inst_name = defToSta(def_inst_name, network);

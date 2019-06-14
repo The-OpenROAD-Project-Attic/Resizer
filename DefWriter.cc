@@ -110,8 +110,7 @@ writeDefComponent(Instance *inst,
 		  FILE *out_stream,
 		  LefDefNetwork *network)
 {
-  DefComponent *component = reinterpret_cast<DefComponent*>(inst);
-  defiComponent *def_component = component->defComponent();
+  defiComponent *def_component = network->defComponent(inst);
   fprintf(out_stream, "- %s %s",
 	  staToDef(network->name(inst), network),
 	  network->name(network->cell(inst)));
