@@ -221,6 +221,7 @@ Resizer::resizeToTargetSlew()
 void
 Resizer::resizeToTargetSlew1(Instance *inst)
 {
+  LefDefNetwork *network = lefDefNetwork();
   LibertyCell *cell = network_->libertyCell(inst);
   if (cell) {
     Pin *output = singleOutputPin(inst, network_);
@@ -247,8 +248,18 @@ Resizer::resizeToTargetSlew1(Instance *inst)
 		      sdc_network_->pathName(inst),
 		      cell->name(),
 		      best_cell->name());
-	  replaceCell(inst, best_cell);
-	  resize_count_++;
+	  if (network->isLefCell(network_->cell(inst))) {
+	    // Replace LEF with LEF so ports stay aligned.
+	    Cell *best_lef = network->lefCell(best_cell);
+	    if (best_lef) {
+	      replaceCell(inst, best_lef);
+	      resize_count_++;
+	    }
+	  }
+	  else {
+	    replaceCell(inst, best_cell);
+	    resize_count_++;
+	  }
 	}
       }
     }

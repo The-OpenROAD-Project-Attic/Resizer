@@ -73,6 +73,8 @@ public:
   lefiMacro *lefMacro(Cell *cell);
   void setLefMacro(Cell *cell,
 		   lefiMacro *lef_macro);
+  Cell *lefCell(LibertyCell *cell);
+  bool isLefCell(Cell *cell) const;
   virtual LibertyCell *libertyCell(Cell *cell) const;
   virtual LibertyPort *libertyPort(Port *port) const;
 
@@ -81,8 +83,6 @@ public:
 			     const char *name,
 			     defiComponent *def_component);
   defiComponent *defComponent(Instance *inst) const;
-  virtual void replaceCell(Instance *inst,
-			   LibertyCell *cell);
   // In DBUs.
   DefPt location(const Pin *pin);
   void setLocation(Instance *instance,

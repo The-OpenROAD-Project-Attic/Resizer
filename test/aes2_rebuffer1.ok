@@ -64,7 +64,7 @@ Path Type: max
 
 
 Resized 9524 instances.
-Inserted 94 buffers in 26 nets.
+Inserted 93 buffers in 26 nets.
 Startpoint: u0/w_reg_3__19_ (rising edge-triggered flip-flop clocked by clk)
 Endpoint: u0/w_reg_3__31_ (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
@@ -142,39 +142,39 @@ Path Type: max
            0.00    0.76 ^ u0/u0/U20/B (NOR3_X4A_A12TH)
    0.06    0.46    1.22 v u0/u0/U20/Y (NOR3_X4A_A12TH)
            0.00    1.22 v buffer153/A (BUF_X4B_A12TH)
-   0.04    0.31    1.53 v buffer153/Y (BUF_X4B_A12TH)
-           0.00    1.53 v buffer157/A (BUF_X4B_A12TH)
-   0.05    0.24    1.77 v buffer157/Y (BUF_X4B_A12TH)
-           0.00    1.77 v u0/u0/U111/A (NAND2_X8B_A12TH)
-   0.12    0.19    1.96 ^ u0/u0/U111/Y (NAND2_X8B_A12TH)
-           0.00    1.96 ^ u0/u0/U243/C (NAND3_X6A_A12TH)
-   0.05    0.24    2.20 v u0/u0/U243/Y (NAND3_X6A_A12TH)
-           0.00    2.20 v u0/u0/U254/A (NOR2_X1P4A_A12TH)
-   0.01    0.20    2.40 ^ u0/u0/U254/Y (NOR2_X1P4A_A12TH)
-           0.00    2.40 ^ u0/u0/U255/D (NAND4_X4A_A12TH)
-   0.06    0.38    2.78 v u0/u0/U255/Y (NAND4_X4A_A12TH)
-           0.00    2.78 v u0/u0/U354/AN (NAND4B_X4M_A12TH)
-   0.04    0.47    3.25 v u0/u0/U354/Y (NAND4B_X4M_A12TH)
-           0.00    3.25 v u0/u0/U356/A1 (OAI31_X6M_A12TH)
-   0.01    0.25    3.50 ^ u0/u0/U356/Y (OAI31_X6M_A12TH)
-           0.00    3.50 ^ u0/u0/U357/D (NAND4_X4A_A12TH)
-   0.14    0.66    4.15 v u0/u0/U357/Y (NAND4_X4A_A12TH)
-           0.00    4.15 v u0/U200/B (XOR2_X4M_A12TH)
-   0.02    0.54    4.69 ^ u0/U200/Y (XOR2_X4M_A12TH)
-           0.00    4.69 ^ u0/U201/A (XOR2_X4M_A12TH)
-   0.03    0.31    5.00 ^ u0/U201/Y (XOR2_X4M_A12TH)
-           0.00    5.00 ^ u0/U202/A (XNOR2_X4M_A12TH)
-   0.09    0.43    5.44 ^ u0/U202/Y (XNOR2_X4M_A12TH)
-           0.00    5.44 ^ u0/U203/B (XNOR2_X4M_A12TH)
-   0.11    0.61    6.04 ^ u0/U203/Y (XNOR2_X4M_A12TH)
-           0.00    6.04 ^ u0/U204/B (NAND2_X0P5B_A12TH)
-   0.00    0.35    6.39 v u0/U204/Y (NAND2_X0P5B_A12TH)
-           0.00    6.39 v u0/U205/C0 (OAI211_X1P4M_A12TH)
-   0.00    0.17    6.56 ^ u0/U205/Y (OAI211_X1P4M_A12TH)
-           0.00    6.56 ^ u0/U206/B0 (OAI2XB1_X1M_A12TH)
-   0.00    0.14    6.70 v u0/U206/Y (OAI2XB1_X1M_A12TH)
-           0.00    6.70 v u0/w_reg_3__31_/D (DFFQ_X4M_A12TH)
-                   6.70   data arrival time
+   0.03    0.30    1.52 v buffer153/Y (BUF_X4B_A12TH)
+           0.00    1.52 v buffer156/A (BUF_X4B_A12TH)
+   0.09    0.28    1.80 v buffer156/Y (BUF_X4B_A12TH)
+           0.00    1.80 v u0/u0/U111/A (NAND2_X8B_A12TH)
+   0.12    0.23    2.04 ^ u0/u0/U111/Y (NAND2_X8B_A12TH)
+           0.00    2.04 ^ u0/u0/U243/C (NAND3_X6A_A12TH)
+   0.05    0.24    2.28 v u0/u0/U243/Y (NAND3_X6A_A12TH)
+           0.00    2.28 v u0/u0/U254/A (NOR2_X1P4A_A12TH)
+   0.01    0.20    2.48 ^ u0/u0/U254/Y (NOR2_X1P4A_A12TH)
+           0.00    2.48 ^ u0/u0/U255/D (NAND4_X4A_A12TH)
+   0.06    0.38    2.86 v u0/u0/U255/Y (NAND4_X4A_A12TH)
+           0.00    2.86 v u0/u0/U354/AN (NAND4B_X4M_A12TH)
+   0.04    0.47    3.32 v u0/u0/U354/Y (NAND4B_X4M_A12TH)
+           0.00    3.32 v u0/u0/U356/A1 (OAI31_X6M_A12TH)
+   0.01    0.25    3.57 ^ u0/u0/U356/Y (OAI31_X6M_A12TH)
+           0.00    3.57 ^ u0/u0/U357/D (NAND4_X4A_A12TH)
+   0.14    0.66    4.23 v u0/u0/U357/Y (NAND4_X4A_A12TH)
+           0.00    4.23 v u0/U200/B (XOR2_X4M_A12TH)
+   0.02    0.54    4.77 ^ u0/U200/Y (XOR2_X4M_A12TH)
+           0.00    4.77 ^ u0/U201/A (XOR2_X4M_A12TH)
+   0.03    0.31    5.08 ^ u0/U201/Y (XOR2_X4M_A12TH)
+           0.00    5.08 ^ u0/U202/A (XNOR2_X4M_A12TH)
+   0.09    0.43    5.51 ^ u0/U202/Y (XNOR2_X4M_A12TH)
+           0.00    5.51 ^ u0/U203/B (XNOR2_X4M_A12TH)
+   0.11    0.61    6.12 ^ u0/U203/Y (XNOR2_X4M_A12TH)
+           0.00    6.12 ^ u0/U204/B (NAND2_X0P5B_A12TH)
+   0.00    0.35    6.47 v u0/U204/Y (NAND2_X0P5B_A12TH)
+           0.00    6.47 v u0/U205/C0 (OAI211_X1P4M_A12TH)
+   0.00    0.17    6.64 ^ u0/U205/Y (OAI211_X1P4M_A12TH)
+           0.00    6.64 ^ u0/U206/B0 (OAI2XB1_X1M_A12TH)
+   0.00    0.14    6.78 v u0/U206/Y (OAI2XB1_X1M_A12TH)
+           0.00    6.78 v u0/w_reg_3__31_/D (DFFQ_X4M_A12TH)
+                   6.78   data arrival time
 
            7.00    7.00   clock clk (rise edge)
            0.00    7.00   clock network delay (ideal)
@@ -184,8 +184,8 @@ Path Type: max
                    6.89   data required time
 ----------------------------------------------------------------
                    6.89   data required time
-                  -6.70   data arrival time
+                  -6.78   data arrival time
 ----------------------------------------------------------------
-                   0.19   slack (MET)
+                   0.12   slack (MET)
 
 

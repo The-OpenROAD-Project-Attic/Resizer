@@ -6,7 +6,12 @@ replace_cell u1 snl_bufx2
 report_checks -fields input_pin
 
 # buffer insertion
-insert_buffer b1 snl_bufx1 u2z r3/D b1z
+disconnect_pin u2z r3/D
+make_net b1z
+make_instance b1 snl_bufx1
+connect_pin u2z b1/A
+connect_pin b1z b1/Z
+connect_pin b1z r3/D
 report_checks -fields input_pin
 
 set def_file [make_result_file insert_buffer1.def]

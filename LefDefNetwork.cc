@@ -94,6 +94,18 @@ LefDefNetwork::lefMacro(Cell *cell)
   return lef_macro_map_.findKey(cell);
 }
 
+Cell *
+LefDefNetwork::lefCell(LibertyCell *cell)
+{
+  return findCell(lef_library_, cell->name());
+}
+
+bool
+LefDefNetwork::isLefCell(Cell *cell) const
+{
+  return library(cell) == lef_library_;
+}
+
 LibertyCell *
 LefDefNetwork::libertyCell(Cell *cell) const
 {
@@ -142,20 +154,6 @@ defiComponent *
 LefDefNetwork::defComponent(Instance *inst) const
 {
   return def_component_map_.findKey(inst);
-}
-
-void
-LefDefNetwork::replaceCell(Instance *inst,
-			   LibertyCell *cell)
-{
-  if (library(this->cell(inst)) == lef_library_) {
-    // Replace lef with lef so ports stay lined up.
-    Cell *lef_cell = findCell(lef_library_, cell->name());
-    ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(lef_cell);
-    replaceCellIntenal(inst, ccell);
-  }
-  else
-    ConcreteNetwork::replaceCell(inst, cell);
 }
 
 void
