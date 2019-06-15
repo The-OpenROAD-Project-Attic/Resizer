@@ -265,9 +265,13 @@ target_link_libraries(resizer
 if (ZLIB_FOUND)
   target_link_libraries(resizer ${ZLIB_LIBRARIES})
 endif()
+
+# g++ std::thread apparently still needs -pthreads.
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(resizer -pthread)
 endif()
+
+target_compile_options(resizer PUBLIC ${COMPILE_OPTIONS})
 
 ################################################################
 # Install
