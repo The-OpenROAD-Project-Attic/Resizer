@@ -143,6 +143,7 @@ record_resizer_tests {
   write_def1
   write_def2
   write_def3
+  write_def4
 }
 
 # Record tests in $STAX/designs
@@ -163,10 +164,14 @@ define_test_group med {
   mea_resize1
   aes2_resize1
   aes2_rebuffer1
+}
+
+define_test_group slow {
   jpeg_resize1
 }
 
 set fast [group_tests all]
 set fast [list_delete $fast [group_tests med]]
+set fast [list_delete $fast [group_tests slow]]
 
 define_test_group fast $fast

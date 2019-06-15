@@ -1,0 +1,43 @@
+VERSION 5.5 ;
+NAMESCASESENSITIVE ON ;
+DIVIDERCHAR "/" ;
+BUSBITCHARS "[]" ;
+DESIGN top ;
+UNITS DISTANCE MICRONS 2000 ;
+DIEAREA ( 0 0 ) ( 10000 10000 ) ;
+
+COMPONENTS 6 ;
+- b1/r1 snl_ffqx1 ;
+- b1/u1 snl_bufx1 ;
+- b1/u2 snl_bufx1 ;
+- b2/r1 snl_ffqx1 ;
+- b2/u1 snl_bufx1 ;
+- b2/u2 snl_bufx1 ;
+END COMPONENTS
+
+PINS 4 ;
+- in + NET in + DIRECTION INPUT + FIXED ( 0 0 ) S ;
+- clk1 + NET clk1 + DIRECTION INPUT + FIXED ( 10000 0 ) E ;
+- clk2 + NET clk2 + DIRECTION INPUT + FIXED ( 10000 10000 ) N ;
+- out + NET out + DIRECTION OUTPUT + FIXED ( 0 10000 ) W ;
+END PINS
+
+NETS 15 ;
+- b1out ( b1/u2 Z ) ( b2/u1 A ) ;
+- clk1 ( PIN clk1 ) ( b1/r1 CP ) ;
+- clk2 ( PIN clk2 ) ( b2/r1 CP ) ;
+- in ( PIN in ) ( b1/u1 A ) ;
+- out ( PIN out ) ( b2/u2 Z ) ;
+- b1/clk ( PIN clk1 ) ( b1/r1 CP ) ;
+- b1/in ( PIN in ) ( b1/u1 A ) ;
+- b1/out ( b1/u2 Z ) ( b2/u1 A ) ;
+- b1/r1q ( b1/r1 Q ) ( b1/u2 A ) ;
+- b1/u1out ( b1/u1 Z ) ( b1/r1 D ) ;
+- b2/clk ( PIN clk2 ) ( b2/r1 CP ) ;
+- b2/in ( b1/u2 Z ) ( b2/u1 A ) ;
+- b2/out ( PIN out ) ( b2/u2 Z ) ;
+- b2/r1q ( b2/r1 Q ) ( b2/u2 A ) ;
+- b2/u1out ( b2/u1 Z ) ( b2/r1 D ) ;
+END NETS
+
+END DESIGN

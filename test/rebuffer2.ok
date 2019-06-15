@@ -97,10 +97,10 @@ SPECIALNETS 2 ;
 END SPECIALNETS
 
 NETS 4 ;
-- clk ( PIN clk ) ( r5 CP ) ( r4 CP ) ( r3 CP ) ( r2 CP ) ( r1 CP ) ;
+- clk ( PIN clk ) ( r1 CP ) ( r2 CP ) ( r3 CP ) ( r4 CP ) ( r5 CP ) ;
 - net1 ( r2 D ) ( r3 D ) ( buffer1 Z ) ;
-- net2 ( r5 D ) ( r4 D ) ( buffer2 Z ) ;
-- r1q ( buffer2 A ) ( buffer1 A ) ( r1 Q ) ;
+- net2 ( r4 D ) ( r5 D ) ( buffer2 Z ) ;
+- r1q ( r1 Q ) ( buffer1 A ) ( buffer2 A ) ;
 END NETS
 
 END DESIGN

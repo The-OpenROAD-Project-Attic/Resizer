@@ -113,8 +113,10 @@ LefDefNetwork::libertyCell(Cell *cell) const
   LibertyCell *lib_cell = dynamic_cast<LibertyCell*>(ccell);
   if (lib_cell)
     return lib_cell;
-  else
+  else if (cell)
     return findLibertyCell(ccell->name());
+  else
+    return nullptr;
 }
 
 LibertyPort *

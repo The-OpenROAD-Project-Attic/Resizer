@@ -1,3 +1,32 @@
+Startpoint: r2 (rising edge-triggered flip-flop clocked by clk)
+Endpoint: r3 (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00 ^ r2/CP (snl_ffqx1)
+   0.23    0.23 v r2/Q (snl_ffqx1)
+   0.14    0.37 v u1/Z (snl_bufx1)
+   0.13    0.50 v u2/Z (snl_and02x1)
+   0.00    0.50 v r3/D (snl_ffqx1)
+           0.50   data arrival time
+
+  10.00   10.00   clock clk (rise edge)
+   0.00   10.00   clock network delay (ideal)
+   0.00   10.00   clock reconvergence pessimism
+          10.00 ^ r3/CP (snl_ffqx1)
+  -0.10    9.90   library setup time
+           9.90   data required time
+---------------------------------------------------------
+           9.90   data required time
+          -0.50   data arrival time
+---------------------------------------------------------
+           9.40   slack (MET)
+
+
 VERSION 5.5 ;
 NAMESCASESENSITIVE ON ;
 DIVIDERCHAR "/" ;
@@ -30,10 +59,10 @@ NETS 10 ;
 - in1 ( PIN in1 ) ( r1 D ) ;
 - in2 ( PIN in2 ) ( r2 D ) ;
 - out ( PIN out ) ( r3 Q ) ;
-- r1q ( u2 A ) ( r1 Q ) ;
-- r2q ( u1 A ) ( r2 Q ) ;
-- u1z ( u2 B ) ( u1 Z ) ;
-- u2z ( r3 D ) ( u2 Z ) ;
+- r1q ( r1 Q ) ( u2 A ) ;
+- r2q ( r2 Q ) ( u1 A ) ;
+- u1z ( u1 Z ) ( u2 B ) ;
+- u2z ( u2 Z ) ( r3 D ) ;
 END NETS
 
 END DESIGN

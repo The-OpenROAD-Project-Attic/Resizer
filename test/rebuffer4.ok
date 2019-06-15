@@ -47,14 +47,14 @@ SPECIALNETS 2 ;
 END SPECIALNETS
 
 NETS 8 ;
-- clk ( PIN clk ) ( r3 CP ) ( r2 CP ) ( r1 CP ) ;
-- in1 ( PIN in1 ) ( r2 D ) ( r1 D ) ;
+- clk ( PIN clk ) ( r1 CP ) ( r2 CP ) ( r3 CP ) ;
+- in1 ( PIN in1 ) ( r1 D ) ( r2 D ) ;
 - net1 ( u2 B ) ( buffer1 Z ) ;
-- out ( PIN out ) ( r3 Q ) ;
-- r1q ( u2 A ) ( r1 Q ) ;
-- r2q ( u1 A ) ( r2 Q ) ;
-- u1z ( buffer1 A ) ( u1 Z ) ;
-- u2z ( r3 D ) ( u2 Z ) ;
+- out ( r3 Q ) ( PIN out ) ;
+- r1q ( r1 Q ) ( u2 A ) ;
+- r2q ( r2 Q ) ( u1 A ) ;
+- u1z ( u1 Z ) ( buffer1 A ) ;
+- u2z ( u2 Z ) ( r3 D ) ;
 END NETS
 
 END DESIGN

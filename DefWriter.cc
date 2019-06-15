@@ -71,6 +71,10 @@ static void
 writeDefNets(FILE *out_stream,
 	     LefDefNetwork *network);
 static void
+writeDefNets(const Instance *inst,
+	     FILE *out_stream,
+	     LefDefNetwork *network);
+static void
 writeDefNet(Net *net,
 	    FILE *out_stream,
 	    LefDefNetwork *network);
@@ -229,7 +233,7 @@ writeDefComponent(Instance *inst,
 {
   defiComponent *def_component = network->defComponent(inst);
   fprintf(out_stream, "- %s %s",
-	  staToDef(network->name(inst), network),
+	  staToDef(network->pathName(inst), network),
 	  network->name(network->cell(inst)));
   if (def_component) {
     if (def_component->hasEEQ())
@@ -393,16 +397,31 @@ writeDefNets(FILE *out_stream,
 {
   fprintf(out_stream, "NETS %d ;\n",
 	  network->netCount());
-  
-  NetIterator *net_iter = network->netIterator(network->topInstance());
+  writeDefNets(network->topInstance(), out_stream, network);  
+  fprintf(out_stream, "END NETS\n");
+}
+
+static void
+writeDefNets(const Instance *inst,
+	     FILE *out_stream,
+	     LefDefNetwork *network)
+{
+  NetIterator *net_iter = network->netIterator(inst);
   while (net_iter->hasNext()) {
     Net *net = net_iter->next();
     if (!network->isGround(net) && !network->isPower(net))
       writeDefNet(net, out_stream, network);
   }
   delete net_iter;
-  
-  fprintf(out_stream, "END NETS\n");
+
+  // Decend the hierarchy.
+  InstanceChildIterator *child_iter = network->childIterator(inst);
+  while (child_iter->hasNext()) {
+    Instance *child = child_iter->next();
+    if (network->isHierarchical(child))
+      writeDefNets(child, out_stream, network);
+  }
+  delete child_iter;
 }
 
 static void
@@ -410,37 +429,31 @@ writeDefNet(Net *net,
 	    FILE *out_stream,
 	    LefDefNetwork *network)
 {
-  const char *sta_net_name = network->name(net);
+  const char *sta_net_name = network->pathName(net);
   const char *def_net_name = staToDef(sta_net_name, network);
   fprintf(out_stream, "- %s", def_net_name);
   int column = strlen(def_net_name) + 2;
   int column_max = 80;
 
-  NetTermIterator *term_iter = network->termIterator(net);
-  while (term_iter->hasNext()) {
-    Term *term = term_iter->next();
-    const char *port_name = network->portName(term);
-    fprintf(out_stream, " ( PIN %s )",
-	    port_name);
-    int width = strlen(port_name) + 9;
-    if ((column + width) > column_max) {
-      fprintf(out_stream, "\n ");
-      column = 0;
-    }
-    column += width;
-  }
-  delete term_iter;
-
-  NetPinIterator *pin_iter = network->pinIterator(net);
+  NetConnectedPinIterator *pin_iter = network->connectedPinIterator(net);
   while (pin_iter->hasNext()) {
-    Pin *pin = pin_iter->next();
-    const char *sta_component_name = network->name(network->instance(pin));
-    const char *def_component_name = staToDef(sta_component_name, network);
-    const char *port_name = network->portName(pin);
-    fprintf(out_stream, " ( %s %s )",
-	    def_component_name,
-	    port_name);
-    int width = strlen(def_component_name) + strlen(port_name) + 6;
+    const Pin *pin = pin_iter->next();
+    int width = 0;
+    if (network->isTopLevelPort(pin)) {
+      const char *port_name = network->portName(pin);
+      fprintf(out_stream, " ( PIN %s )",
+	      port_name);
+      width = strlen(port_name) + 9;
+    }
+    else if (network->isLeaf(pin)) {
+      const char *sta_component_name = network->pathName(network->instance(pin));
+      const char *def_component_name = staToDef(sta_component_name, network);
+      const char *port_name = network->portName(pin);
+      fprintf(out_stream, " ( %s %s )",
+	      def_component_name,
+	      port_name);
+      width = strlen(def_component_name) + strlen(port_name) + 6;
+    }
     if ((column + width) > column_max) {
       fprintf(out_stream, "\n ");
       column = 0;
