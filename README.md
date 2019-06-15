@@ -41,7 +41,7 @@ to the executable when it starts.
 Resizer sources the TCL command file ~/.resizer unless the command
 line option -no_init is specified.
 
-Resizer then sources the command file cmd_file.  Unless the -exit
+Resizer then sources the command file cmd_file. Unless the -exit
 command line flag is specified it enters and interactive TCL command
 interpreter.
 
@@ -55,16 +55,19 @@ Addtional commands are shown below.
 	 [-repair_max_cap]
 	 [-repair_max_slew]
 	 [-buffer_cell buffer_cell]
-* write_def filename
+* write_def [-units units]
+            [-die_area {lx ly ux uy}]
+            [-auto_place_pins]
+            filename
 
-Liberty libraries should be read before LEF and DEF.  Only one LEF and
-one DEF file are supported.  
+Liberty libraries should be read before LEF and DEF. Only one LEF and
+one DEF file are supported.
 
 The set_wire_rc command sets the resistance (ohms/meter) and
 capacitance (farads/meter) of routing wires. It adds parasitics based
-on placed component pin locations.  The resistance and capacitance are
+on placed component pin locations. The resistance and capacitance are
 per meter of a routing wire. They should represent "average" routing
-layer resistance and capacitance.  If the set_wire_rc command is not
+layer resistance and capacitance. If the set_wire_rc command is not
 called before resizing, the default_wireload model specified in the
 first liberty file or with the SDC set_wire_load command is used to
 make parasitics.
@@ -72,9 +75,15 @@ make parasitics.
 The resize command resizes gates and then uses buffer insertion to
 repair maximum capacitance and slew violations. Use the -resize,
 -repair_max_cap and -repair_max_slew options to invoke a single
-mode. With none of the options specified all are done.  The
+mode. With none of the options specified all are done. The
 -buffer_cell argument is required for buffer insertion
 (-repair_max_cap or -repair_max_slew).
+
+The write_def command -units, -die_area and -auto_place_pins arguments
+are only used when writing a DEF file from a Verilog netlist. The die
+area is a list of corner coordinates in DEF units. The
+-auto_place_pins argument adds locations for the pins equally spaced
+around the die perimeter.
 
 A typical resizer command file is shown below.
 
