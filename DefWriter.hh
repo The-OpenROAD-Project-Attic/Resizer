@@ -23,6 +23,15 @@ class LefDefNetwork;
 
 void
 writeDef(const char *filename,
+	 // These args are only for writing DEF from Verilog.
+	 int units,
+	 // Die area (in DEF units).
+	 int die_lx,
+	 int die_ly,
+	 int die_ux,
+	 int die_uy,
+	 // Place pins around the die area boundary.
+	 bool auto_place_pins,
 	 LefDefNetwork *network);
 
 } // namespace

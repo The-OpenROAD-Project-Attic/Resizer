@@ -75,10 +75,18 @@ read_def(const char *filename)
 }
 
 void
-write_def(const char *filename)
+write_def_cmd(const char *filename,
+	      int units,
+	      // Die area.
+	      int die_lx,
+	      int die_ly,
+	      int die_ux,
+	      int die_uy,
+	      bool auto_place_pins)
 {
   LefDefNetwork *network = lefDefNetwork();
-  writeDef(filename, network);
+  writeDef(filename, units, die_lx, die_ly, die_ux, die_uy,
+	   auto_place_pins, network);
 }
 
 void
@@ -112,7 +120,6 @@ rebuffer_net(Net *net,
 	     LibertyCell *buffer_cell)
 {
   Resizer *resizer = getResizer();
-  Corner *corner = resizer->cmdCorner();
   resizer->rebuffer(net, buffer_cell);
 }
 

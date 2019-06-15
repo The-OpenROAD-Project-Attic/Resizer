@@ -77,7 +77,7 @@ readDef(const char *filename,
 	bool save_def_data,
 	LefDefNetwork *network)
 {
-  network->setFilename(filename);
+  network->setDefFilename(filename);
   // Make top_instance to act as parent to components.
   // Note that top ports are not known yet because PINS section has not been parsed.
   Library *lef_library = network->lefLibrary();

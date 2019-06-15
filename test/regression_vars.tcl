@@ -17,7 +17,7 @@ if { [regexp "CYGWIN" [exec uname -a]] } {
 set resize_dir [find_parent_dir $test_dir]
 set app_path [file join $resize_dir "build" $app]
 # Application options.
-set app_options "-no_init -no_splash"
+set app_options "-no_init -no_splash -exit"
 # Log files for each test are placed in result_dir.
 set result_dir [file join $test_dir "results"]
 # Collective diffs.
@@ -142,6 +142,7 @@ record_resizer_tests {
   resize3
   write_def1
   write_def2
+  write_def3
 }
 
 # Record tests in $STAX/designs

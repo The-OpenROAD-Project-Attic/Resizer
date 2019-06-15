@@ -23,6 +23,41 @@ define_cmd_args "read_def" {filename}
 
 define_cmd_args "write_def" {filename}
 
+proc write_def { args } {
+  parse_key_args "write_def" args keys {-units -die_area} \
+    flags {-auto_place_pins}
+
+  set units 1000
+  if [info exists keys(-units)] {
+    set units $keys(-units)
+    check_positive_float "-units" $units
+  }
+
+  set die_lx 0
+  set die_ly 0
+  set die_ux 0
+  set die_uy 0
+  if [info exists keys(-die_area)] {
+    set die_area $keys(-die_area)
+    if { [llength $die_area] != 4 } {
+      sta_error "-die_area is a list of 4 coordinates."
+    }
+    lassign $die_area die_lx die_ly die_ux die_uy
+    check_positive_float "-die_area" $die_lx
+    check_positive_float "-die_area" $die_ly
+    check_positive_float "-die_area" $die_ux
+    check_positive_float "-die_area" $die_uy
+  }
+
+  set auto_place_pins [info exists flags(-auto_place_pins)]
+  check_argc_eq1 "write_def" $args
+  set filename $args
+
+  write_def_cmd $filename $units \
+    $die_lx $die_ly $die_ux $die_uy \
+    $auto_place_pins
+}
+
 define_cmd_args "set_wire_rc" {[-resistance res ][-capacitance cap]\
 				 [-corner corner_name]}
 

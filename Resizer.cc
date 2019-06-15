@@ -651,13 +651,13 @@ bool
 Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
 {
   Vertex *vertex = graph_->pinDrvrVertex(drvr_pin);
+  float limit;
+  bool exists;
+  slewLimit(drvr_pin, MinMax::max(), limit, exists);
   TransRiseFallIterator tr_iter;
   while (tr_iter.hasNext()) {
     TransRiseFall *tr = tr_iter.next();
     Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
-    float limit;
-    bool exists;
-    slewLimit(drvr_pin, tr, MinMax::max(), limit, exists);
     if (slew > limit)
       return true;
   }
@@ -666,7 +666,6 @@ Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
 
 void
 Resizer::slewLimit(const Pin *pin,
-		   const TransRiseFall *tr,
 		   const MinMax *min_max,
 		   // Return values.
 		   float &limit,

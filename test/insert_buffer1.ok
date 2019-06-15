@@ -88,7 +88,6 @@ COMPONENTS 6 ;
 - u2 snl_and02x1 ;
 END COMPONENTS
 
-
 PINS 6 ;
 - in1 + NET in1 + DIRECTION INPUT ;
 - in2 + NET in2 + DIRECTION INPUT ;
@@ -118,6 +117,5 @@ NETS 11 ;
 - u1z ( u2 B ) ( u1 Z ) ;
 - u2z ( b1 A ) ( u2 Z ) ;
 END NETS
-
 
 END DESIGN

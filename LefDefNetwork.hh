@@ -58,8 +58,8 @@ public:
   ~LefDefNetwork();
   virtual void clear();
   void setDivider(char divider);
-  const char *filename() { return filename_; }
-  void setFilename(const char *filename);
+  const char *defFilename() { return def_filename_; }
+  void setDefFilename(const char *filename);
   // dbu/micron
   float defUnits() const { return def_units_; }
   void setDefUnits(double def_units);
@@ -97,7 +97,7 @@ public:
   using ConcreteNetwork::connect;
 
 protected:
-  const char *filename_;
+  const char *def_filename_;
   Library *lef_library_;
   float def_units_;		// dbu/micron
   DefPortLocations port_locations_;

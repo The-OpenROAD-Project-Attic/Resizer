@@ -31,7 +31,6 @@ COMPONENTS 6 ;
 + PLACED ( 100000 400000 ) N ;
 END COMPONENTS
 
-
 PINS 6 ;
 - in1 + NET in1 + DIRECTION INPUT + USE SIGNAL 
   + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 200000 ) N ;
@@ -57,6 +56,5 @@ NETS 8 ;
 - u1z ( buffer1 A ) ( u1 Z ) ;
 - u2z ( r3 D ) ( u2 Z ) ;
 END NETS
-
 
 END DESIGN

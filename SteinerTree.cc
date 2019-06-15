@@ -307,7 +307,6 @@ SteinerTree::findLeftRights(const Network *network)
   int branch_count = branchCount();
   left_.resize(branch_count, SteinerTree::null_pt);
   right_.resize(branch_count, SteinerTree::null_pt);
-  int pin_count = pinCount();
   SteinerPtSeq adj1(branch_count, SteinerTree::null_pt);
   SteinerPtSeq adj2(branch_count, SteinerTree::null_pt);
   SteinerPtSeq adj3(branch_count, SteinerTree::null_pt);

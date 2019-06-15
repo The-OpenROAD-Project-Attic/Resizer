@@ -84,7 +84,6 @@ COMPONENTS 7 ;
 + PLACED ( 100000 500000 ) N ;
 END COMPONENTS
 
-
 PINS 1 ;
 - clk + NET clk + DIRECTION INPUT + USE SIGNAL 
   + LAYER M4 ( -100 0 ) ( 100 1040 ) + FIXED ( 100000 100000 ) N ;
@@ -103,6 +102,5 @@ NETS 4 ;
 - net2 ( r5 D ) ( r4 D ) ( buffer2 Z ) ;
 - r1q ( buffer2 A ) ( buffer1 A ) ( r1 Q ) ;
 END NETS
-
 
 END DESIGN

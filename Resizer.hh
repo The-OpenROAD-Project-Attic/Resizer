@@ -92,7 +92,6 @@ protected:
   bool hasMaxCapViolation(const Pin *drvr_pin);
   bool hasMaxSlewViolation(const Pin *drvr_pin);
   void slewLimit(const Pin *pin,
-		 const TransRiseFall *tr,
 		 const MinMax *min_max,
 		 // Return values.
 		 float &limit,

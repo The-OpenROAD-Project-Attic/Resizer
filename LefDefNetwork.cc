@@ -22,31 +22,31 @@ namespace sta {
 
 LefDefNetwork::LefDefNetwork() :
   ConcreteNetwork(),
-  filename_(nullptr),
+  def_filename_(nullptr),
   lef_library_(nullptr)
 {
 }
 
 LefDefNetwork::~LefDefNetwork()
 {
-  stringDelete(filename_);
-  def_component_map_.deleteContents();
-  lef_macro_map_.deleteContents();
+  clear();
 }
 
 void
 LefDefNetwork::clear()
 {
-  stringDelete(filename_);
-  filename_ = nullptr;
+  stringDelete(def_filename_);
+  def_filename_ = nullptr;
   lef_library_ = nullptr;
+  def_component_map_.deleteContents();
+  lef_macro_map_.deleteContents();
   ConcreteNetwork::clear();
 }
 
 void
 LefDefNetwork::setDivider(char divider)
 {
-  divider_ = divider_;
+  divider_ = divider;
 }
 
 void
@@ -62,9 +62,9 @@ LefDefNetwork::dbuToMeters(int dbu) const
 }
 
 void
-LefDefNetwork::setFilename(const char *filename)
+LefDefNetwork::setDefFilename(const char *filename)
 {
-  filename_ = stringCopy(filename);
+  def_filename_ = stringCopy(filename);
 }
 
 Library *
