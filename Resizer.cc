@@ -847,8 +847,8 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 		// If q is strictly worse than p, remove solution q.
 		Z2[qi] = nullptr;
 	      }
-	      qi++;
 	    }
+	    qi++;
 	  }
 	}
       }
