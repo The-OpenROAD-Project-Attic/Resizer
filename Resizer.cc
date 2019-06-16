@@ -48,6 +48,10 @@
 //  test rebuffering on input ports
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
+// rename option to -insert_buffers
+// write_def -sort option for stable results
+// write_def -site
+// write_verilog
 
 namespace sta {
 
@@ -783,6 +787,34 @@ Resizer::rebuffer(const Pin *drvr_pin,
   }
 }
 
+class RebufferOptionBufferReqGreater
+{
+public:
+  RebufferOptionBufferReqGreater(LibertyCell *buffer_cell,
+				 Resizer *resizer);
+  bool operator()(RebufferOption *option1,
+		  RebufferOption *option2);
+
+protected:
+  LibertyCell *buffer_cell_;
+  Resizer *resizer_;
+};
+
+RebufferOptionBufferReqGreater::RebufferOptionBufferReqGreater(LibertyCell *buffer_cell,
+							       Resizer *resizer) :
+  buffer_cell_(buffer_cell),
+  resizer_(resizer)
+{
+}
+ 
+bool
+RebufferOptionBufferReqGreater::operator()(RebufferOption *option1,
+					   RebufferOption *option2)
+{
+  return fuzzyGreater(option1->bufferRequired(buffer_cell_, resizer_),
+		      option2->bufferRequired(buffer_cell_, resizer_));
+}
+
 // The routing tree is represented a binary tree with the sinks being the leaves
 // of the tree, the junctions being the Steiner nodes and the root being the
 // source of the net.
@@ -834,22 +866,30 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	}
       }
       // Prune the options. This is fanout^2.
-      for (auto p : Z2) {
+      // Presort options to hit better options sooner.
+      sort(Z2, RebufferOptionBufferReqGreater(buffer_cell, this));
+      for (int pi = 0; pi < Z2.size(); pi++) {
+	auto p = Z2[pi];
 	if (p) {
-	  Required Tp = p->bufferRequired(buffer_cell, this);
 	  float Lp = p->cap();
-	  int qi = 0;
-	  for (auto q : Z2) {
+	  // Because the options are sorted we don't have to look
+	  // beyond the first option.
+	  //for (int qi = 0; qi < pi; qi++) {
+	  bool found_options = false;
+	  for (int qi = pi + 1; qi < Z2.size(); qi++) {
+	    auto q = Z2[qi];
 	    if (q) {
-	      Required Tq = q->bufferRequired(buffer_cell, this);
 	      float Lq = q->cap();
-	      if (fuzzyLess(Tq, Tp) && fuzzyGreater(Lq, Lp)) {
-		// If q is strictly worse than p, remove solution q.
+	      // We know Tq <= Tp from the sort so we don't need to check req.
+	      if (fuzzyGreaterEqual(Lq, Lp)) {
+		// If q is the same or worse than p, remove solution q.
 		Z2[qi] = nullptr;
-	      }
+	      found_options = true;
 	    }
-	    qi++;
 	  }
+	  // All of the options after p have been pruned.
+	  if (!found_options)
+	    break;
 	}
       }
       // Save the survivors.

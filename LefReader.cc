@@ -17,6 +17,7 @@
 #include "Machine.hh"
 #include "Error.hh"
 #include "PortDirection.hh"
+#include "Liberty.hh"
 #include "LefDefNetwork.hh"
 #include "lefrReader.hpp"
 
@@ -127,7 +128,8 @@ macroBeginCbk(lefrCallbackType_e,
   LefReader *reader = getLefReader(user);
   LefDefNetwork *network = reader->network();
   Library *lef_lib = reader->lefLibrary();
-  Cell *lef_macro = network->makeCell(lef_lib, macro_name, true, reader->filename());
+  Cell *lef_macro = network->makeCell(lef_lib, macro_name, true,
+				      reader->filename());
   reader->setLefMacro(lef_macro);
   return 0;
 }
@@ -138,6 +140,21 @@ macroEndCbk(lefrCallbackType_e,
 	    lefiUserData user)
 {
   LefReader *reader = getLefReader(user);
+  LefDefNetwork *network = reader->network();
+  Cell *lef_macro = reader->lefMacro();
+  // Set corresponding liberty cell and ports for reference by Network.
+  ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(lef_macro);
+  LibertyCell *lib_cell = network->findLibertyCell(network->name(lef_macro));
+  if (lib_cell) {
+    ccell->setLibertyCell(lib_cell);
+    LibertyCellPortIterator port_iter(lib_cell);
+    while (port_iter.hasNext()) {
+      LibertyPort *lib_port = port_iter.next();
+      ConcretePort *port = ccell->findPort(lib_port->name());
+      if (port)
+	port->setLibertyPort(lib_port);
+    }
+  }
   reader->setLefMacro(nullptr);
   return 0;
 }
