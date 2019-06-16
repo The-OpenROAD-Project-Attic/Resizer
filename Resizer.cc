@@ -884,6 +884,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	      if (fuzzyGreaterEqual(Lq, Lp)) {
 		// If q is the same or worse than p, remove solution q.
 		Z2[qi] = nullptr;
+	      }
 	      found_options = true;
 	    }
 	  }
