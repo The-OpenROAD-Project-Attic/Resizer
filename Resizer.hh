@@ -74,6 +74,7 @@ protected:
   void findBufferTargetSlews();
   void findBufferTargetSlews(LibertyLibrary *library,
 			     // Return values.
+			     Slew slews[],
 			     int counts[]);
   void makeNetParasitics();
   void makeNetParasitics(const Net *net);

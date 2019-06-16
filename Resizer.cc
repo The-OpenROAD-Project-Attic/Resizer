@@ -52,6 +52,8 @@
 // write_def -sort option for stable results
 // write_def -site
 // write_verilog
+// prune rebuffer options by shifting up instead of a 2nd pass
+// should buffer sizing/insertion preserve library for Vt/power reasons?
 
 namespace sta {
 
@@ -237,13 +239,15 @@ Resizer::resizeToTargetSlew1(Instance *inst)
       auto equiv_cells = cell->equivCells();
       if (equiv_cells) {
 	for (auto target_cell : *equiv_cells) {
-	  float target_load = (*target_load_map_)[target_cell];
-	  float ratio = target_load / load_cap;
-	  if (ratio > 1.0)
-	    ratio = 1.0 / ratio;
-	  if (ratio > best_ratio) {
-	    best_ratio = ratio;
-	    best_cell = target_cell;
+	  if (!target_cell->dontUse()) {
+	    float target_load = (*target_load_map_)[target_cell];
+	    float ratio = target_load / load_cap;
+	    if (ratio > 1.0)
+	      ratio = 1.0 / ratio;
+	    if (ratio > best_ratio) {
+	      best_ratio = ratio;
+	      best_cell = target_cell;
+	    }
 	  }
 	}
 	if (best_cell && best_cell != cell) {
@@ -395,46 +399,65 @@ Resizer::findBufferTargetSlews()
 {
   tgt_slews_[TransRiseFall::riseIndex()] = 0.0;
   tgt_slews_[TransRiseFall::fallIndex()] = 0.0;
-  int counts[TransRiseFall::index_count]{0};
+  int tgt_counts[TransRiseFall::index_count]{0};
   
   LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
   while (lib_iter->hasNext()) {
     LibertyLibrary *lib = lib_iter->next();
-    findBufferTargetSlews(lib, counts);
+    Slew slews[TransRiseFall::index_count]{0.0};
+    int counts[TransRiseFall::index_count]{0};
+    
+    findBufferTargetSlews(lib, slews, counts);
+    for (int tr = 0; tr < TransRiseFall::index_count; tr++) {
+      tgt_slews_[tr] += slews[tr];
+      tgt_counts[tr] += counts[tr];
+      slews[tr] /= counts[tr];
+    }
+    debugPrint3(debug_, "resizer_tgt", 2, "target_slews %s = %.2e/%.2e\n",
+		lib->name(),
+		slews[TransRiseFall::riseIndex()],
+		slews[TransRiseFall::fallIndex()]);
   }
   delete lib_iter;
 
-  tgt_slews_[TransRiseFall::riseIndex()] /= counts[TransRiseFall::riseIndex()];
-  tgt_slews_[TransRiseFall::fallIndex()] /= counts[TransRiseFall::fallIndex()];
+  for (int tr = 0; tr < TransRiseFall::index_count; tr++)
+    tgt_slews_[tr] /= tgt_counts[tr];
+
+  debugPrint2(debug_, "resizer_tgt", 1, "target_slews = %.2e/%.2e\n",
+	      tgt_slews_[TransRiseFall::riseIndex()],
+	      tgt_slews_[TransRiseFall::fallIndex()]);
 }
 
 void
 Resizer::findBufferTargetSlews(LibertyLibrary *library,
 			       // Return values.
+			       Slew slews[],
 			       int counts[])
 {
   for (auto buffer : *library->buffers()) {
-    LibertyPort *input, *output;
-    buffer->bufferPorts(input, output);
-    auto arc_sets = buffer->timingArcSets(input, output);
-    if (arc_sets) {
-      for (auto arc_set : *arc_sets) {
-	TimingArcSetArcIterator arc_iter(arc_set);
-	while (arc_iter.hasNext()) {
-	  TimingArc *arc = arc_iter.next();
-	  GateTimingModel *model = dynamic_cast<GateTimingModel*>(arc->model());
-	  TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
-	  TransRiseFall *out_tr = arc->toTrans()->asRiseFall();
-	  float in_cap = input->capacitance(in_tr, min_max_);
-	  float load_cap = in_cap * 10.0; // "factor debatable"
-	  ArcDelay arc_delay;
-	  Slew arc_slew;
-	  model->gateDelay(buffer, pvt_, 0.0, load_cap, 0.0, false,
-			   arc_delay, arc_slew);
-	  model->gateDelay(buffer, pvt_, arc_slew, load_cap, 0.0, false,
-			   arc_delay, arc_slew);
-	  tgt_slews_[out_tr->index()] += arc_slew;
-	  counts[out_tr->index()]++;
+    if (!buffer->dontUse()) {
+      LibertyPort *input, *output;
+      buffer->bufferPorts(input, output);
+      auto arc_sets = buffer->timingArcSets(input, output);
+      if (arc_sets) {
+	for (auto arc_set : *arc_sets) {
+	  TimingArcSetArcIterator arc_iter(arc_set);
+	  while (arc_iter.hasNext()) {
+	    TimingArc *arc = arc_iter.next();
+	    GateTimingModel *model = dynamic_cast<GateTimingModel*>(arc->model());
+	    TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
+	    TransRiseFall *out_tr = arc->toTrans()->asRiseFall();
+	    float in_cap = input->capacitance(in_tr, min_max_);
+	    float load_cap = in_cap * 10.0; // "factor debatable"
+	    ArcDelay arc_delay;
+	    Slew arc_slew;
+	    model->gateDelay(buffer, pvt_, 0.0, load_cap, 0.0, false,
+			     arc_delay, arc_slew);
+	    model->gateDelay(buffer, pvt_, arc_slew, load_cap, 0.0, false,
+			     arc_delay, arc_slew);
+	    slews[out_tr->index()] += arc_slew;
+	    counts[out_tr->index()]++;
+	  }
 	}
       }
     }
