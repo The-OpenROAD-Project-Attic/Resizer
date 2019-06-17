@@ -17,12 +17,36 @@ cd build
 cmake ..
 make
 
-The default build type is release to compile optimized code.
+The default build type is RELEASE to compile optimized code.
 The resulting executable is in `build/resizer`.
 
 Optional CMake variables passed as -D<var>=<value> arguments to CMake are show below.
 
+```
 CMAKE_BUILD_TYPE DEBUG|RELEASE
+CMAKE_CXX_FLAGS - additional compiler flags
+TCL_LIB - path to tcl library
+TCL_HEADER - path to tcl.h
+CUDD - path to cudd installation
+ZLIB_ROOT - path to zlib
+CMAKE_INSTALL_PREFIX
+```
+
+If OpenSTA is built with the CUDD package Resizer requires its location.
+Use -DCUDD=<cudd_path> as described in the OpenSTA README.md file.
+
+The default install directory is `/usr/local`.
+To install in a different directory with CMake use:
+
+```
+cmake .. -DCMAKE_INSTALL_PREFIX=<prefix_path>
+```
+
+Alternatively, you can use the `DESTDIR` variable with make.
+
+```
+make DESTDIR=<prefix_path> install
+```
 
 #### Running Resizer
 
@@ -122,7 +146,8 @@ report_wns
 
 #### Verilog to DEF
 
-An example command script to translate DEF to Verilog is shown below.
+An example Resizer command script to translate DEF to Verilog is shown
+below.
 
 ```
 read_liberty liberty1.lib
