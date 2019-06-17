@@ -83,6 +83,7 @@ resize [-resize]
        [-buffer_cell buffer_cell]
 write_def [-units dist_units]
           [-die_area {lx ly ux uy}]
+          [-core_area {lx ly ux uy}]
           [-site site_name]
           [-auto_place_pins]
           filename
@@ -107,13 +108,14 @@ mode. With none of the options specified all are done. The
 -buffer_cell argument is required for buffer insertion
 (-repair_max_cap or -repair_max_slew).
 
-The write_def command -units, -die_area, -site and -auto_place_pins
-arguments are only used when writing a DEF file from a Verilog
-netlist. dist_units are the DEF database units per micron. The die
-area is a list of corner coordinates in microns (lower x, lower y,
-upper x, upper y). site_name is a LEF site name that is used to write
-ROW statements to fill the die area.  The -auto_place_pins argument
-adds locations for the pins equally spaced around the die perimeter.
+The write_def command -units, -die_area, -core_area, -site and
+-auto_place_pins arguments are only used when writing a DEF file from
+a Verilog netlist. dist_units are the DEF database units per
+micron. The die area is a list of corner coordinates in microns (lower
+x, lower y, upper x, upper y). site_name is a LEF site name that is
+used to write ROW statements to fill the die area.  The
+-auto_place_pins argument adds locations for the pins equally spaced
+around the die perimeter.
 
 A typical resizer command file is shown below.
 
@@ -162,17 +164,18 @@ Verilog using command line arguments.
 
 ```
 verilog2def
-  [-help]                   show help and exit
-  [-version]                show version and exit
-  -liberty liberty_file     liberty library
-  -lef lef_file             lef_file for site size
+  [-help]                    show help and exit
+  [-version]                 show version and exit
+  -liberty liberty_file      liberty library
+  -lef lef_file              lef_file for site size
   -verilog verilog_file     
-  -top_module module_name   verilog module to expand
-  -units units              def units per micron
-  [-die_area "lx ly ux uy"] die area in microns
+  -top_module module_name    verilog module to expand
+  -units units               def units per micron
+  [-die_area "lx ly ux uy"]  die area in microns
+  [-core_area "lx ly ux uy"] core area in microns
   [-site site_name]         
   [-auto_place_pins]        
-  -def def_file             def file to write
+  -def def_file              def file to write
 ```
 
 Multiple Liberty files can be read by using multiple -liberty keywords.

@@ -30,6 +30,11 @@ writeDef(const char *filename,
 	 double die_ly,
 	 double die_ux,
 	 double die_uy,
+	 // Core area (in meters).
+	 double core_lx,
+	 double core_ly,
+	 double core_ux,
+	 double core_uy,
 	 const char *site_name,
 	 // Place pins around the die area boundary.
 	 bool auto_place_pins,

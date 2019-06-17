@@ -21,10 +21,14 @@ define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}
 
-define_cmd_args "write_def" {filename}
+define_cmd_args "write_def" {-units def_units\
+			       [-die_area {lx ly ux uy}]\
+			       [-core_area {lx ly ux uy}]\
+			       [-site site_name]\
+			       filename}
 
 proc write_def { args } {
-  parse_key_args "write_def" args keys {-units -die_area -site} \
+  parse_key_args "write_def" args keys {-units -die_area -core_area -site} \
     flags {-auto_place_pins -sort}
 
   set units 1000
@@ -49,6 +53,22 @@ proc write_def { args } {
     check_positive_float "-die_area" $die_uy
   }
 
+  set core_lx 0
+  set core_ly 0
+  set core_ux 0
+  set core_uy 0
+  if [info exists keys(-core_area)] {
+    set core_area $keys(-core_area)
+    if { [llength $core_area] != 4 } {
+      sta_error "-core_area is a list of 4 coordinates."
+    }
+    lassign $core_area core_lx core_ly core_ux core_uy
+    check_positive_float "-core_area" $core_lx
+    check_positive_float "-core_area" $core_ly
+    check_positive_float "-core_area" $core_ux
+    check_positive_float "-core_area" $core_uy
+  }
+
   set site_name ""
   if [info exists keys(-site)] {
     set site_name $keys(-site)
@@ -64,6 +84,8 @@ proc write_def { args } {
   write_def_cmd $filename $units \
     [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
     [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
+    [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
+    [expr $core_ux * 1e-6] [expr $core_uy * 1e-6] \
     $site_name $auto_place_pins $sort
 }
 

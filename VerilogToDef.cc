@@ -127,6 +127,24 @@ main(int argc,
     die_uy = strtod(die_tokens[3].c_str(), nullptr) * 1e-6;
   }
 
+  const char *core_area = findCmdLineKey(argc, argv, "-core_area");
+  double core_lx = 0.0;
+  double core_ly = 0.0;
+  double core_ux = 0.0;
+  double core_uy = 0.0;
+  if (core_area) {
+    string core_area1(core_area);
+    StringVector core_tokens;
+    split(core_area1, " ,", core_tokens);
+    if (core_tokens.size() != 4)
+      report->printWarn("Warning: -core_area should be a list of 4 coordinates\n");
+    // microns to meters.
+    core_lx = strtod(core_tokens[0].c_str(), nullptr) * 1e-6;
+    core_ly = strtod(core_tokens[1].c_str(), nullptr) * 1e-6;
+    core_ux = strtod(core_tokens[2].c_str(), nullptr) * 1e-6;
+    core_uy = strtod(core_tokens[3].c_str(), nullptr) * 1e-6;
+  }
+
   const char *site_name = findCmdLineKey(argc, argv, "-site");
   bool auto_place_pins = findCmdLineFlag(argc, argv, "-auto_place_pins");
 
@@ -148,7 +166,9 @@ main(int argc,
       readLef(lef_filename, &network);
       readVerilogFile(verilog_filename, &network);
       network.linkNetwork(top_module, true, report);
-      writeDef(def_filename, units, die_lx, die_ly, die_ux, die_uy,
+      writeDef(def_filename, units,
+	       die_lx, die_ly, die_ux, die_uy,
+	       core_lx, core_ly, core_ux, core_uy,
 	       site_name, auto_place_pins, true, &network);
     }
     catch (StaException &excp) {
@@ -165,15 +185,16 @@ static void
 showUsage(const char *prog)
 {
   printf("Usage %s\n", prog);
-  printf("  [-help]                   show help and exit\n");
-  printf("  [-version]                show version and exit\n");
-  printf("  -liberty liberty_file     liberty for linking verilog\n");
-  printf("  -lef lef_file             lef_file for site size\n");
-  printf("  -verilog verilog_file     \n");
-  printf("  -top_module module_name   verilog module to expand\n");
-  printf("  -units units              def units per micron\n");
-  printf("  [-die_area \"lx ly ux uy\"] die area in microns\n");
-  printf("  [-site site_name]         \n");
-  printf("  [-auto_place_pins]        \n");
-  printf("  -def def_file             def file to write\n");
+  printf("  [-help]                    show help and exit\n");
+  printf("  [-version]                 show version and exit\n");
+  printf("  -liberty liberty_file      liberty for linking verilog\n");
+  printf("  -lef lef_file              lef_file for site size\n");
+  printf("  -verilog verilog_file      \n");
+  printf("  -top_module module_name    verilog module to expand\n");
+  printf("  -units units               def units per micron\n");
+  printf("  [-die_area \"lx ly ux uy\"]  die area in microns\n");
+  printf("  [-core_area \"lx ly ux uy\"] core area in microns\n");
+  printf("  [-site site_name]          \n");
+  printf("  [-auto_place_pins]         \n");
+  printf("  -def def_file              def file to write\n");
 }

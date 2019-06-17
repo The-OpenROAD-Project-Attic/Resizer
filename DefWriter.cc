@@ -38,11 +38,14 @@ rewriteDef(const char *in_filename,
 static void
 writeDefFresh(const char *filename,
 	      int units,
-	      // Die area.
 	      double die_lx,
 	      double die_ly,
 	      double die_ux,
 	      double die_uy,
+	      double core_lx,
+	      double core_ly,
+	      double core_ux,
+	      double core_uy,
 	      const char *site_name,
 	      bool auto_place_pins,
 	      bool sort,
@@ -101,10 +104,10 @@ writeDefHeader(int units,
 	       LefDefNetwork *network);
 static void
 writeDefRows(const char *site_name,
-	     double die_lx,
-	     double die_ly,
-	     double die_ux,
-	     double die_uy,
+	     double core_lx,
+	     double core_ly,
+	     double core_ux,
+	     double core_uy,
 	     FILE *out_stream,
 	     LefDefNetwork *network);
 
@@ -118,6 +121,10 @@ writeDef(const char *filename,
 	 double die_ly,
 	 double die_ux,
 	 double die_uy,
+	 double core_lx,
+	 double core_ly,
+	 double core_ux,
+	 double core_uy,
 	 const char *site_name,
 	 bool auto_place_pins,
 	 bool sort,
@@ -127,7 +134,9 @@ writeDef(const char *filename,
   if (in_filename)
     rewriteDef(in_filename, filename, sort, network);
   else
-    writeDefFresh(filename, units, die_lx, die_ly, die_ux, die_uy,
+    writeDefFresh(filename, units,
+		  die_lx, die_ly, die_ux, die_uy,
+		  core_lx, core_ly, core_ux, core_uy,
 		  site_name, auto_place_pins, sort, network);
 }
 
@@ -140,6 +149,10 @@ writeDefFresh(const char *filename,
 	      double die_ly,
 	      double die_ux,
 	      double die_uy,
+	      double core_lx,
+	      double core_ly,
+	      double core_ux,
+	      double core_uy,
 	      const char *site_name,
 	      bool auto_place_pins,
 	      bool sort,
@@ -151,7 +164,7 @@ writeDefFresh(const char *filename,
     writeDefHeader(units, die_lx, die_ly, die_ux, die_uy,
 		   out_stream, network);
     fprintf(out_stream, "\n");
-    writeDefRows(site_name, die_lx, die_ly, die_ux, die_uy,
+    writeDefRows(site_name, core_lx, core_ly, core_ux, core_uy,
 		 out_stream, network);
     fprintf(out_stream, "\n");
     writeDefComponents(sort, out_stream, network);
@@ -240,15 +253,15 @@ writeDefHeader(int units,
 
 static void
 writeDefRows(const char *site_name,
-	     double die_lx,
-	     double die_ly,
-	     double die_ux,
-	     double die_uy,
+	     double core_lx,
+	     double core_ly,
+	     double core_ux,
+	     double core_uy,
 	     FILE *out_stream,
 	     LefDefNetwork *network)
 {
   if (site_name
-      &&  die_lx >= 0.0 && die_lx >= 0.0 && die_ux >= 0.0 && die_uy >= 0.0) {
+      &&  core_lx >= 0.0 && core_lx >= 0.0 && core_ux >= 0.0 && core_uy >= 0.0) {
     lefiSite *site = network->findLefSite(site_name);
     if (site) {
       if (site->hasSize()) {
@@ -257,10 +270,10 @@ writeDefRows(const char *site_name,
 	double site_dy = site->sizeY() * 1e-6;
 	int site_dx_dbu = network->metersToDbu(site_dx);
 	int site_dy_dbu = network->metersToDbu(site_dy);
-	double die_dx = abs(die_ux - die_lx);
-	double die_dy = abs(die_uy - die_ly);
-	int rows_x = die_dx / site_dx;
-	int rows_y = die_dy / site_dy;
+	double core_dx = abs(core_ux - core_lx);
+	double core_dy = abs(core_uy - core_ly);
+	int rows_x = core_dx / site_dx;
+	int rows_y = core_dy / site_dy;
 
 	int y = 0;
 	for (int row = 0; row < rows_y; row++) {
@@ -268,7 +281,7 @@ writeDefRows(const char *site_name,
 	  fprintf(out_stream, "ROW ROW_%d %s %d %d %s DO %d by 1 STEP %d 0 ;\n",
 		  row,
 		  site_name,
-		  network->metersToDbu(die_ly),
+		  network->metersToDbu(core_ly),
 		  y,
 		  orient,
 		  rows_x,

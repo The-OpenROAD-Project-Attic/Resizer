@@ -82,6 +82,11 @@ write_def_cmd(const char *filename,
 	      double die_ly,
 	      double die_ux,
 	      double die_uy,
+	      // Core area.
+	      double core_lx,
+	      double core_ly,
+	      double core_ux,
+	      double core_uy,
 	      const char *site_name,
 	      bool auto_place_pins,
 	      bool sort)
@@ -89,7 +94,9 @@ write_def_cmd(const char *filename,
   LefDefNetwork *network = lefDefNetwork();
   if (site_name[0] == '\0')
     site_name = nullptr;
-  writeDef(filename, units, die_lx, die_ly, die_ux, die_uy,
+  writeDef(filename, units,
+	   die_lx, die_ly, die_ux, die_uy,
+	   core_lx, core_ly, core_ux, core_uy,
 	   site_name, auto_place_pins, sort, network);
 }
 
