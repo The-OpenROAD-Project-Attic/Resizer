@@ -16,6 +16,7 @@
 
 #include "Machine.hh"
 #include "Liberty.hh"
+#include "SdcNetwork.hh"
 #include "LefDefNetwork.hh"
 
 namespace sta {
@@ -44,6 +45,15 @@ LefDefNetwork::clear()
   lef_macro_map_.deleteContents();
   lef_size_map_.deleteContents();
   ConcreteNetwork::clear();
+}
+
+void
+LefDefNetwork::initState(Report *report,
+			 Debug *debug)
+{
+  report_ = report;
+  debug_ = debug;
+  sdc_network_ = new SdcNetwork(this);
 }
 
 void

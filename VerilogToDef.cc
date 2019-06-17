@@ -27,6 +27,11 @@
 #include "LefDefNetwork.hh"
 #include "ResizerConfig.hh" // RESIZER_VERSION
 #include "StaMain.hh" // findCmdLineKey, findCmdLineFlag
+#include "Sta.hh" // initSta
+
+// ../build/verilog2def -lef liberty1.lef -liberty liberty1.lib -verilog reg1.v -top_module top -units 100 -die_area "0 0 1000 1000" -site site1 -auto_place_pins -def results/foo.def
+// -lef ../test/liberty1.lef -liberty ../test/liberty1.lib -verilog ../test/reg1.v -top_module top -units 100 -die_area "0 0 1000 1000" -site site1 -auto_place_pins -def ../test/results/foo.def
+// parse multiple liberty files
 
 using std::string;
 using sta::StringVector;
@@ -37,6 +42,8 @@ using sta::isDigits;
 using sta::findCmdLineKey;
 using sta::findCmdLineFlag;
 using sta::LefDefNetwork;
+using sta::initSta;
+using sta::StaException;
 
 static void
 showUsage(const char *prog);
@@ -45,8 +52,9 @@ int
 main(int argc,
      char *argv[])
 {
+  initSta();
   if (findCmdLineFlag(argc, argv, "-help")) {
-    showUsage(argv[0]); 
+    showUsage(argv[0]);
     exit(EXIT_SUCCESS);
   }
 
@@ -56,30 +64,41 @@ main(int argc,
   }
 
   Report *report = makeReportStd();
+  bool errors = false;
 
   const char *lef_filename = findCmdLineKey(argc, argv, "-lef");
-  if (lef_filename == nullptr)
-    report->printError("missing -lef argument.\n");
+  if (lef_filename == nullptr) {
+    report->printError("Error: missing -lef argument.\n");
+    errors = true;
+  }
 
   const char *liberty_filename = findCmdLineKey(argc, argv, "-liberty");
-  if (liberty_filename == nullptr)
-    report->printError("missing -liberty argument.\n");
+  if (liberty_filename == nullptr) {
+    report->printError("Error: missing -liberty argument.\n");
+    errors = true;
+  }
 
   const char *verilog_filename = findCmdLineKey(argc, argv, "-verilog");
-  if (verilog_filename == nullptr)
-    report->printError("missing -verilog argument.\n");
+  if (verilog_filename == nullptr) {
+    report->printError("Error: missing -verilog argument.\n");
+    errors = true;
+  }
 
   const char *top_module = findCmdLineKey(argc, argv, "-top_module");
-  if (top_module == nullptr)
-    report->printError("missing -top_module argument.\n");
+  if (top_module == nullptr) {
+    report->printError("Error: missing -top_module argument.\n");
+    errors = true;
+  }
 
   const char *units_str = findCmdLineKey(argc, argv, "-units");
   int units = 0;
-  if (units_str == nullptr)
-    report->printError("missing -units argument.\n");
+  if (units_str == nullptr) {
+    report->printError("Error: missing -units argument.\n");
+    errors = true;
+  }
   else {
     if (!isDigits(units_str))
-      report->printError("-units is not a positiveinteger\n");
+      report->printError("Error: -units is not a positiveinteger\n");
     units = strtol(units_str, nullptr, 10);
   }
 
@@ -93,28 +112,45 @@ main(int argc,
     StringVector die_tokens;
     split(die_area1, " ,", die_tokens);
     if (die_tokens.size() != 4)
-      report->printError("-die_area should be a list of 4 coordinates\n");
-    die_lx = strtod(die_tokens[0].c_str(), nullptr);
-    die_ly = strtod(die_tokens[1].c_str(), nullptr);
-    die_ux = strtod(die_tokens[2].c_str(), nullptr);
-    die_uy = strtod(die_tokens[3].c_str(), nullptr);
+      report->printWarn("Warning: -die_area should be a list of 4 coordinates\n");
+    // microns to meters.
+    die_lx = strtod(die_tokens[0].c_str(), nullptr) * 1e-6;
+    die_ly = strtod(die_tokens[1].c_str(), nullptr) * 1e-6;
+    die_ux = strtod(die_tokens[2].c_str(), nullptr) * 1e-6;
+    die_uy = strtod(die_tokens[3].c_str(), nullptr) * 1e-6;
   }
 
   const char *site_name = findCmdLineKey(argc, argv, "-site");
   bool auto_place_pins = findCmdLineFlag(argc, argv, "-auto_place_pins");
+
   const char *def_filename = findCmdLineKey(argc, argv, "-def");
+  if (def_filename == nullptr) {
+    report->printError("Error: missing -def argument.\n");
+    errors = true;
+  }
 
-  Debug debug(report);
-  LefDefNetwork network;
 
-  readLef(lef_filename, &network);
-  readLibertyFile(liberty_filename, false, &network);
-  readVerilogFile(verilog_filename, &network);
-  network.linkNetwork(top_module, true, report);
-  writeDef(def_filename, units, die_lx, die_ly, die_ux, die_uy,
-	   site_name, auto_place_pins, &network);
+  if (!errors) {
+    Debug debug(report);
+    LefDefNetwork network;
+    network.initState(report, &debug);
 
-  exit(EXIT_SUCCESS);
+    try {
+      readLibertyFile(liberty_filename, false, &network);
+      readLef(lef_filename, &network);
+      readVerilogFile(verilog_filename, &network);
+      network.linkNetwork(top_module, true, report);
+      writeDef(def_filename, units, die_lx, die_ly, die_ux, die_uy,
+	       site_name, auto_place_pins, &network);
+    }
+    catch (StaException &excp) {
+      report->printError("Error: %s\n", excp.what());
+      errors = true;
+    }
+  }
+  else
+    showUsage(argv[0]);
+  exit(errors ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 static void

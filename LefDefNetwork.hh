@@ -57,6 +57,8 @@ class LefDefNetwork : public ConcreteNetwork
 public:
   LefDefNetwork();
   ~LefDefNetwork();
+  void initState(Report *report,
+		 Debug *debug);
   virtual void clear();
   void setDivider(char divider);
   const char *defFilename() { return def_filename_; }

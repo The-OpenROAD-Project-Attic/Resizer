@@ -237,7 +237,8 @@ writeDefRows(const char *site_name,
 	     FILE *out_stream,
 	     LefDefNetwork *network)
 {
-  if (site_name) {
+  if (site_name
+      &&  die_lx >= 0.0 && die_lx >= 0.0 && die_ux >= 0.0 && die_uy >= 0.0) {
     lefiSite *site = network->findLefSite(site_name);
     if (site) {
       if (site->hasSize()) {

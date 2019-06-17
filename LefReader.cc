@@ -167,7 +167,7 @@ macroCbk(lefrCallbackType_e,
   LefReader *reader = getLefReader(user);
   LefDefNetwork *network = reader->network();
   Cell *cell = reader->lefMacro();
-  network->setLefMacro(cell, lef_macro);
+  network->setLefMacro(cell, new lefiMacro(*lef_macro));
   return 0;
 }
 

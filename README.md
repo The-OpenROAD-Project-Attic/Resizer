@@ -27,12 +27,13 @@ CMAKE_BUILD_TYPE DEBUG|RELEASE
 #### Running Resizer
 
 ```
-resizer -help              show help and exit
-        -version           show version and exit
-        -no_init           do not read .sta init file
-        -no_splash         do not show the license splash at startup
-        -exit              exit after reading cmd_file
-	cmd_file           source cmd_file
+resizer
+  -help              show help and exit
+  -version           show version and exit
+  -no_init           do not read .sta init file
+  -no_splash         do not show the license splash at startup
+  -exit              exit after reading cmd_file
+  cmd_file           source cmd_file
 ```
 
 Resizer looks for the files POWV9.dat and PORT9.dat in ../etc relative
@@ -48,18 +49,20 @@ interpreter.
 The resizer is run using TCL scripts. All OpenSTA commands are available.
 Addtional commands are shown below.
 
-* read_lef filename
-* read_def filename
-* set_wire_rc [-resistance res ] [-capacitance cap] [-corner corner_name]
-* resize [-resize]
-	 [-repair_max_cap]
-	 [-repair_max_slew]
-	 [-buffer_cell buffer_cell]
-* write_def [-units dist_units]
-            [-die_area {lx ly ux uy}]
-            [-site site_name]
-	    [-auto_place_pins]
-            filename
+```
+read_lef filename
+read_def filename
+set_wire_rc [-resistance res ] [-capacitance cap] [-corner corner_name]
+resize [-resize]
+       [-repair_max_cap]
+       [-repair_max_slew]
+       [-buffer_cell buffer_cell]
+write_def [-units dist_units]
+          [-die_area {lx ly ux uy}]
+          [-site site_name]
+          [-auto_place_pins]
+          filename
+```
 
 Liberty libraries should be read before LEF and DEF. Only one DEF file
 is supported.
@@ -117,6 +120,8 @@ report_tns
 report_wns
 ```
 
+#### Verilog to DEF
+
 An example command script to translate DEF to Verilog is shown below.
 
 ```
@@ -127,19 +132,22 @@ link_design top
 write_def -units 100 -die_area {0 0 1000 1000} -site site1 -auto_place_pins reg1.def
 ```
 
+The "verilog2def" executable can also be used to translate DEF to
+Verilog using command line arguments.
+
 ```
 verilog2def
--help
--version
--lef lef_file
--liberty liberty_files
--verilog verilog_file
--top_module module_name
--units units
--die_area "lx ly ux uy"
--site site_name
--auto_place_pins 
--def def_file
+  [-help]                   show help and exit
+  [-version]                show version and exit
+  -lef lef_file             lef_file for site size
+  -liberty liberty_file     liberty for linking verilog
+  -verilog verilog_file     
+  -top_module module_name   verilog module to expand
+  -units units              def units per micron
+  [-die_area "lx ly ux uy"] die area in microns
+  [-site site_name]         
+  [-auto_place_pins]        
+  -def def_file             def file to write
 ```
 
 ## Authors
