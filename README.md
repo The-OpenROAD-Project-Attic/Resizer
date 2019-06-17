@@ -139,8 +139,8 @@ Verilog using command line arguments.
 verilog2def
   [-help]                   show help and exit
   [-version]                show version and exit
+  -liberty liberty_file     liberty library
   -lef lef_file             lef_file for site size
-  -liberty liberty_file     liberty for linking verilog
   -verilog verilog_file     
   -top_module module_name   verilog module to expand
   -units units              def units per micron
@@ -149,6 +149,8 @@ verilog2def
   [-auto_place_pins]        
   -def def_file             def file to write
 ```
+
+Multiple Liberty files can be read by using multiple -liberty keywords.
 
 ## Authors
 

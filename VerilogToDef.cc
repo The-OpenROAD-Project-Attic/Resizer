@@ -66,15 +66,22 @@ main(int argc,
   Report *report = makeReportStd();
   bool errors = false;
 
-  const char *lef_filename = findCmdLineKey(argc, argv, "-lef");
-  if (lef_filename == nullptr) {
-    report->printError("Error: missing -lef argument.\n");
-    errors = true;
-  }
-
+  StringVector liberty_filenames;
   const char *liberty_filename = findCmdLineKey(argc, argv, "-liberty");
   if (liberty_filename == nullptr) {
     report->printError("Error: missing -liberty argument.\n");
+    errors = true;
+  }
+  else {
+    do {
+      liberty_filenames.push_back(liberty_filename);
+      liberty_filename = findCmdLineKey(argc, argv, "-liberty");
+    } while (liberty_filename);
+  }
+
+  const char *lef_filename = findCmdLineKey(argc, argv, "-lef");
+  if (lef_filename == nullptr) {
+    report->printError("Error: missing -lef argument.\n");
     errors = true;
   }
 
@@ -136,7 +143,8 @@ main(int argc,
     network.initState(report, &debug);
 
     try {
-      readLibertyFile(liberty_filename, false, &network);
+      for (auto liberty_filename : liberty_filenames)
+	readLibertyFile(liberty_filename.c_str(), false, &network);
       readLef(lef_filename, &network);
       readVerilogFile(verilog_filename, &network);
       network.linkNetwork(top_module, true, report);
@@ -159,8 +167,8 @@ showUsage(const char *prog)
   printf("Usage %s\n", prog);
   printf("  [-help]                   show help and exit\n");
   printf("  [-version]                show version and exit\n");
-  printf("  -lef lef_file             lef_file for site size\n");
   printf("  -liberty liberty_file     liberty for linking verilog\n");
+  printf("  -lef lef_file             lef_file for site size\n");
   printf("  -verilog verilog_file     \n");
   printf("  -top_module module_name   verilog module to expand\n");
   printf("  -units units              def units per micron\n");

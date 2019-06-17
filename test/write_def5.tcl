@@ -1,5 +1,5 @@
 # write_def -site from verilog 
-source helpers.tcl
+source "helpers.tcl"
 read_liberty liberty1.lib
 read_lef liberty1.lef
 read_verilog reg1.v
