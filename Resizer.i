@@ -83,13 +83,14 @@ write_def_cmd(const char *filename,
 	      double die_ux,
 	      double die_uy,
 	      const char *site_name,
-	      bool auto_place_pins)
+	      bool auto_place_pins,
+	      bool sort)
 {
   LefDefNetwork *network = lefDefNetwork();
   if (site_name[0] == '\0')
     site_name = nullptr;
   writeDef(filename, units, die_lx, die_ly, die_ux, die_uy,
-	   site_name, auto_place_pins, network);
+	   site_name, auto_place_pins, sort, network);
 }
 
 void

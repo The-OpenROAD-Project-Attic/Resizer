@@ -11,5 +11,5 @@ set_wire_rc -resistance 1.7e+5 -capacitance 1.3e-8
 sta::rebuffer_net [get_pin_net u1/Z] $buffer_cell
 
 set def_file [make_result_file rebuffer4.def]
-write_def $def_file
+write_def -sort $def_file
 report_file $def_file

@@ -14,5 +14,5 @@ resize -resize
 report_checks
 
 set def_file [make_result_file resize2.def]
-write_def $def_file
+write_def -sort $def_file
 report_file $def_file

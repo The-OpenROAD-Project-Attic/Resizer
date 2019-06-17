@@ -33,6 +33,7 @@ writeDef(const char *filename,
 	 const char *site_name,
 	 // Place pins around the die area boundary.
 	 bool auto_place_pins,
+	 bool sort,
 	 LefDefNetwork *network);
 
 } // namespace

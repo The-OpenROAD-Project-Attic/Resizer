@@ -15,5 +15,5 @@ connect_pin b1z r3/D
 report_checks -fields input_pin
 
 set def_file [make_result_file insert_buffer1.def]
-write_def $def_file
+write_def -sort $def_file
 report_file $def_file

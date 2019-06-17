@@ -96,8 +96,8 @@ END SPECIALNETS
 
 NETS 3 ;
 - clk ( PIN clk ) ( r1 CP ) ( r2 CP ) ( r3 CP ) ( r4 CP ) ( r5 CP ) ;
-- net1 ( r2 D ) ( r3 D ) ( r4 D ) ( r5 D ) ( buffer1 Z ) ;
-- r1q ( r1 Q ) ( buffer1 A ) ;
+- net1 ( buffer1 Z ) ( r2 D ) ( r3 D ) ( r4 D ) ( r5 D ) ;
+- r1q ( buffer1 A ) ( r1 Q ) ;
 END NETS
 
 END DESIGN

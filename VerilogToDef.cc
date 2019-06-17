@@ -149,7 +149,7 @@ main(int argc,
       readVerilogFile(verilog_filename, &network);
       network.linkNetwork(top_module, true, report);
       writeDef(def_filename, units, die_lx, die_ly, die_ux, die_uy,
-	       site_name, auto_place_pins, &network);
+	       site_name, auto_place_pins, true, &network);
     }
     catch (StaException &excp) {
       report->printError("Error: %s\n", excp.what());

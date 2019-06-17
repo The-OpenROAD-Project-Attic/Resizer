@@ -25,7 +25,7 @@ define_cmd_args "write_def" {filename}
 
 proc write_def { args } {
   parse_key_args "write_def" args keys {-units -die_area -site} \
-    flags {-auto_place_pins}
+    flags {-auto_place_pins -sort}
 
   set units 1000
   if [info exists keys(-units)] {
@@ -55,6 +55,8 @@ proc write_def { args } {
   }
 
   set auto_place_pins [info exists flags(-auto_place_pins)]
+  set sort [info exists flags(-sort)]
+
   check_argc_eq1 "write_def" $args
   set filename $args
 
@@ -62,7 +64,7 @@ proc write_def { args } {
   write_def_cmd $filename $units \
     [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
     [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
-    $site_name $auto_place_pins
+    $site_name $auto_place_pins $sort
 }
 
 define_cmd_args "set_wire_rc" {[-resistance res ][-capacitance cap]\
