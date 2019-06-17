@@ -20,6 +20,8 @@
 
 namespace sta {
 
+using std::round;
+
 LefDefNetwork::LefDefNetwork() :
   ConcreteNetwork(),
   def_filename_(nullptr),
@@ -40,6 +42,7 @@ LefDefNetwork::clear()
   lef_library_ = nullptr;
   def_component_map_.deleteContents();
   lef_macro_map_.deleteContents();
+  lef_size_map_.deleteContents();
   ConcreteNetwork::clear();
 }
 
@@ -50,7 +53,7 @@ LefDefNetwork::setDivider(char divider)
 }
 
 void
-LefDefNetwork::setDefUnits(double def_units)
+LefDefNetwork::setDefUnits(int def_units)
 {
   def_units_ = def_units;
 }
@@ -58,7 +61,13 @@ LefDefNetwork::setDefUnits(double def_units)
 double
 LefDefNetwork::dbuToMeters(int dbu) const
 {
-  return dbu / def_units_ * 1e-6;
+  return (dbu / def_units_) * 1e-6;
+}
+
+int
+LefDefNetwork::metersToDbu(double dist) const
+{
+  return round((dist * 1e6) * def_units_);
 }
 
 void
@@ -211,6 +220,21 @@ LefDefNetwork::isPlaced(const Pin *pin) const
     return def_component
       && def_component->isPlaced();
   }
+}
+
+////////////////////////////////////////////////////////////////
+
+void
+LefDefNetwork::makeLefSite(lefiSite *site)
+{
+  lefiSite *copy = new lefiSite(*site);
+  lef_size_map_[copy->name()] = copy;
+}
+
+lefiSite *
+LefDefNetwork::findLefSite(const char *name)
+{
+  return lef_size_map_.findKey(name);
 }
 
 ////////////////////////////////////////////////////////////////

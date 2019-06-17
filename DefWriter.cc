@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include "Machine.hh"
 #include "Error.hh"
+#include "Report.hh"
 #include "StringUtil.hh"
 #include "PortDirection.hh"
 #include "LefDefNetwork.hh"
@@ -36,10 +37,11 @@ static void
 writeDefFresh(const char *filename,
 	      int units,
 	      // Die area.
-	      int die_lx,
-	      int die_ly,
-	      int die_ux,
-	      int die_uy,
+	      double die_lx,
+	      double die_ly,
+	      double die_ux,
+	      double die_uy,
+	      const char *site_name,
 	      bool auto_place_pins,
 	      LefDefNetwork *network);
 static void
@@ -50,18 +52,18 @@ writeDefComponent(Instance *inst,
 		  FILE *out_stream,
 		  LefDefNetwork *network);
 static void
-writeDefPins(int die_lx,
-	     int die_ly,
-	     int die_ux,
-	     int die_uy,
+writeDefPins(double die_lx,
+	     double die_ly,
+	     double die_ux,
+	     double die_uy,
 	     bool auto_place_pins,
 	     FILE *out_stream,
 	     LefDefNetwork *network);
 static void
 writeDefPin(Pin *pin,
 	    bool is_placed,
-	    int x,
-	    int y,
+	    double x,
+	    double y,
 	    const char *orient,	    
 	    FILE *out_stream,
 	    LefDefNetwork *network);
@@ -84,12 +86,20 @@ staToDef(const char *token,
 static void
 writeDefHeader(int units,
 	       // Die area.
-	       int die_lx,
-	       int die_ly,
-	       int die_ux,
-	       int die_uy,
+	       double die_lx,
+	       double die_ly,
+	       double die_ux,
+	       double die_uy,
 	       FILE *out_stream,
 	       LefDefNetwork *network);
+static void
+writeDefRows(const char *site_name,
+	     double die_lx,
+	     double die_ly,
+	     double die_ux,
+	     double die_uy,
+	     FILE *out_stream,
+	     LefDefNetwork *network);
 
 ////////////////////////////////////////////////////////////////
 
@@ -97,10 +107,11 @@ void
 writeDef(const char *filename,
 	 int units,
 	 // Die area.
-	 int die_lx,
-	 int die_ly,
-	 int die_ux,
-	 int die_uy,
+	 double die_lx,
+	 double die_ly,
+	 double die_ux,
+	 double die_uy,
+	 const char *site_name,
 	 bool auto_place_pins,
 	 LefDefNetwork *network)
 {
@@ -109,7 +120,7 @@ writeDef(const char *filename,
     rewriteDef(in_filename, filename, network);
   else
     writeDefFresh(filename, units, die_lx, die_ly, die_ux, die_uy,
-		  auto_place_pins, network);
+		  site_name, auto_place_pins, network);
 }
 
 // Write a fresh DEF file from the network.
@@ -117,17 +128,23 @@ static void
 writeDefFresh(const char *filename,
 	      int units,
 	      // Die area.
-	      int die_lx,
-	      int die_ly,
-	      int die_ux,
-	      int die_uy,
+	      double die_lx,
+	      double die_ly,
+	      double die_ux,
+	      double die_uy,
+	      const char *site_name,
 	      bool auto_place_pins,
 	      LefDefNetwork *network)
 {
   FILE *out_stream = fopen(filename, "w");
   if (out_stream) {
+    network->setDefUnits(units);
     writeDefHeader(units, die_lx, die_ly, die_ux, die_uy,
 		   out_stream, network);
+    fprintf(out_stream, "\n");
+    writeDefRows(site_name, die_lx, die_ly, die_ux, die_uy,
+		 out_stream, network);
+    fprintf(out_stream, "\n");
     writeDefComponents(out_stream, network);
     fprintf(out_stream, "\n");
     writeDefPins(die_lx, die_ly, die_ux, die_uy, auto_place_pins,
@@ -190,10 +207,10 @@ rewriteDef(const char *in_filename,
 static void
 writeDefHeader(int units,
 	       // Die area.
-	       int die_lx,
-	       int die_ly,
-	       int die_ux,
-	       int die_uy,
+	       double die_lx,
+	       double die_ly,
+	       double die_ux,
+	       double die_uy,
 	       FILE *out_stream,
 	       LefDefNetwork *network)
 {
@@ -205,8 +222,57 @@ writeDefHeader(int units,
 	  network->name(network->cell(network->topInstance())));
   fprintf(out_stream, "UNITS DISTANCE MICRONS %d ;\n", units);
   fprintf(out_stream, "DIEAREA ( %d %d ) ( %d %d ) ;\n",
-	  die_lx, die_ly, die_ux, die_uy);
-  fprintf(out_stream, "\n");
+	  network->metersToDbu(die_lx),
+	  network->metersToDbu(die_ly),
+	  network->metersToDbu(die_ux),
+	  network->metersToDbu(die_uy));
+}
+
+static void
+writeDefRows(const char *site_name,
+	     double die_lx,
+	     double die_ly,
+	     double die_ux,
+	     double die_uy,
+	     FILE *out_stream,
+	     LefDefNetwork *network)
+{
+  if (site_name) {
+    lefiSite *site = network->findLefSite(site_name);
+    if (site) {
+      if (site->hasSize()) {
+	// LEF site size is in microns. Convert to meters.
+	double site_dx = site->sizeX() * 1e-6;
+	double site_dy = site->sizeY() * 1e-6;
+	int site_dx_dbu = network->metersToDbu(site_dx);
+	int site_dy_dbu = network->metersToDbu(site_dy);
+	double die_dx = abs(die_ux - die_lx);
+	double die_dy = abs(die_uy - die_ly);
+	int rows_x = die_dx / site_dx;
+	int rows_y = die_dy / site_dy;
+
+	int y = 0;
+	for (int row = 0; row < rows_y; row++) {
+	  const char *orient = (row % 2 == 0) ? "FS" : "N";
+	  fprintf(out_stream, "ROW ROW_%d %s %d %d %s DO %d by 1 STEP %d 0 ;\n",
+		  row,
+		  site_name,
+		  network->metersToDbu(die_ly),
+		  y,
+		  orient,
+		  rows_x,
+		  site_dx_dbu);
+	  y += site_dy_dbu;
+	}
+      }
+      else
+	network->report()->printWarn("Warning: LEF site %s does not have size.\n",
+				   site_name);
+    }
+    else
+      network->report()->printWarn("Warning: LEF site %s not found.\n",
+				   site_name);
+  }
 }
 
 static void
@@ -291,10 +357,10 @@ writeDefComponent(Instance *inst,
 }
   
 static void
-writeDefPins(int die_lx,
-	     int die_ly,
-	     int die_ux,
-	     int die_uy,
+writeDefPins(double die_lx,
+	     double die_ly,
+	     double die_ux,
+	     double die_uy,
 	     bool auto_place_pins,
 	     FILE *out_stream,
 	     LefDefNetwork *network)
@@ -318,7 +384,7 @@ writeDefPins(int die_lx,
     InstancePinIterator *pin_iter2 = network->pinIterator(network->topInstance());
     while (pin_iter2->hasNext()) {
       Pin *pin = pin_iter2->next();
-      int x, y;
+      double x, y;
       const char *orient;
       if (location < dx) {
 	// bottom
@@ -356,8 +422,8 @@ writeDefPins(int die_lx,
 static void
 writeDefPin(Pin *pin,
 	    bool is_placed,
-	    int x,
-	    int y,
+	    double x,
+	    double y,
 	    const char *orient,	    
 	    FILE *out_stream,
 	    LefDefNetwork *network)
@@ -372,7 +438,10 @@ writeDefPin(Pin *pin,
   fprintf(out_stream, " + DIRECTION %s",
 	  staToDef(dir));
   if (is_placed)
-    fprintf(out_stream, " + FIXED ( %d %d ) %s", x, y, orient);
+    fprintf(out_stream, " + FIXED ( %d %d ) %s",
+	    network->metersToDbu(x),
+	    network->metersToDbu(y),
+	    orient);
   fprintf(out_stream, " ;\n");
 }
 

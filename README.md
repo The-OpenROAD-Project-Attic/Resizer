@@ -55,13 +55,14 @@ Addtional commands are shown below.
 	 [-repair_max_cap]
 	 [-repair_max_slew]
 	 [-buffer_cell buffer_cell]
-* write_def [-units units]
+* write_def [-units dist_units]
             [-die_area {lx ly ux uy}]
-            [-auto_place_pins]
+            [-site site_name]
+	    [-auto_place_pins]
             filename
 
-Liberty libraries should be read before LEF and DEF. Only one LEF and
-one DEF file are supported.
+Liberty libraries should be read before LEF and DEF. Only one DEF file
+is supported.
 
 The set_wire_rc command sets the resistance (ohms/meter) and
 capacitance (farads/meter) of routing wires. It adds parasitics based
@@ -79,11 +80,13 @@ mode. With none of the options specified all are done. The
 -buffer_cell argument is required for buffer insertion
 (-repair_max_cap or -repair_max_slew).
 
-The write_def command -units, -die_area and -auto_place_pins arguments
-are only used when writing a DEF file from a Verilog netlist. The die
-area is a list of corner coordinates in DEF units. The
--auto_place_pins argument adds locations for the pins equally spaced
-around the die perimeter.
+The write_def command -units, -die_area, -site and -auto_place_pins
+arguments are only used when writing a DEF file from a Verilog
+netlist. dist_units are the DEF database units per micron. The die
+area is a list of corner coordinates in microns (lower x, lower y,
+upper x, upper y). site_name is a LEF site name that is used to write
+ROW statements to fill the die area.  The -auto_place_pins argument
+adds locations for the pins equally spaced around the die perimeter.
 
 A typical resizer command file is shown below.
 

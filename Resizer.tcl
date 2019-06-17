@@ -24,13 +24,13 @@ define_cmd_args "read_def" {filename}
 define_cmd_args "write_def" {filename}
 
 proc write_def { args } {
-  parse_key_args "write_def" args keys {-units -die_area} \
+  parse_key_args "write_def" args keys {-units -die_area -site} \
     flags {-auto_place_pins}
 
   set units 1000
   if [info exists keys(-units)] {
     set units $keys(-units)
-    check_positive_float "-units" $units
+    check_positive_integer "-units" $units
   }
 
   set die_lx 0
@@ -49,13 +49,20 @@ proc write_def { args } {
     check_positive_float "-die_area" $die_uy
   }
 
+  set site_name ""
+  if [info exists keys(-site)] {
+    set site_name $keys(-site)
+  }
+
   set auto_place_pins [info exists flags(-auto_place_pins)]
   check_argc_eq1 "write_def" $args
   set filename $args
 
+  # convert die coordinates to meters.
   write_def_cmd $filename $units \
-    $die_lx $die_ly $die_ux $die_uy \
-    $auto_place_pins
+    [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
+    [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
+    $site_name $auto_place_pins
 }
 
 define_cmd_args "set_wire_rc" {[-resistance res ][-capacitance cap]\

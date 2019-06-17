@@ -50,6 +50,7 @@ typedef UnorderedMap<Cell*, LibertyCell*> LibertyCellMap;
 typedef UnorderedMap<Port*, DefPt> DefPortLocations;
 typedef UnorderedMap<Instance*, defiComponent *> InstanceDefComponentMap;
 typedef UnorderedMap<Cell*, lefiMacro*> CellLefMacroMap;
+typedef Map<const char*, lefiSite*, CharPtrLess> LefSiteMap;
 
 class LefDefNetwork : public ConcreteNetwork
 {
@@ -62,13 +63,15 @@ public:
   void setDefFilename(const char *filename);
   // dbu/micron
   float defUnits() const { return def_units_; }
-  void setDefUnits(double def_units);
+  void setDefUnits(int def_units);
   double dbuToMeters(int dbu) const;
-
+  int metersToDbu(double dist) const;
   Library *makeLefLibrary(const char *name,
 			  const char *filename);
   Library *lefLibrary();
   Library *lefLibrary(Cell *cell);
+  lefiSite *findLefSite(const char *name);
+  void makeLefSite(lefiSite *site);
 
   lefiMacro *lefMacro(Cell *cell);
   void setLefMacro(Cell *cell,
@@ -99,10 +102,11 @@ public:
 protected:
   const char *def_filename_;
   Library *lef_library_;
-  float def_units_;		// dbu/micron
+  int def_units_;		// dbu/micron
   DefPortLocations port_locations_;
   InstanceDefComponentMap def_component_map_;
   CellLefMacroMap lef_macro_map_;
+  LefSiteMap lef_size_map_;
 };
 
 } // namespace

@@ -45,6 +45,10 @@ static int
 lefPinCbk(lefrCallbackType_e,
 	  lefiPin *pin,
 	  lefiUserData user);
+static int
+lefSiteCbk(lefrCallbackType_e,
+	   lefiSite *site,
+	   lefiUserData user);
 
 // LEF parser callback routine state.
 class LefReader
@@ -104,6 +108,7 @@ registerLefCallbacks()
   lefrSetMacroEndCbk(macroEndCbk);
   lefrSetMacroCbk(macroCbk);
   lefrSetPinCbk(lefPinCbk);
+  lefrSetSiteCbk(lefSiteCbk);
 }
 
 LefReader::LefReader(const char *filename,
@@ -202,6 +207,17 @@ lefPinCbk(lefrCallbackType_e,
   }
   Port *port = network->makePort(reader->lefMacro(), lpin->name());
   network->setDirection(port, dir);
+  return 0;
+}
+
+static int
+lefSiteCbk(lefrCallbackType_e,
+	   lefiSite *site,
+	   lefiUserData user)
+{
+  LefReader *reader = getLefReader(user);
+  LefDefNetwork *network = reader->network();
+  network->makeLefSite(site);
   return 0;
 }
 

@@ -78,15 +78,18 @@ void
 write_def_cmd(const char *filename,
 	      int units,
 	      // Die area.
-	      int die_lx,
-	      int die_ly,
-	      int die_ux,
-	      int die_uy,
+	      double die_lx,
+	      double die_ly,
+	      double die_ux,
+	      double die_uy,
+	      const char *site_name,
 	      bool auto_place_pins)
 {
   LefDefNetwork *network = lefDefNetwork();
+  if (site_name[0] == '\0')
+    site_name = nullptr;
   writeDef(filename, units, die_lx, die_ly, die_ux, die_uy,
-	   auto_place_pins, network);
+	   site_name, auto_place_pins, network);
 }
 
 void

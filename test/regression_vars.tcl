@@ -144,6 +144,7 @@ record_resizer_tests {
   write_def2
   write_def3
   write_def4
+  write_def5
 }
 
 # Record tests in $STAX/designs

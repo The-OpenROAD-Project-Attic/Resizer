@@ -25,11 +25,12 @@ void
 writeDef(const char *filename,
 	 // These args are only for writing DEF from Verilog.
 	 int units,
-	 // Die area (in DEF units).
-	 int die_lx,
-	 int die_ly,
-	 int die_ux,
-	 int die_uy,
+	 // Die area (in meters).
+	 double die_lx,
+	 double die_ly,
+	 double die_ux,
+	 double die_uy,
+	 const char *site_name,
 	 // Place pins around the die area boundary.
 	 bool auto_place_pins,
 	 LefDefNetwork *network);
