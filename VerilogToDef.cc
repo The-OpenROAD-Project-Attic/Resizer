@@ -65,6 +65,7 @@ main(int argc,
 
   Report *report = makeReportStd();
   bool errors = false;
+  bool verbose = findCmdLineFlag(argc, argv, "-verbose");
 
   StringVector liberty_filenames;
   const char *liberty_filename = findCmdLineKey(argc, argv, "-liberty");
@@ -154,22 +155,41 @@ main(int argc,
     errors = true;
   }
 
-
   if (!errors) {
     Debug debug(report);
     LefDefNetwork network;
     network.initState(report, &debug);
 
     try {
-      for (auto liberty_filename : liberty_filenames)
+      bool first = true;
+      for (auto liberty_filename : liberty_filenames) {
+	if (verbose) {
+	  if (!first)
+	    report->print("\n");
+	  report->print("Reading liberty %s...", liberty_filename.c_str());
+	}
 	readLibertyFile(liberty_filename.c_str(), false, &network);
+	first = false;
+      }
+      if (verbose)
+	report->print("\nReading LEF %s...", lef_filename);
       readLef(lef_filename, &network);
+
+      if (verbose)
+	report->print("\nReading verilog %s...", verilog_filename);
       readVerilogFile(verilog_filename, &network);
+
+      if (verbose)
+	report->print("\nLinking...");
       network.linkNetwork(top_module, true, report);
+      if (verbose)
+	report->print("\nWriting DEF %s...", def_filename);
       writeDef(def_filename, units,
 	       die_lx, die_ly, die_ux, die_uy,
 	       core_lx, core_ly, core_ux, core_uy,
 	       site_name, auto_place_pins, true, &network);
+      if (verbose)
+	report->print("\n");
     }
     catch (StaException &excp) {
       report->printError("Error: %s\n", excp.what());
@@ -187,6 +207,7 @@ showUsage(const char *prog)
   printf("Usage %s\n", prog);
   printf("  [-help]                    show help and exit\n");
   printf("  [-version]                 show version and exit\n");
+  printf("  [-verbose]                 report progress\n");
   printf("  -liberty liberty_file      liberty for linking verilog\n");
   printf("  -lef lef_file              lef_file for site size\n");
   printf("  -verilog verilog_file      \n");
