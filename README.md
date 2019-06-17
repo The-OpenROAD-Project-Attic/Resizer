@@ -117,6 +117,31 @@ report_tns
 report_wns
 ```
 
+An example command script to translate DEF to Verilog is shown below.
+
+```
+read_liberty liberty1.lib
+read_lef liberty1.lef
+read_verilog reg1.v
+link_design top
+write_def -units 100 -die_area {0 0 1000 1000} -site site1 -auto_place_pins reg1.def
+```
+
+```
+verilog2def
+-help
+-version
+-lef lef_file
+-liberty liberty_files
+-verilog verilog_file
+-top_module module_name
+-units units
+-die_area "lx ly ux uy"
+-site site_name
+-auto_place_pins 
+-def def_file
+```
+
 ## Authors
 
 * James Cherry (coding)

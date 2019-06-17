@@ -23,7 +23,6 @@ class LefDefNetwork;
 
 void
 readLef(const char *filename,
-	bool save_lef_data,
 	LefDefNetwork *network);
 
 } // namespace

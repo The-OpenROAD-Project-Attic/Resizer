@@ -274,6 +274,34 @@ endif()
 target_compile_options(resizer PUBLIC ${COMPILE_OPTIONS})
 
 ################################################################
+#
+# verilog2def
+#
+################################################################
+
+add_executable(verilog2def
+  VerilogToDef.cc
+  LefDefNetwork.cc
+  DefWriter.cc
+  LefReader.cc)
+
+target_include_directories(verilog2def PUBLIC ${RESIZER_INCLUDE_DIRS})
+
+target_link_libraries(verilog2def
+  ${STA_HOME}/app/libOpenSTA.a
+  ${TCL_LIB}
+  ${CUDD_LIB}
+  ${LEF_HOME}/lef/liblef.a
+  ${DEF_HOME}/def/libdef.a
+  )
+
+if (ZLIB_FOUND)
+  target_link_libraries(verilog2def ${ZLIB_LIBRARIES})
+endif()
+
+target_compile_options(verilog2def PUBLIC ${COMPILE_OPTIONS})
+
+################################################################
 # Install
 # cmake .. -DCMAKE_INSTALL_PREFIX=<prefix_path>
 

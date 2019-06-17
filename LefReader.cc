@@ -55,11 +55,9 @@ class LefReader
 {
 public:
   LefReader(const char *filename,
-	    bool save_lef_data,
 	    Library *lef_library,
 	    LefDefNetwork *network);
   const char *filename() { return filename_; }
-  bool saveLefData() { return save_lef_data_; }
   LefDefNetwork *network() { return network_; }
   Library *lefLibrary() { return lef_library_; }
   Cell *lefMacro() { return lef_macro_; }
@@ -67,7 +65,6 @@ public:
 
 private:
   const char *filename_;
-  bool save_lef_data_;
   Library *lef_library_;
   LefDefNetwork *network_;
   Cell *lef_macro_;
@@ -81,7 +78,6 @@ LefReader::setLefMacro(Cell *lef_macro)
 
 void
 readLef(const char *filename,
-	bool save_lef_data,
 	LefDefNetwork *network)
 {
   lefrInitSession();
@@ -90,7 +86,7 @@ readLef(const char *filename,
   Library *lef_library = network->lefLibrary();
   if (lef_library == nullptr)
     lef_library = network->makeLefLibrary("LEF", filename);
-  LefReader reader(filename, save_lef_data, lef_library, network);
+  LefReader reader(filename, lef_library, network);
   FILE *stream = fopen(filename, "r");
   if (stream) {
     lefrRead(stream, filename, &reader);
@@ -112,11 +108,9 @@ registerLefCallbacks()
 }
 
 LefReader::LefReader(const char *filename,
-		     bool save_lef_data,
 		     Library *lef_library,
 		     LefDefNetwork *network) :
   filename_(filename),
-  save_lef_data_(save_lef_data),
   lef_library_(lef_library),
   network_(network),
   lef_macro_(nullptr)
@@ -171,11 +165,9 @@ macroCbk(lefrCallbackType_e,
 {
   // Save lef macro data.
   LefReader *reader = getLefReader(user);
-  if (reader->saveLefData()) {
-    LefDefNetwork *network = reader->network();
-    Cell *cell = reader->lefMacro();
-    network->setLefMacro(cell, lef_macro);
-  }
+  LefDefNetwork *network = reader->network();
+  Cell *cell = reader->lefMacro();
+  network->setLefMacro(cell, lef_macro);
   return 0;
 }
 

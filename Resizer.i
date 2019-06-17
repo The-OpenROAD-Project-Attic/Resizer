@@ -57,7 +57,7 @@ void
 read_lef(const char *filename)
 {
   LefDefNetwork *network = lefDefNetwork();
-  readLef(filename, true, network);
+  readLef(filename, network);
 }
 
 bool
