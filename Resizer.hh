@@ -40,7 +40,8 @@ public:
   void setWireRC(float wire_res, // ohms/meter
 		 float wire_cap, // farads/meter
 		 Corner *corner);
-  // Resize all instances in the network.
+  // Resize all instances in the network
+  // and insert buffers to fix max cap/slew violations.
   void resize(bool resize,
 	      bool repair_max_cap,
 	      bool repair_max_slew,
