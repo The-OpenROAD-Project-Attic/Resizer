@@ -1,4 +1,4 @@
-Startpoint: r2 (rising edge-triggered flip-flop clocked by clk)
+Startpoint: r1 (rising edge-triggered flip-flop clocked by clk)
 Endpoint: r3 (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
 Path Type: max
@@ -7,12 +7,40 @@ Path Type: max
 ---------------------------------------------------------
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
-   0.00    0.00 ^ r2/CP (snl_ffqx1)
-   0.23    0.23 v r2/Q (snl_ffqx1)
-   0.48    0.71 v u1/Z (snl_bufx1)
-   0.25    0.96 v u2/Z (snl_and02x1)
-   0.00    0.96 v r3/D (snl_ffqx1)
-           0.96   data arrival time
+   0.00    0.00 ^ r1/CP (snl_ffqx1)
+   0.90    0.90 v r1/Q (snl_ffqx1)
+   0.29    1.20 v u2/Z (snl_and02x1)
+   0.00    1.20 v r3/D (snl_ffqx1)
+           1.20   data arrival time
+
+   1.00    1.00   clock clk (rise edge)
+   0.00    1.00   clock network delay (ideal)
+   0.00    1.00   clock reconvergence pessimism
+           1.00 ^ r3/CP (snl_ffqx1)
+  -0.12    0.88   library setup time
+           0.88   data required time
+---------------------------------------------------------
+           0.88   data required time
+          -1.20   data arrival time
+---------------------------------------------------------
+          -0.32   slack (VIOLATED)
+
+
+Resized 2 instances.
+Startpoint: r1 (rising edge-triggered flip-flop clocked by clk)
+Endpoint: r3 (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00 ^ r1/CP (snl_ffqx4)
+   0.55    0.55 ^ r1/Q (snl_ffqx4)
+   0.21    0.76 ^ u2/Z (snl_and02x1)
+   0.00    0.76 ^ r3/D (snl_ffqx1)
+           0.76   data arrival time
 
    1.00    1.00   clock clk (rise edge)
    0.00    1.00   clock network delay (ideal)
@@ -22,39 +50,9 @@ Path Type: max
            0.89   data required time
 ---------------------------------------------------------
            0.89   data required time
-          -0.96   data arrival time
+          -0.76   data arrival time
 ---------------------------------------------------------
-          -0.08   slack (VIOLATED)
-
-
-Resized 1 instances.
-Startpoint: r2 (rising edge-triggered flip-flop clocked by clk)
-Endpoint: r3 (rising edge-triggered flip-flop clocked by clk)
-Path Group: clk
-Path Type: max
-
-  Delay    Time   Description
----------------------------------------------------------
-   0.00    0.00   clock clk (rise edge)
-   0.00    0.00   clock network delay (ideal)
-   0.00    0.00 ^ r2/CP (snl_ffqx1)
-   0.31    0.31 v r2/Q (snl_ffqx1)
-   0.23    0.54 v u1/Z (snl_bufx8)
-   0.15    0.69 v u2/Z (snl_and02x1)
-   0.00    0.69 v r3/D (snl_ffqx1)
-           0.69   data arrival time
-
-   1.00    1.00   clock clk (rise edge)
-   0.00    1.00   clock network delay (ideal)
-   0.00    1.00   clock reconvergence pessimism
-           1.00 ^ r3/CP (snl_ffqx1)
-  -0.10    0.90   library setup time
-           0.90   data required time
----------------------------------------------------------
-           0.90   data required time
-          -0.69   data arrival time
----------------------------------------------------------
-           0.21   slack (MET)
+           0.13   slack (MET)
 
 
 ###############################################################################
@@ -75,7 +73,7 @@ DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
 
 COMPONENTS 5 ;
-- r1 snl_ffqx1 ;
+- r1 snl_ffqx4 ;
 - r2 snl_ffqx1 ;
 - r3 snl_ffqx1 ;
 - u1 snl_bufx8 ;
