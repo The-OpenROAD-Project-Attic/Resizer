@@ -195,7 +195,8 @@ Resizer::ensureLevelDrvrVerticies()
     VertexIterator vertex_iter(graph_);
     while (vertex_iter.hasNext()) {
       Vertex *vertex = vertex_iter.next();
-      level_drvr_verticies_.push_back(vertex);
+      if (vertex->isDriver(network_))
+	level_drvr_verticies_.push_back(vertex);
     }
     sort(level_drvr_verticies_, VertexLevelLess(network_));
     level_drvr_verticies_valid_ = true;

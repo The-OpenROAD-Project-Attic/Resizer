@@ -10,16 +10,16 @@ Path Type: max
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
    0.00    0.00 ^ fdct_zigzag/zigzag_mod/ld_zigzag_reg/CK (EDFFQ_X2M_A12TL)
-   4.46    4.46 ^ fdct_zigzag/zigzag_mod/ld_zigzag_reg/Q (EDFFQ_X2M_A12TL)
-   7.26   11.71 v fdct_zigzag/zigzag_mod/FE_DBTC3_n42/Y (INV_X4M_A12TL)
-   1.10   12.81 ^ fdct_zigzag/zigzag_mod/U797/Y (INV_X7P5M_A12TL)
-   0.16   12.97 v qnr/U10/Y (INV_X1P4B_A12TL)
-   0.10   13.08 ^ qnr/U74/Y (NAND2_X1B_A12TL)
-   0.16   13.23 v qnr/U6/Y (INV_X1B_A12TL)
-   0.12   13.36 ^ qnr/U3/Y (AOI32_X1M_A12TL)
-   0.10   13.46 v qnr/U17/Y (OAI31_X1M_A12TL)
-   0.00   13.46 v qnr/qnt_cnt_reg_5_/D (DFFQ_X1M_A12TL)
-          13.46   data arrival time
+   4.23    4.23 ^ fdct_zigzag/zigzag_mod/ld_zigzag_reg/Q (EDFFQ_X2M_A12TL)
+   6.61   10.85 v fdct_zigzag/zigzag_mod/FE_DBTC3_n42/Y (INV_X4M_A12TL)
+   1.10   11.94 ^ fdct_zigzag/zigzag_mod/U797/Y (INV_X7P5M_A12TL)
+   0.15   12.09 v qnr/U10/Y (INV_X1P4B_A12TL)
+   0.10   12.19 ^ qnr/U74/Y (NAND2_X1B_A12TL)
+   0.15   12.34 v qnr/U6/Y (INV_X1B_A12TL)
+   0.12   12.46 ^ qnr/U3/Y (AOI32_X1M_A12TL)
+   0.10   12.55 v qnr/U17/Y (OAI31_X1M_A12TL)
+   0.00   12.55 v qnr/qnt_cnt_reg_5_/D (DFFQ_X1M_A12TL)
+          12.55   data arrival time
 
    7.00    7.00   clock clk (rise edge)
    0.00    7.00   clock network delay (ideal)
@@ -29,18 +29,18 @@ Path Type: max
            6.95   data required time
 ---------------------------------------------------------
            6.95   data required time
-         -13.46   data arrival time
+         -12.55   data arrival time
 ---------------------------------------------------------
-          -6.51   slack (VIOLATED)
+          -5.60   slack (VIOLATED)
 
 
-tns -10183.92
-wns -6.51
-Resized 38197 instances.
+tns -8608.33
+wns -5.60
+Resized 38027 instances.
 After resizing
 Startpoint: fdct_zigzag/dct_mod/ddgo_reg
             (rising edge-triggered flip-flop clocked by clk)
-Endpoint: fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/result_reg_17_
+Endpoint: fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/result_reg_17_
           (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
 Path Type: max
@@ -50,38 +50,38 @@ Path Type: max
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
    0.00    0.00 ^ fdct_zigzag/dct_mod/ddgo_reg/CK (EDFFQ_X3M_A12TL)
-   6.43    6.43 ^ fdct_zigzag/dct_mod/ddgo_reg/Q (EDFFQ_X3M_A12TL)
-   1.64    8.07 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U503/Y (NOR2_X0P5B_A12TL)
-   0.44    8.51 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U504/Y (NOR2_X0P5A_A12TL)
-   0.17    8.68 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U505/Y (NOR2_X0P5M_A12TL)
-   0.13    8.81 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U512/Y (AOI21_X0P5M_A12TL)
-   0.09    8.90 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U513/Y (OAI21_X0P7M_A12TL)
-   0.11    9.01 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U514/Y (AOI21_X3M_A12TL)
-   0.09    9.10 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U543/Y (OAI21_X0P5M_A12TL)
-   0.10    9.20 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U70/Y (XNOR2_X0P5M_A12TL)
-   0.00    9.20 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/result_reg_17_/D (EDFFQ_X0P5M_A12TL)
-           9.20   data arrival time
+   6.12    6.12 ^ fdct_zigzag/dct_mod/ddgo_reg/Q (EDFFQ_X3M_A12TL)
+   1.54    7.67 v fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U483/Y (NOR2_X0P5B_A12TL)
+   0.44    8.10 ^ fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U484/Y (NOR2_X0P5A_A12TL)
+   0.17    8.27 v fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U86/Y (NOR2_X0P5M_A12TL)
+   0.12    8.39 ^ fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U163/Y (NAND2_X0P7A_A12TL)
+   0.09    8.48 v fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U159/Y (OAI21_X4M_A12TL)
+   0.11    8.59 ^ fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U521/Y (AOI21_X3M_A12TL)
+   0.09    8.68 v fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U550/Y (OAI21_X0P5M_A12TL)
+   0.11    8.79 v fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/U61/Y (XNOR2_X0P5M_A12TL)
+   0.00    8.79 v fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/result_reg_17_/D (EDFFQ_X0P5M_A12TL)
+           8.79   data arrival time
 
    7.00    7.00   clock clk (rise edge)
    0.00    7.00   clock network delay (ideal)
    0.00    7.00   clock reconvergence pessimism
-           7.00 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/result_reg_17_/CK (EDFFQ_X0P5M_A12TL)
-  -0.13    6.87   library setup time
-           6.87   data required time
+           7.00 ^ fdct_zigzag/dct_mod/dct_block_5/dct_unit_0/macu/result_reg_17_/CK (EDFFQ_X0P5M_A12TL)
+  -0.14    6.86   library setup time
+           6.86   data required time
 ---------------------------------------------------------
-           6.87   data required time
-          -9.20   data arrival time
+           6.86   data required time
+          -8.79   data arrival time
 ---------------------------------------------------------
-          -2.33   slack (VIOLATED)
+          -1.92   slack (VIOLATED)
 
 
-tns -3147.40
-wns -2.33
-Inserted 248 buffers in 23 nets.
+tns -2327.22
+wns -1.92
+Inserted 16 buffers in 16 nets.
 After buffering
-Startpoint: fdct_zigzag/dct_mod/ddin_reg_5_
+Startpoint: fdct_zigzag/dct_mod/ddin_reg_2_
             (rising edge-triggered flip-flop clocked by clk)
-Endpoint: fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/mult_res_reg_15_
+Endpoint: fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/mult_res_reg_17_
           (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
 Path Type: max
@@ -90,37 +90,39 @@ Path Type: max
 ---------------------------------------------------------
    0.00    0.00   clock clk (rise edge)
    0.00    0.00   clock network delay (ideal)
-   0.00    0.00 ^ fdct_zigzag/dct_mod/ddin_reg_5_/CK (EDFFQ_X3M_A12TL)
-   0.96    0.96 ^ fdct_zigzag/dct_mod/ddin_reg_5_/Q (EDFFQ_X3M_A12TL)
-   0.38    1.34 ^ buffer680/Y (BUF_X9M_A12TL)
-   0.17    1.51 ^ buffer693/Y (BUF_X9M_A12TL)
-   0.09    1.60 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U320/Y (XNOR2_X1M_A12TL)
-   0.10    1.70 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U217/Y (OAI22_X1P4M_A12TL)
-   0.12    1.82 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U29/Y (NOR2_X0P5M_A12TL)
-   0.09    1.90 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U82/Y (INV_X0P5B_A12TL)
-   0.10    2.00 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U174/Y (OAI21_X0P7M_A12TL)
-   0.09    2.09 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U231/Y (NAND2_X0P5A_A12TL)
-   0.16    2.25 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U365/SUM (ADDFH_X2M_A12TL)
-   0.06    2.31 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U226/Y (NOR2_X1P4B_A12TL)
-   0.14    2.45 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U224/Y (NOR2_X0P5A_A12TL)
-   0.09    2.54 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U222/Y (NAND2_X0P5M_A12TL)
-   0.12    2.66 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U219/Y (OAI21_X2M_A12TL)
-   0.10    2.76 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U59/Y (AOI21_X0P5M_A12TL)
-   0.09    2.85 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/U340/Y (XOR2_X0P5M_A12TL)
-   0.00    2.85 v fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/mult_res_reg_15_/D (EDFFQ_X0P5M_A12TL)
-           2.85   data arrival time
+   0.00    0.00 ^ fdct_zigzag/dct_mod/ddin_reg_2_/CK (EDFFQ_X3M_A12TL)
+   0.14    0.14 ^ fdct_zigzag/dct_mod/ddin_reg_2_/Q (EDFFQ_X3M_A12TL)
+   0.36    0.50 ^ buffer945/Y (BUF_X9M_A12TL)
+   0.37    0.87 ^ buffer1021/Y (BUF_X9M_A12TL)
+   0.14    1.00 ^ buffer1025/Y (BUF_X9M_A12TL)
+   0.09    1.09 ^ buffer1027/Y (BUF_X9M_A12TL)
+   0.08    1.17 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U43/Y (XNOR2_X1P4M_A12TL)
+   0.10    1.27 v fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U342/Y (OAI22_X1P4M_A12TL)
+   0.11    1.37 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U181/Y (OAI21_X0P5M_A12TL)
+   0.08    1.45 v fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U80/Y (AO1B2_X0P5M_A12TL)
+   0.09    1.54 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U17/Y (OAI21_X0P5M_A12TL)
+   0.09    1.64 v fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U166/Y (NAND2_X0P5A_A12TL)
+   0.17    1.81 v fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U362/SUM (ADDFH_X2M_A12TL)
+   0.12    1.93 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U243/Y (NOR2_X0P5A_A12TL)
+   0.09    2.02 v fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U240/Y (NOR2_X0P5A_A12TL)
+   0.12    2.14 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U241/Y (AOI21_X0P7M_A12TL)
+   0.08    2.22 v fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U216/Y (OAI21_X3M_A12TL)
+   0.11    2.33 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U226/Y (AOI21_X0P5M_A12TL)
+   0.09    2.42 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/U266/Y (XNOR2_X0P5M_A12TL)
+   0.00    2.42 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/mult_res_reg_17_/D (EDFFQ_X0P5M_A12TL)
+           2.42   data arrival time
 
    7.00    7.00   clock clk (rise edge)
    0.00    7.00   clock network delay (ideal)
    0.00    7.00   clock reconvergence pessimism
-           7.00 ^ fdct_zigzag/dct_mod/dct_block_1/dct_unit_6/macu/mult_res_reg_15_/CK (EDFFQ_X0P5M_A12TL)
-  -0.14    6.86   library setup time
-           6.86   data required time
+           7.00 ^ fdct_zigzag/dct_mod/dct_block_0/dct_unit_0/macu/mult_res_reg_17_/CK (EDFFQ_X0P5M_A12TL)
+  -0.11    6.89   library setup time
+           6.89   data required time
 ---------------------------------------------------------
-           6.86   data required time
-          -2.85   data arrival time
+           6.89   data required time
+          -2.42   data arrival time
 ---------------------------------------------------------
-           4.02   slack (MET)
+           4.47   slack (MET)
 
 
 tns 0.00
@@ -129,5 +131,5 @@ max_transition
 
 Pin                                    Limit   Trans   Slack
 ------------------------------------------------------------
-fdct_zigzag/dct_mod/ddin_reg_1_/CK      0.88    3.05   -2.16 (VIOLATED)
+fdct_zigzag/dct_mod/ddin_reg_1_/CK      0.88    2.53   -1.65 (VIOLATED)
 
