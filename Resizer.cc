@@ -43,16 +43,12 @@
 //  skinflute wants to read files which prevents having a stand-alone executable
 //  multi-corner support?
 //  tcl cmds to set liberty pin cap and limit for testing
-//  check one lef, one def
+//  check one def
 //  check lef/liberty library cell ports match
 //  test rebuffering on input ports
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
 // rename option to -insert_buffers
-// write_def -sort option for stable results
-// write_def -site
-// write_verilog
-// prune rebuffer options by shifting up instead of a 2nd pass
 // should buffer sizing/insertion preserve library for Vt/power reasons?
 
 namespace sta {
@@ -875,7 +871,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 					      level + 1, buffer_cell);
       RebufferOptionSeq Zr = rebufferBottomUp(tree, tree->right(k), k,
 					      level + 1, buffer_cell);
-      RebufferOptionSeq Z2;
+      RebufferOptionSeq Z;
       // Combine the options from both branches.
       for (auto p : Zl) {
 	for (auto q : Zr) {
@@ -886,47 +882,33 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 						    nullptr,
 						    tree->location(k),
 						    p, q);
-	  Z2.push_back(junc);
+	  Z.push_back(junc);
 	}
       }
       // Prune the options. This is fanout^2.
       // Presort options to hit better options sooner.
-      sort(Z2, RebufferOptionBufferReqGreater(buffer_cell, this));
-      for (int pi = 0; pi < Z2.size(); pi++) {
-	auto p = Z2[pi];
+      sort(Z, RebufferOptionBufferReqGreater(buffer_cell, this));
+      int si = 0;
+      for (int pi = 0; pi < Z.size(); pi++) {
+	auto p = Z[pi];
 	if (p) {
 	  float Lp = p->cap();
+	  // Remove options by shifting down with index si.
+	  si = pi + 1;
 	  // Because the options are sorted we don't have to look
 	  // beyond the first option.
-	  //for (int qi = 0; qi < pi; qi++) {
-	  bool found_options = false;
-	  for (int qi = pi + 1; qi < Z2.size(); qi++) {
-	    auto q = Z2[qi];
+	  for (int qi = pi + 1; qi < Z.size(); qi++) {
+	    auto q = Z[qi];
 	    if (q) {
 	      float Lq = q->cap();
 	      // We know Tq <= Tp from the sort so we don't need to check req.
-	      if (fuzzyGreaterEqual(Lq, Lp)) {
-		// If q is the same or worse than p, remove solution q.
-		Z2[qi] = nullptr;
-	      }
-	      found_options = true;
+	      // If q is the same or worse than p, remove solution q.
+	      if (fuzzyLess(Lq, Lp))
+		// Copy survivor down.
+		Z[si++] = q;
 	    }
 	  }
-	  // All of the options after p have been pruned.
-	  if (!found_options)
-	    break;
-	}
-      }
-      // Save the survivors.
-      RebufferOptionSeq Z;
-      for (auto p : Z2) {
-	if (p) {
-	  debugPrint5(debug_, "rebuffer", 3, "%*sjunction %s cap %s req %s\n",
-		      level, "",
-		      tree->name(k, sdc_network_),
-		      units_->capacitanceUnit()->asString(p->cap()),
-		      delayAsString(p->required(), this));
-	  Z.push_back(p);
+	  Z.resize(si);
 	}
       }
       return addWireAndBuffer(Z, tree, k, prev, level, buffer_cell);
