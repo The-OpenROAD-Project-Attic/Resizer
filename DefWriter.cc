@@ -275,13 +275,14 @@ writeDefRows(const char *site_name,
 	int rows_x = core_dx / site_dx;
 	int rows_y = core_dy / site_dy;
 
-	int y = 0;
+	int core_lx_dbu = network->metersToDbu(core_lx);
+	int y = network->metersToDbu(core_ly);;
 	for (int row = 0; row < rows_y; row++) {
 	  const char *orient = (row % 2 == 0) ? "FS" : "N";
 	  fprintf(out_stream, "ROW ROW_%d %s %d %d %s DO %d by 1 STEP %d 0 ;\n",
 		  row,
 		  site_name,
-		  network->metersToDbu(core_ly),
+		  core_lx_dbu,
 		  y,
 		  orient,
 		  rows_x,
