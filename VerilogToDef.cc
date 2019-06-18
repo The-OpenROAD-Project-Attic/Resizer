@@ -31,7 +31,6 @@
 
 // ../build/verilog2def -lef liberty1.lef -liberty liberty1.lib -verilog reg1.v -top_module top -units 100 -die_area "0 0 1000 1000" -site site1 -auto_place_pins -def results/foo.def
 // -lef ../test/liberty1.lef -liberty ../test/liberty1.lib -verilog ../test/reg1.v -top_module top -units 100 -die_area "0 0 1000 1000" -site site1 -auto_place_pins -def ../test/results/foo.def
-// parse multiple liberty files
 
 using std::string;
 using sta::StringVector;
