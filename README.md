@@ -5,12 +5,12 @@
 Expected directory layout
 
 /resizer - this source tree
-/lef - Si2 lef reader/writer
-/def - Si2 def reader/writer
+/lef - Si2 lef reader/writer version 5.8-p027
+/def - Si2 def reader/writer version 5.8-p027
 /flute - flute steiner tree package version 2.2
 /opensta - OpenSTA
 
-git clone https://parallax.xp-dev.com/git/resizer
+git clone https://github.com/The-OpenROAD-Project/Resizer.git
 cd resizer
 mkdir build
 cd build
