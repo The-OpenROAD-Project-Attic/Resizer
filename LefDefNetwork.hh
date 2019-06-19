@@ -80,8 +80,6 @@ public:
 		   lefiMacro *lef_macro);
   Cell *lefCell(LibertyCell *cell);
   bool isLefCell(Cell *cell) const;
-  virtual LibertyCell *libertyCell(Cell *cell) const;
-  virtual LibertyPort *libertyPort(Port *port) const;
 
   void initTopInstancePins();
   Instance *makeDefComponent(Cell *cell,

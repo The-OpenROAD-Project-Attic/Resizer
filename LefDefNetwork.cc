@@ -125,34 +125,6 @@ LefDefNetwork::isLefCell(Cell *cell) const
   return library(cell) == lef_library_;
 }
 
-LibertyCell *
-LefDefNetwork::libertyCell(Cell *cell) const
-{
-  ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(cell);
-  LibertyCell *lib_cell = dynamic_cast<LibertyCell*>(ccell);
-  if (lib_cell)
-    return lib_cell;
-  else if (cell)
-    return findLibertyCell(ccell->name());
-  else
-    return nullptr;
-}
-
-LibertyPort *
-LefDefNetwork::libertyPort(Port *port) const
-{
-  ConcretePort *cport = reinterpret_cast<ConcretePort*>(port);
-  LibertyPort *lib_port = dynamic_cast<LibertyPort*>(cport);
-  if (lib_port)
-    return lib_port;
-  else {
-    LibertyCell *lib_cell = libertyCell(cport->cell());
-    if (lib_cell)
-      return lib_cell->findLibertyPort(cport->name());
-  }
-  return nullptr;
-}
-
 void
 LefDefNetwork::initTopInstancePins()
 {
