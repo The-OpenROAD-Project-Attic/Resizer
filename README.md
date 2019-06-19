@@ -63,10 +63,10 @@ resizer
 Resizer looks for the files POWV9.dat and PORT9.dat in ../etc relative
 to the executable when it starts.
 
-Resizer sources the TCL command file ~/.resizer unless the command
-line option -no_init is specified.
+Resizer sources the TCL command file `~/.resizer` unless the command
+line option `-no_init` is specified.
 
-Resizer then sources the command file cmd_file. Unless the -exit
+Resizer then sources the command file cmd_file. Unless the `-exit`
 command line flag is specified it enters and interactive TCL command
 interpreter.
 
@@ -92,7 +92,7 @@ write_def [-units dist_units]
 Liberty libraries should be read before LEF and DEF. Only one DEF file
 is supported.
 
-The set_wire_rc command sets the resistance (ohms/meter) and
+The `set_wire_rc` command sets the resistance (ohms/meter) and
 capacitance (farads/meter) of routing wires. It adds parasitics based
 on placed component pin locations. The resistance and capacitance are
 per meter of a routing wire. They should represent "average" routing
@@ -101,20 +101,20 @@ called before resizing, the default_wireload model specified in the
 first liberty file or with the SDC set_wire_load command is used to
 make parasitics.
 
-The resize command resizes gates and then uses buffer insertion to
-repair maximum capacitance and slew violations. Use the -resize,
--repair_max_cap and -repair_max_slew options to invoke a single
+The `resize` command resizes gates and then uses buffer insertion to
+repair maximum capacitance and slew violations. Use the `-resize`,
+`-repair_max_cap` and `-repair_max_slew` options to invoke a single
 mode. With none of the options specified all are done. The
--buffer_cell argument is required for buffer insertion
-(-repair_max_cap or -repair_max_slew).
+`-buffer_cell` argument is required for buffer insertion
+(`-repair_max_cap` or `-repair_max_slew`).
 
-The write_def command -units, -die_area, -core_area, -site and
--auto_place_pins arguments are only used when writing a DEF file from
-a Verilog netlist. dist_units are the DEF database units per
+The `write_def` command `-units`, `-die_area`, `-core_area`, `-site` and
+`-auto_place`_pins arguments are only used when writing a DEF file from
+a Verilog netlist. `dist_units` are the DEF database units per
 micron. The die area is a list of corner coordinates in microns (lower
-x, lower y, upper x, upper y). site_name is a LEF site name that is
+x, lower y, upper x, upper y). `site_name` is a LEF site name that is
 used to write ROW statements to fill the die area.  The
--auto_place_pins argument adds locations for the pins equally spaced
+`-auto_place_pins` argument adds locations for the pins equally spaced
 around the die perimeter.
 
 A typical resizer command file is shown below.
@@ -159,7 +159,7 @@ link_design top
 write_def -units 100 -die_area {0 0 1000 1000} -site site1 -auto_place_pins reg1.def
 ```
 
-The "verilog2def" executable can also be used to translate DEF to
+The `verilog2def` executable can also be used to translate DEF to
 Verilog using command line arguments.
 
 ```
