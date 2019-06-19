@@ -51,11 +51,12 @@ public:
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
 			  Corner *corner);
-
   // Rebuffer net.
   // Assumes buffer_cell->isBuffer() is true.
   void rebuffer(Net *net,
 		LibertyCell *buffer_cell);
+  Slew targetSlew(const TransRiseFall *tr);
+  float targetLoadCap(LibertyCell *cell);
 
 protected:
   virtual void makeNetwork();

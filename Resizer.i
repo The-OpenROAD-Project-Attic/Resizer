@@ -30,16 +30,6 @@
 
 using namespace sta;
 
-%}
-
-////////////////////////////////////////////////////////////////
-//
-// C++ functions visible as TCL functions.
-//
-////////////////////////////////////////////////////////////////
-
-%inline %{
-
 LefDefNetwork *
 lefDefNetwork()
 {
@@ -52,6 +42,35 @@ getResizer()
 {
   return static_cast<Resizer*>(Sta::sta());
 }
+
+%}
+
+////////////////////////////////////////////////////////////////
+//
+// SWIG type definitions.
+// (copied from StaTcl.i because I don't see how to share them.
+//
+////////////////////////////////////////////////////////////////
+
+%typemap(in) TransRiseFall* {
+  int length;
+  const char *arg = Tcl_GetStringFromObj($input, &length);
+  TransRiseFall *tr = TransRiseFall::find(arg);
+  if (tr == nullptr) {
+    Tcl_SetResult(interp,const_cast<char*>("Error: unknown transition name."),
+		  TCL_STATIC);
+    return TCL_ERROR;
+  }
+  $1 = tr;
+}
+
+////////////////////////////////////////////////////////////////
+//
+// C++ functions visible as TCL functions.
+//
+////////////////////////////////////////////////////////////////
+
+%inline %{
 
 void
 read_lef(const char *filename)
@@ -132,6 +151,20 @@ rebuffer_net(Net *net,
 {
   Resizer *resizer = getResizer();
   resizer->rebuffer(net, buffer_cell);
+}
+
+double
+resize_target_slew(const TransRiseFall *tr)
+{
+  Resizer *resizer = getResizer();
+  return resizer->targetSlew(tr);
+}
+
+double
+resize_target_load_cap(LibertyCell *cell)
+{
+  Resizer *resizer = getResizer();
+  return resizer->targetLoadCap(cell);
 }
 
 %} // inline

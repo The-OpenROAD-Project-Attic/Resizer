@@ -316,6 +316,15 @@ Resizer::findTargetLoads()
   delete lib_iter;
 }
 
+float
+Resizer::targetLoadCap(LibertyCell *cell)
+{
+  float load_cap = 0.0;
+  bool exists;
+  target_load_map_->findKey(cell, load_cap, exists);
+  return load_cap;
+}
+
 void
 Resizer::findTargetLoads(LibertyLibrary *library)
 {
@@ -389,6 +398,12 @@ Resizer::ensureBufferTargetSlews()
     findBufferTargetSlews();
     tgt_slews_valid_ = true;
   }
+}
+
+Slew
+Resizer::targetSlew(const TransRiseFall *tr)
+{
+  return tgt_slews_[tr->index()];
 }
 
 void
