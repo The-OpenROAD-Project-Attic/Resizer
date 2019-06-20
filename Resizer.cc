@@ -363,7 +363,7 @@ Resizer::findTargetLoads(LibertyLibrary *library,
 }
 
 // Find the load capacitance that will cause the output slew
-// to be equal to in_slew.
+// to be equal to out_slew.
 float
 Resizer::findTargetLoad(LibertyCell *cell,
 			TimingArc *arc,
