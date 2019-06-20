@@ -26,7 +26,7 @@ Path Type: max
           -0.32   slack (VIOLATED)
 
 
-Resized 2 instances.
+Resized 3 instances.
 Startpoint: r1 (rising edge-triggered flip-flop clocked by clk)
 Endpoint: r3 (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
@@ -74,7 +74,7 @@ DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
 COMPONENTS 5 ;
 - r1 snl_ffqx4 ;
-- r2 snl_ffqx1 ;
+- r2 snl_ffqx2 ;
 - r3 snl_ffqx1 ;
 - u1 snl_bufx8 ;
 - u2 snl_and02x1 ;

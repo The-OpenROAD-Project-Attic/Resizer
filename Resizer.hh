@@ -68,10 +68,12 @@ protected:
   void resizeToTargetSlew1(Instance *inst);
   void ensureTargetLoads();
   void findTargetLoads();
-  void findTargetLoads(LibertyLibrary *library);
+  void findTargetLoads(LibertyLibrary *library,
+		       Slew slews[]);
   float findTargetLoad(LibertyCell *cell,
 		       TimingArc *arc,
-		       Slew in_slew);
+		       Slew in_slew,
+		       Slew out_slew);
   void ensureBufferTargetSlews();
   void findBufferTargetSlews();
   void findBufferTargetSlews(LibertyLibrary *library,

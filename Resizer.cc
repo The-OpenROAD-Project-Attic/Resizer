@@ -311,7 +311,7 @@ Resizer::findTargetLoads()
   LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
   while (lib_iter->hasNext()) {
     LibertyLibrary *lib = lib_iter->next();
-    findTargetLoads(lib);
+    findTargetLoads(lib, tgt_slews_);
   }
   delete lib_iter;
 }
@@ -326,7 +326,8 @@ Resizer::targetLoadCap(LibertyCell *cell)
 }
 
 void
-Resizer::findTargetLoads(LibertyLibrary *library)
+Resizer::findTargetLoads(LibertyLibrary *library,
+			 Slew slews[])
 {
   LibertyCellIterator cell_iter(library);
   while (cell_iter.hasNext()) {
@@ -344,8 +345,10 @@ Resizer::findTargetLoads(LibertyLibrary *library)
 	while (arc_iter.hasNext()) {
 	  TimingArc *arc = arc_iter.next();
 	  TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
+	  TransRiseFall *out_tr = arc->toTrans()->asRiseFall();
 	  float arc_target_load = findTargetLoad(cell, arc,
-						 tgt_slews_[in_tr->index()]);
+						 slews[in_tr->index()],
+						 slews[out_tr->index()]);
 	  target_load_sum += arc_target_load;
 	  arc_count++;
 	}
@@ -364,7 +367,8 @@ Resizer::findTargetLoads(LibertyLibrary *library)
 float
 Resizer::findTargetLoad(LibertyCell *cell,
 			TimingArc *arc,
-			Slew in_slew)
+			Slew in_slew,
+			Slew out_slew)
 {
   GateTimingModel *model = dynamic_cast<GateTimingModel*>(arc->model());
   if (model) {
@@ -375,9 +379,9 @@ Resizer::findTargetLoad(LibertyCell *cell,
     while (cap_step > cap_tol) {
       ArcDelay arc_delay;
       Slew arc_slew;
-      model->gateDelay(cell, pvt_, 0.0, load_cap, 0.0, false,
+      model->gateDelay(cell, pvt_, in_slew, load_cap, 0.0, false,
 		       arc_delay, arc_slew);
-      if (arc_slew > in_slew) {
+      if (arc_slew > out_slew) {
 	load_cap -= cap_step;
 	cap_step /= 2.0;
       }
