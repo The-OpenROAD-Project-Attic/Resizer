@@ -33,7 +33,7 @@ namespace sta {
 
 // Defined in StaTcl.i
 LibertyLibrarySeq *
-TclListSeqLibertyLibrary(Tcl_Obj * const source,
+tclListSeqLibertyLibrary(Tcl_Obj *const source,
 			 Tcl_Interp *interp);
 
 LefDefNetwork *
@@ -89,7 +89,7 @@ using namespace sta;
 }
 
 %typemap(in) LibertyLibrarySeq* {
-  $1 = TclListSeqLibertyLibrary($input, interp);
+  $1 = tclListSeqLibertyLibrary($input, interp);
 }
 
 ////////////////////////////////////////////////////////////////
