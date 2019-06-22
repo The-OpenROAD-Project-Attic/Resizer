@@ -78,6 +78,7 @@ read_lef filename
 read_def filename
 set_wire_rc [-resistance res ] [-capacitance cap] [-corner corner_name]
 resize [-resize]
+       [-resize_libraries resize_libraries]
        [-repair_max_cap]
        [-repair_max_slew]
        [-buffer_cell buffer_cell]
@@ -106,7 +107,13 @@ repair maximum capacitance and slew violations. Use the `-resize`,
 `-repair_max_cap` and `-repair_max_slew` options to invoke a single
 mode. With none of the options specified all are done. The
 `-buffer_cell` argument is required for buffer insertion
-(`-repair_max_cap` or `-repair_max_slew`).
+(`-repair_max_cap` or `-repair_max_slew`). The `-resize_libraries`
+option specifies which libraries to use when
+resizing. `resize_libraries` defaults to all of the liberty libraries
+that have been read. Some designs have multiple libraries with
+different transistor thresholds (Vt) and are used to trade off power
+and speed. Chosing a low Vt library uses more power but results in a
+faster design after the resizing step.
 
 The `write_def` command `-units`, `-die_area`, `-core_area`, `-site` and
 `-auto_place`_pins arguments are only used when writing a DEF file from

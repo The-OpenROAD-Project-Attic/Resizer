@@ -22,13 +22,19 @@
 
 #include "Machine.hh"
 #include "Error.hh"
+#include "Liberty.hh"
 #include "LefReader.hh"
 #include "DefReader.hh"
 #include "DefWriter.hh"
 #include "LefDefNetwork.hh"
 #include "Resizer.hh"
 
-using namespace sta;
+namespace sta {
+
+// Defined in StaTcl.i
+LibertyLibrarySeq *
+TclListSeqLibertyLibrary(Tcl_Obj * const source,
+			 Tcl_Interp *interp);
 
 LefDefNetwork *
 lefDefNetwork()
@@ -42,6 +48,24 @@ getResizer()
 {
   return static_cast<Resizer*>(Sta::sta());
 }
+
+void
+networkLibertyLibraries(Network *network,
+			// Return value.
+			LibertyLibrarySeq &libs)
+{
+  
+  LibertyLibraryIterator *lib_iter = network->libertyLibraryIterator();
+  while (lib_iter->hasNext()) {
+    LibertyLibrary *lib = lib_iter->next();
+    libs.push_back(lib);
+  }
+  delete lib_iter;
+}
+
+} // namespace
+
+using namespace sta;
 
 %}
 
@@ -62,6 +86,10 @@ getResizer()
     return TCL_ERROR;
   }
   $1 = tr;
+}
+
+%typemap(in) LibertyLibrarySeq* {
+  $1 = TclListSeqLibertyLibrary($input, interp);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -132,17 +160,22 @@ void
 resize_cmd(bool resize,
 	   bool repair_max_cap,
 	   bool repair_max_slew,
-	   LibertyCell *buffer_cell)
+	   LibertyCell *buffer_cell,
+	   LibertyLibrarySeq *resize_libs)
 {
   Resizer *resizer = getResizer();
-  resizer->resize(resize, repair_max_cap, repair_max_slew, buffer_cell);
+  resizer->resize(resize, repair_max_cap, repair_max_slew,
+		  buffer_cell, resize_libs);
 }
 
 void
 resize_to_target_slew(Instance *inst)
 {
   Resizer *resizer = getResizer();
-  resizer->resizeToTargetSlew(inst, resizer->cmdCorner());
+  Network *network = resizer->network();
+  LibertyLibrarySeq resize_libs;
+  networkLibertyLibraries(network, resize_libs);
+  resizer->resizeToTargetSlew(inst, &resize_libs, resizer->cmdCorner());
 }
 
 void
@@ -150,7 +183,10 @@ rebuffer_net(Net *net,
 	     LibertyCell *buffer_cell)
 {
   Resizer *resizer = getResizer();
-  resizer->rebuffer(net, buffer_cell);
+  Network *network = resizer->network();
+  LibertyLibrarySeq resize_libs;
+  networkLibertyLibraries(network, resize_libs);
+  resizer->rebuffer(net, buffer_cell, &resize_libs);
 }
 
 double
@@ -165,6 +201,13 @@ resize_target_load_cap(LibertyCell *cell)
 {
   Resizer *resizer = getResizer();
   return resizer->targetLoadCap(cell);
+}
+
+void
+set_dont_use(LibertyCell *cell,
+	     bool dont_use)
+{
+  cell->setDontUse(dont_use);
 }
 
 %} // inline

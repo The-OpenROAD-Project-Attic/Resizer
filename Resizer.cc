@@ -49,7 +49,6 @@
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
 // rename option to -insert_buffers
-// should buffer sizing/insertion preserve library for Vt/power reasons?
 
 namespace sta {
 
@@ -63,11 +62,10 @@ singleOutputPin(const Instance *inst,
 
 Resizer::Resizer() :
   Sta(),
-  corner_(nullptr),
   wire_res_(0.0),
   wire_cap_(0.0),
+  corner_(nullptr),
   level_drvr_verticies_valid_(false),
-  tgt_slews_valid_(false),
   unique_net_index_(1),
   unique_buffer_index_(1)
 {
@@ -147,15 +145,16 @@ void
 Resizer::resize(bool resize,
 		bool repair_max_cap,
 		bool repair_max_slew,
-		LibertyCell *buffer_cell)
+		LibertyCell *buffer_cell,
+		LibertyLibrarySeq *resize_libs)
 {
   init();
   ensureCorner();
   // Find a target slew for the libraries and then
   // a target load for each cell that gives the target slew.
-  ensureTargetLoads();
+  findTargetLoads(resize_libs);
   if (resize) {
-    resizeToTargetSlew();
+    resizeToTargetSlew(resize_libs);
     report_->print("Resized %d instances.\n", resize_count_);
   }
   if (repair_max_cap || repair_max_slew) {
@@ -201,16 +200,20 @@ Resizer::ensureLevelDrvrVerticies()
 
 void
 Resizer::resizeToTargetSlew(Instance *inst,
+			    LibertyLibrarySeq *resize_libs,
 			    Corner *corner)
 {
+  init();
   initCorner(corner);
-  ensureTargetLoads();
+  makeEquivCells(resize_libs);
+  findTargetLoads(resize_libs);
   resizeToTargetSlew1(inst);
 }
 
 void
-Resizer::resizeToTargetSlew()
+Resizer::resizeToTargetSlew(LibertyLibrarySeq *resize_libs)
 {
+  makeEquivCells(resize_libs);
   // Resize in reverse level order.
   for (int i = level_drvr_verticies_.size() - 1; i >= 0; i--) {
     Vertex *vertex = level_drvr_verticies_[i];
@@ -218,6 +221,20 @@ Resizer::resizeToTargetSlew()
     Instance *inst = network_->instance(drvr_pin);
     resizeToTargetSlew1(inst);
   }
+}
+
+void
+Resizer::makeEquivCells(LibertyLibrarySeq *resize_libs)
+{
+  // Map cells from all libraries to resize_libs.
+  LibertyLibrarySeq map_libs;
+  LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
+  while (lib_iter->hasNext()) {
+    LibertyLibrary *lib = lib_iter->next();
+    map_libs.push_back(lib);
+  }
+  delete lib_iter;
+  makeEquivCells(resize_libs, &map_libs);
 }
 
 void
@@ -233,7 +250,7 @@ Resizer::resizeToTargetSlew1(Instance *inst)
       float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
       LibertyCell *best_cell = nullptr;
       float best_ratio = 0.0;
-      auto equiv_cells = cell->equivCells();
+      auto equiv_cells = equivCells(cell);
       if (equiv_cells) {
 	for (auto target_cell : *equiv_cells) {
 	  if (!target_cell->dontUse()) {
@@ -293,27 +310,16 @@ singleOutputPin(const Instance *inst,
 
 ////////////////////////////////////////////////////////////////
 
-void
-Resizer::ensureTargetLoads()
-{
-  if (target_load_map_ == nullptr)
-    findTargetLoads();
-}
-
 // Find the target load for each library cell that gives the target slew.
 void
-Resizer::findTargetLoads()
+Resizer::findTargetLoads(LibertyLibrarySeq *resize_libs)
 {
   // Find target slew across all buffers in the libraries.
-  ensureBufferTargetSlews();
-
-  target_load_map_ = new CellTargetLoadMap;
-  LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
-  while (lib_iter->hasNext()) {
-    LibertyLibrary *lib = lib_iter->next();
+  findBufferTargetSlews(resize_libs);
+  if (target_load_map_ == nullptr)
+    target_load_map_ = new CellTargetLoadMap;
+  for (auto lib : *resize_libs)
     findTargetLoads(lib, tgt_slews_);
-  }
-  delete lib_iter;
 }
 
 float
@@ -394,32 +400,21 @@ Resizer::findTargetLoad(LibertyCell *cell,
 
 ////////////////////////////////////////////////////////////////
 
-// Find target slew across all buffers in the libraries.
-void
-Resizer::ensureBufferTargetSlews()
-{
-  if (!tgt_slews_valid_) {
-    findBufferTargetSlews();
-    tgt_slews_valid_ = true;
-  }
-}
-
 Slew
 Resizer::targetSlew(const TransRiseFall *tr)
 {
   return tgt_slews_[tr->index()];
 }
 
+// Find target slew across all buffers in the libraries.
 void
-Resizer::findBufferTargetSlews()
+Resizer::findBufferTargetSlews(LibertyLibrarySeq *resize_libs)
 {
   tgt_slews_[TransRiseFall::riseIndex()] = 0.0;
   tgt_slews_[TransRiseFall::fallIndex()] = 0.0;
   int tgt_counts[TransRiseFall::index_count]{0};
   
-  LibertyLibraryIterator *lib_iter = network_->libertyLibraryIterator();
-  while (lib_iter->hasNext()) {
-    LibertyLibrary *lib = lib_iter->next();
+  for (auto lib : *resize_libs) {
     Slew slews[TransRiseFall::index_count]{0.0};
     int counts[TransRiseFall::index_count]{0};
     
@@ -429,17 +424,16 @@ Resizer::findBufferTargetSlews()
       tgt_counts[tr] += counts[tr];
       slews[tr] /= counts[tr];
     }
-    debugPrint3(debug_, "resizer_tgt", 2, "target_slews %s = %.2e/%.2e\n",
+    debugPrint3(debug_, "resizer", 2, "target_slews %s = %.2e/%.2e\n",
 		lib->name(),
 		slews[TransRiseFall::riseIndex()],
 		slews[TransRiseFall::fallIndex()]);
   }
-  delete lib_iter;
 
   for (int tr = 0; tr < TransRiseFall::index_count; tr++)
     tgt_slews_[tr] /= tgt_counts[tr];
 
-  debugPrint2(debug_, "resizer_tgt", 1, "target_slews = %.2e/%.2e\n",
+  debugPrint2(debug_, "resizer", 1, "target_slews = %.2e/%.2e\n",
 	      tgt_slews_[TransRiseFall::riseIndex()],
 	      tgt_slews_[TransRiseFall::fallIndex()]);
 }
@@ -769,11 +763,12 @@ Resizer::slewLimit(const Pin *pin,
 
 void
 Resizer::rebuffer(Net *net,
-		  LibertyCell *buffer_cell)
+		  LibertyCell *buffer_cell,
+		  LibertyLibrarySeq *resize_libs)
 {
   init();
   ensureCorner();
-  ensureBufferTargetSlews();
+  findBufferTargetSlews(resize_libs);
   PinSet *drvrs = network_->drivers(net);
   for (auto drvr : *drvrs)
     rebuffer(drvr, buffer_cell);

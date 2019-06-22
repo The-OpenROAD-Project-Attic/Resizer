@@ -45,16 +45,19 @@ public:
   void resize(bool resize,
 	      bool repair_max_cap,
 	      bool repair_max_slew,
-	      LibertyCell *buffer_cell);
+	      LibertyCell *buffer_cell,
+	      LibertyLibrarySeq *resize_libs);
 
   // The functions below are for testing phases of the resizer.
   // Resize a single instance to the target load.
   void resizeToTargetSlew(Instance *inst,
+			  LibertyLibrarySeq *resize_libs,
 			  Corner *corner);
   // Rebuffer net.
   // Assumes buffer_cell->isBuffer() is true.
   void rebuffer(Net *net,
-		LibertyCell *buffer_cell);
+		LibertyCell *buffer_cell,
+		LibertyLibrarySeq *resize_libs);
   Slew targetSlew(const TransRiseFall *tr);
   float targetLoadCap(LibertyCell *cell);
 
@@ -64,18 +67,17 @@ protected:
   void ensureCorner();
   void initCorner(Corner *corner);
   void ensureLevelDrvrVerticies();
-  void resizeToTargetSlew();
+  void resizeToTargetSlew(LibertyLibrarySeq *resize_libs);
+  void makeEquivCells(LibertyLibrarySeq *resize_libs);
   void resizeToTargetSlew1(Instance *inst);
-  void ensureTargetLoads();
-  void findTargetLoads();
+  void findTargetLoads(LibertyLibrarySeq *resize_libs);
   void findTargetLoads(LibertyLibrary *library,
 		       Slew slews[]);
   float findTargetLoad(LibertyCell *cell,
 		       TimingArc *arc,
 		       Slew in_slew,
 		       Slew out_slew);
-  void ensureBufferTargetSlews();
-  void findBufferTargetSlews();
+  void findBufferTargetSlews(LibertyLibrarySeq *resize_libs);
   void findBufferTargetSlews(LibertyLibrary *library,
 			     // Return values.
 			     Slew slews[],
@@ -132,10 +134,11 @@ protected:
   string makeUniqueBufferName();
 
   friend class RebufferOption;
+  using Sta::makeEquivCells;
 
-  Corner *corner_;
   float wire_res_;
   float wire_cap_;
+  Corner *corner_;
 
   const MinMax *min_max_;
   const DcalcAnalysisPt *dcalc_ap_;
@@ -145,7 +148,6 @@ protected:
   VertexSeq level_drvr_verticies_;
   bool level_drvr_verticies_valid_;
   Slew tgt_slews_[TransRiseFall::index_count];
-  bool tgt_slews_valid_;
   int unique_net_index_;
   int unique_buffer_index_;
   int resize_count_;

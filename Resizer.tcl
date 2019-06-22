@@ -17,6 +17,9 @@
 namespace eval sta {
 
 # Defined by SWIG interface LefDef.i.
+define_cmd_args "set__net" {cell dont_use}
+
+# Defined by SWIG interface LefDef.i.
 define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}
@@ -114,11 +117,13 @@ proc set_wire_rc { args } {
 define_cmd_args "resize" {[-resize]\
 			    [-repair_max_cap]\
 			    [-repair_max_slew]\
+			    [-resize_libraries resize_libs]\
 			    [-buffer_cell buffer_cell]}
 
 proc resize { args } {
   parse_key_args "resize" args \
-    keys {-buffer_cell} flags {-resize -repair_max_cap -repair_max_slew}
+    keys {-buffer_cell -resize_libraries} \
+    flags {-resize -repair_max_cap -repair_max_slew}
 
   set resize [info exists flags(-resize)]
   set repair_max_cap [info exists flags(-repair_max_cap)]
@@ -145,9 +150,14 @@ proc resize { args } {
     sta_error "Error: resize -buffer_cell required for buffer insertion."
   }
 
+  if { [info exists keys(-resize_libraries)] } {
+    set resize_libs [get_liberty_error "-resize_libraries" $keys(-resize_libraries)]
+  } else {
+    set resize_libs [get_libs *]
+  }
   check_argc_eq0 "resize" $args
 
-  resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell
+  resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell $resize_libs
 }
 
 define_cmd_args "get_pin_net" {pin_name}
