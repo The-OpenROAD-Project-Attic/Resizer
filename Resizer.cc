@@ -338,34 +338,41 @@ Resizer::findTargetLoads(LibertyLibrary *library,
   LibertyCellIterator cell_iter(library);
   while (cell_iter.hasNext()) {
     auto cell = cell_iter.next();
-    LibertyCellTimingArcSetIterator arc_set_iter(cell);
-    float target_load_sum = 0.0;
-    int arc_count = 0;
-    while (arc_set_iter.hasNext()) {
-      auto arc_set = arc_set_iter.next();
-      auto role = arc_set->role();
-      if (!role->isTimingCheck()
-	  && role != TimingRole::tristateDisable()
-	  && role != TimingRole::tristateEnable()) {
-	TimingArcSetArcIterator arc_iter(arc_set);
-	while (arc_iter.hasNext()) {
-	  TimingArc *arc = arc_iter.next();
-	  TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
-	  TransRiseFall *out_tr = arc->toTrans()->asRiseFall();
-	  float arc_target_load = findTargetLoad(cell, arc,
-						 slews[in_tr->index()],
-						 slews[out_tr->index()]);
-	  target_load_sum += arc_target_load;
-	  arc_count++;
-	}
+    findTargetLoad(cell, slews);
+  }
+}
+
+void
+Resizer::findTargetLoad(LibertyCell *cell,
+			Slew slews[])
+{
+  LibertyCellTimingArcSetIterator arc_set_iter(cell);
+  float target_load_sum = 0.0;
+  int arc_count = 0;
+  while (arc_set_iter.hasNext()) {
+    auto arc_set = arc_set_iter.next();
+    auto role = arc_set->role();
+    if (!role->isTimingCheck()
+	&& role != TimingRole::tristateDisable()
+	&& role != TimingRole::tristateEnable()) {
+      TimingArcSetArcIterator arc_iter(arc_set);
+      while (arc_iter.hasNext()) {
+	TimingArc *arc = arc_iter.next();
+	TransRiseFall *in_tr = arc->fromTrans()->asRiseFall();
+	TransRiseFall *out_tr = arc->toTrans()->asRiseFall();
+	float arc_target_load = findTargetLoad(cell, arc,
+					       slews[in_tr->index()],
+					       slews[out_tr->index()]);
+	target_load_sum += arc_target_load;
+	arc_count++;
       }
     }
-    float target_load = (arc_count > 0) ? target_load_sum / arc_count : 0.0;
-    (*target_load_map_)[cell] = target_load;
-    debugPrint2(debug_, "resizer", 3, "%s target_load = %.2e\n",
-		cell->name(),
-		target_load);
   }
+  float target_load = (arc_count > 0) ? target_load_sum / arc_count : 0.0;
+  (*target_load_map_)[cell] = target_load;
+  debugPrint2(debug_, "resizer", 3, "%s target_load = %.2e\n",
+	      cell->name(),
+	      target_load);
 }
 
 // Find the load capacitance that will cause the output slew

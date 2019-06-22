@@ -73,6 +73,8 @@ protected:
   void findTargetLoads(LibertyLibrarySeq *resize_libs);
   void findTargetLoads(LibertyLibrary *library,
 		       Slew slews[]);
+  void findTargetLoad(LibertyCell *cell,
+		      Slew slews[]);
   float findTargetLoad(LibertyCell *cell,
 		       TimingArc *arc,
 		       Slew in_slew,
