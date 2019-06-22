@@ -16,10 +16,10 @@
 
 namespace eval sta {
 
-# Defined by SWIG interface LefDef.i.
-define_cmd_args "set__net" {cell dont_use}
+# Defined by SWIG interface Resizer.i.
+define_cmd_args "set_dont_use" {cell dont_use}
 
-# Defined by SWIG interface LefDef.i.
+# Defined by SWIG interface Resizer.i
 define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}
