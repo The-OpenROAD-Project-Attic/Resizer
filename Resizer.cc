@@ -65,6 +65,7 @@ Resizer::Resizer() :
   wire_res_(0.0),
   wire_cap_(0.0),
   corner_(nullptr),
+  clk_nets__valid_(false),
   level_drvr_verticies_valid_(false),
   unique_net_index_(1),
   unique_buffer_index_(1)
@@ -122,6 +123,7 @@ Resizer::init()
 {
   ensureLevelized();
   ensureLevelDrvrVerticies();
+  ensureClkNets();
   resize_count_ = 0;
   inserted_buffer_count_ = 0;
   rebuffer_net_count_ = 0;
@@ -132,12 +134,14 @@ Resizer::setWireRC(float wire_res,
 		   float wire_cap,
 		   Corner *corner)
 {
-  wire_res_ = wire_res;
-  wire_cap_ = wire_cap;
-  initCorner(corner);
   // Disable incremental timing.
   graph_delay_calc_->delaysInvalid();
   search_->arrivalsInvalid();
+
+  wire_res_ = wire_res;
+  wire_cap_ = wire_cap;
+  initCorner(corner);
+  init();;
   makeNetParasitics();
 }
 
@@ -246,40 +250,44 @@ Resizer::resizeToTargetSlew1(Instance *inst)
     Pin *output = singleOutputPin(inst, network_);
     // Only resize single output gates for now.
     if (output) {
-      // Includes net parasitic capacitance.
-      float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
-      LibertyCell *best_cell = nullptr;
-      float best_ratio = 0.0;
-      auto equiv_cells = equivCells(cell);
-      if (equiv_cells) {
-	for (auto target_cell : *equiv_cells) {
-	  if (!target_cell->dontUse()) {
-	    float target_load = (*target_load_map_)[target_cell];
-	    float ratio = target_load / load_cap;
-	    if (ratio > 1.0)
-	      ratio = 1.0 / ratio;
-	    if (ratio > best_ratio) {
-	      best_ratio = ratio;
-	      best_cell = target_cell;
+      Net *out_net = network->net(output);
+      // Hands off the clock nets.
+      if (!isClock(out_net)) {
+	// Includes net parasitic capacitance.
+	float load_cap = graph_delay_calc_->loadCap(output, dcalc_ap_);
+	LibertyCell *best_cell = nullptr;
+	float best_ratio = 0.0;
+	auto equiv_cells = equivCells(cell);
+	if (equiv_cells) {
+	  for (auto target_cell : *equiv_cells) {
+	    if (!target_cell->dontUse()) {
+	      float target_load = (*target_load_map_)[target_cell];
+	      float ratio = target_load / load_cap;
+	      if (ratio > 1.0)
+		ratio = 1.0 / ratio;
+	      if (ratio > best_ratio) {
+		best_ratio = ratio;
+		best_cell = target_cell;
+	      }
 	    }
 	  }
-	}
-	if (best_cell && best_cell != cell) {
-	  debugPrint3(debug_, "resizer", 2, "%s %s -> %s\n",
-		      sdc_network_->pathName(inst),
-		      cell->name(),
-		      best_cell->name());
-	  if (network->isLefCell(network_->cell(inst))) {
-	    // Replace LEF with LEF so ports stay aligned.
-	    Cell *best_lef = network->lefCell(best_cell);
-	    if (best_lef) {
-	      replaceCell(inst, best_lef);
+	  if (best_cell && best_cell != cell) {
+	    debugPrint3(debug_, "resizer", 2, "%s %s -> %s\n",
+			sdc_network_->pathName(inst),
+			cell->name(),
+			best_cell->name());
+	    if (network->isLefCell(network_->cell(inst))) {
+	      // Replace LEF with LEF so ports stay aligned.
+	      Cell *best_lef = network->lefCell(best_cell);
+	      if (best_lef) {
+		replaceCell(inst, best_lef);
+		resize_count_++;
+	      }
+	    }
+	    else {
+	      replaceCell(inst, best_cell);
 	      resize_count_++;
 	    }
-	  }
-	  else {
-	    replaceCell(inst, best_cell);
-	    resize_count_++;
 	  }
 	}
       }
@@ -516,12 +524,56 @@ Resizer::initFlute(const char *resizer_path)
 ////////////////////////////////////////////////////////////////
 
 void
+Resizer::ensureClkNets()
+{
+  if (!clk_nets__valid_) {
+    findClkNets();
+    clk_nets__valid_ = true;
+  }
+}
+
+// Find clock nets.
+// This is not as reliable as Search::isClock but is much cheaper.
+void
+Resizer::findClkNets()
+{
+  ClkArrivalSearchPred srch_pred(this);
+  BfsFwdIterator bfs(BfsIndex::other, &srch_pred, this);
+  PinSet clk_pins;
+  search_->findClkVertexPins(clk_pins);
+  for (auto pin : clk_pins) {
+    Vertex *vertex, *bidirect_drvr_vertex;
+    graph_->pinVertices(pin, vertex, bidirect_drvr_vertex);
+    bfs.enqueue(vertex);
+    if (bidirect_drvr_vertex)
+      bfs.enqueue(bidirect_drvr_vertex);
+  }  
+  while (bfs.hasNext()) {
+    Vertex *vertex = bfs.next();
+    const Pin *pin = vertex->pin();
+    Net *net = network_->net(pin);
+    clk_nets_.insert(net);
+    bfs.enqueueAdjacentVertices(vertex);
+  }
+}
+
+bool
+Resizer::isClock(Net *net)
+{
+  return clk_nets_.hasKey(net);
+}
+
+////////////////////////////////////////////////////////////////
+
+void
 Resizer::makeNetParasitics()
 {
   NetIterator *net_iter = network_->netIterator(network_->topInstance());
   while (net_iter->hasNext()) {
     Net *net = net_iter->next();
-    makeNetParasitics(net);
+    // Hands off the clock nets.
+    if (!isClock(net))
+      makeNetParasitics(net);
   }
   delete net_iter;
 }

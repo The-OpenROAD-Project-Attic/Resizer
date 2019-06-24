@@ -66,6 +66,9 @@ protected:
   void init();
   void ensureCorner();
   void initCorner(Corner *corner);
+  void ensureClkNets();
+  void findClkNets();
+  bool isClock(Net *net);
   void ensureLevelDrvrVerticies();
   void resizeToTargetSlew(LibertyLibrarySeq *resize_libs);
   void makeEquivCells(LibertyLibrarySeq *resize_libs);
@@ -146,6 +149,8 @@ protected:
   const DcalcAnalysisPt *dcalc_ap_;
   const Pvt *pvt_;
   const ParasiticAnalysisPt *parasitics_ap_;
+  NetSet clk_nets_;
+  bool clk_nets__valid_;
   CellTargetLoadMap *target_load_map_;
   VertexSeq level_drvr_verticies_;
   bool level_drvr_verticies_valid_;
