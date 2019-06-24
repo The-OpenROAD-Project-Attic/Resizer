@@ -82,6 +82,7 @@ resize [-resize]
        [-repair_max_cap]
        [-repair_max_slew]
        [-buffer_cell buffer_cell]
+       [-dont_use cells]
 write_def [-units dist_units]
           [-die_area {lx ly ux uy}]
           [-core_area {lx ly ux uy}]
@@ -113,7 +114,10 @@ resizing. `resize_libraries` defaults to all of the liberty libraries
 that have been read. Some designs have multiple libraries with
 different transistor thresholds (Vt) and are used to trade off power
 and speed. Chosing a low Vt library uses more power but results in a
-faster design after the resizing step.
+faster design after the resizing step. Use the `-dont_use` keyword to
+specify a list of patterns of cells to not use. For example, "*/DLY*"
+says do not use cells with names that begin with "DLY" in all
+libraries.
 
 The `write_def` command `-units`, `-die_area`, `-core_area`, `-site` and
 `-auto_place`_pins arguments are only used when writing a DEF file from

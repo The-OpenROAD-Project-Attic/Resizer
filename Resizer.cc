@@ -150,8 +150,14 @@ Resizer::resize(bool resize,
 		bool repair_max_cap,
 		bool repair_max_slew,
 		LibertyCell *buffer_cell,
-		LibertyLibrarySeq *resize_libs)
+		LibertyLibrarySeq *resize_libs,
+		LibertyCellSeq *dont_use)
 {
+  if (dont_use) {
+    for (auto cell : *dont_use)
+      dont_use_.insert(cell);
+  }
+
   init();
   ensureCorner();
   // Find a target slew for the libraries and then
@@ -260,7 +266,7 @@ Resizer::resizeToTargetSlew1(Instance *inst)
 	auto equiv_cells = equivCells(cell);
 	if (equiv_cells) {
 	  for (auto target_cell : *equiv_cells) {
-	    if (!target_cell->dontUse()) {
+	    if (!dontUse(target_cell)) {
 	      float target_load = (*target_load_map_)[target_cell];
 	      float ratio = target_load / load_cap;
 	      if (ratio > 1.0)
@@ -314,6 +320,13 @@ singleOutputPin(const Instance *inst,
   }
   delete pin_iter;
   return output;
+}
+
+bool
+Resizer::dontUse(LibertyCell *cell)
+{
+  return cell->dontUse()
+    || dont_use_.hasKey(cell);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -460,7 +473,7 @@ Resizer::findBufferTargetSlews(LibertyLibrary *library,
 			       int counts[])
 {
   for (auto buffer : *library->buffers()) {
-    if (!buffer->dontUse()) {
+    if (!dontUse(buffer)) {
       LibertyPort *input, *output;
       buffer->bufferPorts(input, output);
       auto arc_sets = buffer->timingArcSets(input, output);

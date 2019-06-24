@@ -46,7 +46,8 @@ public:
 	      bool repair_max_cap,
 	      bool repair_max_slew,
 	      LibertyCell *buffer_cell,
-	      LibertyLibrarySeq *resize_libs);
+	      LibertyLibrarySeq *resize_libs,
+	      LibertyCellSeq *dont_use);
 
   // The functions below are for testing phases of the resizer.
   // Resize a single instance to the target load.
@@ -137,6 +138,7 @@ protected:
 		    float load_cap);
   string makeUniqueNetName();
   string makeUniqueBufferName();
+  bool dontUse(LibertyCell *cell);
 
   friend class RebufferOption;
   using Sta::makeEquivCells;
@@ -144,6 +146,7 @@ protected:
   float wire_res_;
   float wire_cap_;
   Corner *corner_;
+  LibertyCellSet dont_use_;
 
   const MinMax *min_max_;
   const DcalcAnalysisPt *dcalc_ap_;

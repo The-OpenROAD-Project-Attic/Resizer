@@ -118,11 +118,12 @@ define_cmd_args "resize" {[-resize]\
 			    [-repair_max_cap]\
 			    [-repair_max_slew]\
 			    [-resize_libraries resize_libs]\
-			    [-buffer_cell buffer_cell]}
+			    [-buffer_cell buffer_cell]\
+			    [-dont_use lib_cells]}
 
 proc resize { args } {
   parse_key_args "resize" args \
-    keys {-buffer_cell -resize_libraries} \
+    keys {-buffer_cell -resize_libraries -dont_use} \
     flags {-resize -repair_max_cap -repair_max_slew}
 
   set resize [info exists flags(-resize)]
@@ -155,9 +156,16 @@ proc resize { args } {
   } else {
     set resize_libs [get_libs *]
   }
+
+  set dont_use {}
+  if { [info exists keys(-dont_use)] } {
+    set dont_use [get_lib_cells -quiet $keys(-dont_use)]
+  }
+
   check_argc_eq0 "resize" $args
 
-  resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell $resize_libs
+  resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell \
+    $resize_libs $dont_use
 }
 
 define_cmd_args "get_pin_net" {pin_name}

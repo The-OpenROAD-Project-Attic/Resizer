@@ -140,6 +140,7 @@ record_resizer_tests {
   resize1
   resize2
   resize3
+  resize4
   write_def1
   write_def2
   write_def3

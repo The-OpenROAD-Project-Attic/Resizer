@@ -35,6 +35,9 @@ namespace sta {
 LibertyLibrarySeq *
 tclListSeqLibertyLibrary(Tcl_Obj *const source,
 			 Tcl_Interp *interp);
+LibertyCellSeq *
+tclListSeqLibertyCell(Tcl_Obj *const source,
+		      Tcl_Interp *interp);
 
 LefDefNetwork *
 lefDefNetwork()
@@ -90,6 +93,10 @@ using namespace sta;
 
 %typemap(in) LibertyLibrarySeq* {
   $1 = tclListSeqLibertyLibrary($input, interp);
+}
+
+%typemap(in) LibertyCellSeq* {
+  $1 = tclListSeqLibertyCell($input, interp);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -161,11 +168,12 @@ resize_cmd(bool resize,
 	   bool repair_max_cap,
 	   bool repair_max_slew,
 	   LibertyCell *buffer_cell,
-	   LibertyLibrarySeq *resize_libs)
+	   LibertyLibrarySeq *resize_libs,
+	   LibertyCellSeq *dont_use)
 {
   Resizer *resizer = getResizer();
   resizer->resize(resize, repair_max_cap, repair_max_slew,
-		  buffer_cell, resize_libs);
+		  buffer_cell, resize_libs, dont_use);
 }
 
 void
