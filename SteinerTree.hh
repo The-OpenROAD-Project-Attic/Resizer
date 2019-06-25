@@ -21,21 +21,24 @@
 #include "Hash.hh"
 #include "LefDefNetwork.hh"
 
-#define FLUTE_2_2
+#define FLUTE_UTD
 
 #ifdef FLUTE_2_2
+  // Support for Brazillian butchered Flute 2.2
   #include "flute.h"
   typedef DBU FluteDbu;
   namespace sta { 
-    using Flute::Tree;
-    using Flute::Branch;
     using Flute::readLUT;
     using Flute::flute;
     using Flute::printtree;
   };
+  typedef Flute::Tree FluteTree;
+  typedef Flute::Branch FluteBranch;
+  typedef FLUTEPTR Flute;
 #endif
 
 #ifdef FLUTE_3_1
+  // Partial support for vanilla Cho-ish 3.1
   #define DTYPE sta::DefDbu
   #include "flute.h"
   typedef sta::DefDbu FluteDbu;
@@ -43,6 +46,17 @@
   #undef max
   #undef min
   #undef abs
+#endif
+
+#ifdef FLUTE_UTD
+  // Support for 3.1 "update" to the dark ages from UTD.
+  #define DTYPE sta::DefDbu
+  #include "flute.h"
+  typedef sta::DefDbu FluteDbu;
+  // brain damaged excuse for namespace
+  typedef FLUTE_TREE FluteTree;
+  typedef FLUTE_BRANCH FluteBranch;
+  typedef FLUTEPTR Flute;
 #endif
 
 namespace sta {
@@ -90,9 +104,10 @@ class SteinerTree
 {
 public:
   SteinerTree() {}
+  ~SteinerTree();
   PinSeq &pins() { return pins_; }
-  void setTree(Tree tree,
-	       int pin_map[]);
+  void setTree(FluteTree tree,
+	       const LefDefNetwork *network);
   int pinCount() const { return pins_.size(); }
   int branchCount() const;
   void branch(int index,
@@ -105,9 +120,6 @@ public:
 	      int &steiner_pt2,
 	      int &wire_length);
   void report(const Network *network);
-  // The steiner points can be in the same location as the pins.
-  void findSteinerPtAliases();
-  // Return a pin in the same location as the steiner pt if it exists.
   Pin *steinerPtAlias(SteinerPt pt);
   // Return the steiner pt connected to the driver pin.
   SteinerPt drvrPt(const Network *network) const;
@@ -139,12 +151,12 @@ protected:
 		      SteinerPtSeq &adj3);
   void checkSteinerPt(SteinerPt pt) const;
 
-  Tree tree_;
+  FluteTree tree_;
   PinSeq pins_;
-  // steiner pt (tree vertex index) -> pin index
-  SteinerPtSeq pin_map_;
-  // location -> pin
-  UnorderedMap<DefPt, Pin*, DefPtHash, DefPtEqual> steiner_pt_pin_alias_map_;
+  // Flute steiner pt index -> pin index.
+  Vector<Pin*> steiner_pt_pin_map_;
+  // location -> pin (any pin if there are multiple at the location).
+  UnorderedMap<DefPt, Pin*, DefPtHash, DefPtEqual> loc_pin_map_;
   SteinerPtSeq left_;
   SteinerPtSeq right_;
 };

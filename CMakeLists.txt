@@ -1,4 +1,4 @@
-# OpenSTA, Static Timing Analyzer
+# Resizer, Verilog/DEF gate resizer
 # Copyright (c) 2019, Parallax Software, Inc.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,13 @@
 
 cmake_minimum_required (VERSION 3.9)
 
-project(resizer VERSION 1.2.0)
+project(resizer VERSION 1.2.1)
 
 set(RESIZER_HOME ${PROJECT_SOURCE_DIR})
-set(STA_HOME ${PROJECT_SOURCE_DIR}/../opensta)
-set(LEF_HOME ${PROJECT_SOURCE_DIR}/../lef/5.8-p027)
-set(DEF_HOME ${PROJECT_SOURCE_DIR}/../def/5.8-p027)
-set(FLUTE_HOME ${PROJECT_SOURCE_DIR}/../flute)
+set(OPENSTA_HOME ${PROJECT_SOURCE_DIR}/module/OpenSTA)
+set(LEF_HOME ${PROJECT_SOURCE_DIR}/module/lef)
+set(DEF_HOME ${PROJECT_SOURCE_DIR}/module/def)
+set(FLUTE_HOME ${PROJECT_SOURCE_DIR}/module/flute)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -117,7 +117,6 @@ configure_file(${RESIZER_HOME}/ResizerConfig.hh.cmake
   ${RESIZER_HOME}/ResizerConfig.hh
   )
 
-
 ################################################################
 #
 # Locate TCL library.
@@ -182,17 +181,17 @@ get_filename_component(TCL_HEADER_DIR "${TCL_HEADER}" PATH)
 ################################################################
 
 set(STA_INCLUDE_DIRS
-  ${STA_HOME}/app
-  ${STA_HOME}/dcalc
-  ${STA_HOME}/graph
-  ${STA_HOME}/liberty
-  ${STA_HOME}/network
-  ${STA_HOME}/parasitics
-  ${STA_HOME}/sdc
-  ${STA_HOME}/sdf
-  ${STA_HOME}/search
-  ${STA_HOME}/util
-  ${STA_HOME}/verilog
+  ${OPENSTA_HOME}/app
+  ${OPENSTA_HOME}/dcalc
+  ${OPENSTA_HOME}/graph
+  ${OPENSTA_HOME}/liberty
+  ${OPENSTA_HOME}/network
+  ${OPENSTA_HOME}/parasitics
+  ${OPENSTA_HOME}/sdc
+  ${OPENSTA_HOME}/sdf
+  ${OPENSTA_HOME}/search
+  ${OPENSTA_HOME}/util
+  ${OPENSTA_HOME}/verilog
   )
 
 ################################################################
@@ -222,7 +221,7 @@ set(RESIZER_INCLUDE_DIRS
   ${STA_INCLUDE_DIRS}
   ${LEF_HOME}/lef
   ${DEF_HOME}/def
-  ${FLUTE_HOME}/include
+  ${FLUTE_HOME}
   )
 
 set(RESIZER_TCL_FILES
@@ -234,32 +233,41 @@ set(RESIZER_SWIG_FILES
   )
 
 add_custom_command(OUTPUT ${RESIZER_HOME}/ResizerTclInitVar.cc
-  COMMAND ${STA_HOME}/etc/TclEncode.tcl ${RESIZER_HOME}/ResizerTclInitVar.cc resizer_tcl_inits ${RESIZER_TCL_FILES}
+  COMMAND ${OPENSTA_HOME}/etc/TclEncode.tcl ${RESIZER_HOME}/ResizerTclInitVar.cc resizer_tcl_inits ${RESIZER_TCL_FILES}
   WORKING_DIRECTORY ${RESIZER_HOME}
-  DEPENDS ${RESIZER_TCL_FILES} ${STA_HOME}/etc/TclEncode.tcl
+  DEPENDS ${RESIZER_TCL_FILES} ${OPENSTA_HOME}/etc/TclEncode.tcl
   )
 
 include(FindSWIG)
 add_custom_command(OUTPUT ${RESIZER_HOME}/Resizer_wrap.cc
-  COMMAND ${SWIG_EXECUTABLE} -tcl8 -c++ -namespace -prefix sta -I${STA_HOME}/tcl -I${STA_HOME}/sdf -I${STA_HOME}/dcalc -I${STA_HOME}/parasitics -I${STA_HOME}/verilog -o ${RESIZER_HOME}/Resizer_wrap.cc ${RESIZER_HOME}/Resizer.i
-  COMMAND ${STA_HOME}/etc/SwigCleanup.tcl ${RESIZER_HOME}/Resizer_wrap.cc
-  WORKING_DIRECTORY ${STA_HOME}
+  COMMAND ${SWIG_EXECUTABLE} -tcl8 -c++ -namespace -prefix sta -I${OPENSTA_HOME}/tcl -I${OPENSTA_HOME}/sdf -I${OPENSTA_HOME}/dcalc -I${OPENSTA_HOME}/parasitics -I${OPENSTA_HOME}/verilog -o ${RESIZER_HOME}/Resizer_wrap.cc ${RESIZER_HOME}/Resizer.i
+  COMMAND ${OPENSTA_HOME}/etc/SwigCleanup.tcl ${RESIZER_HOME}/Resizer_wrap.cc
+  WORKING_DIRECTORY ${OPENSTA_HOME}
   DEPENDS ${RESIZER_SWIG_FILES}
   )
 
 ################################################################
 
-add_executable(resizer ${RESIZER_SOURCE})
+add_subdirectory(${DEF_HOME})
+add_subdirectory(${LEF_HOME})
+add_subdirectory(${FLUTE_HOME})
+add_subdirectory(${OPENSTA_HOME})
+
+################################################################
+
+add_executable(resizer
+  ${RESIZER_SOURCE}
+  )
 
 target_include_directories(resizer PUBLIC ${RESIZER_INCLUDE_DIRS})
 
 target_link_libraries(resizer
-  ${STA_HOME}/app/libOpenSTA.a
+  OpenSTA
   ${TCL_LIB}
   ${CUDD_LIB}
-  ${LEF_HOME}/lef/liblef.a
-  ${DEF_HOME}/def/libdef.a
-  ${FLUTE_HOME}/lib/libflute.a
+  lef
+  def
+  flute
   )
 
 if (ZLIB_FOUND)
@@ -283,16 +291,17 @@ add_executable(verilog2def
   VerilogToDef.cc
   LefDefNetwork.cc
   DefWriter.cc
-  LefReader.cc)
+  LefReader.cc
+  )
 
 target_include_directories(verilog2def PUBLIC ${RESIZER_INCLUDE_DIRS})
 
 target_link_libraries(verilog2def
-  ${STA_HOME}/app/libOpenSTA.a
+  OpenSTA
   ${TCL_LIB}
   ${CUDD_LIB}
-  ${LEF_HOME}/lef/liblef.a
-  ${DEF_HOME}/def/libdef.a
+  lef
+  def
   )
 
 if (ZLIB_FOUND)
@@ -310,7 +319,7 @@ install(TARGETS resizer DESTINATION bin)
 
 ################################################################
 
-add_custom_target(tags etags -o TAGS ${RESIZER_SOURCE} ${RESIZER_HEADERS} ${RESIZER_TCL_FILES}
+add_custom_target(resizer-tags etags -o TAGS ${RESIZER_SOURCE} ${RESIZER_HEADERS} ${RESIZER_TCL_FILES}
   WORKING_DIRECTORY ${RESIZER_HOME}
   DEPENDS ${RESIZER_SOURCE} ${RESIZER_HEADERS} ${RESIZER_TCL_FILES}
   )

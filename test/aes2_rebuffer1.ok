@@ -1,10 +1,10 @@
-tns -5398.31
+tns -5413.62
 worst slack -24.72
 Resized 9469 instances.
 Inserted 15 buffers in 13 nets.
-tns -0.00
+tns 0.00
 worst slack 0.26
 Inserted 5 buffers.
 Inserted 7 buffers.
-tns -0.00
+tns 0.00
 worst slack 0.46

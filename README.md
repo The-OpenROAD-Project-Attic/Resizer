@@ -2,20 +2,17 @@
 
 #### Installation
 
-Expected directory layout
+Resizer depends on the Si2 LEF/DEF parsers, OpenSTA, and flute. These
+source directories are git submodules and located in `resizer/module`.
 
-/resizer - this source tree
-/lef - Si2 lef reader/writer version 5.8-p027
-/def - Si2 def reader/writer version 5.8-p027
-/flute - flute steiner tree package version 2.2
-/opensta - OpenSTA
-
-git clone https://github.com/The-OpenROAD-Project/Resizer.git
+```
+git clone --recursive https://github.com/The-OpenROAD-Project/Resizer.git
 cd resizer
 mkdir build
 cd build
 cmake ..
 make
+```
 
 The default build type is RELEASE to compile optimized code.
 The resulting executable is in `build/resizer`.

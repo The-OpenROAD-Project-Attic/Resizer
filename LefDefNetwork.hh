@@ -87,7 +87,7 @@ public:
 			     defiComponent *def_component);
   defiComponent *defComponent(Instance *inst) const;
   // In DBUs.
-  DefPt location(const Pin *pin);
+  DefPt location(const Pin *pin) const;
   void setLocation(Instance *instance,
 		   DefPt location);
   // Set top level pin/port location.

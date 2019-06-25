@@ -1,0 +1,12 @@
+[submodule "module/OpenSTA"]
+	path = module/OpenSTA
+	url = https://github.com/The-OpenROAD-Project/OpenSTA.git
+[submodule "module/lef"]
+	path = module/lef
+	url = https://github.com/The-OpenROAD-Project/lef.git
+[submodule "module/def"]
+	path = module/def
+	url = https://github.com/The-OpenROAD-Project/def.git
+[submodule "module/flute"]
+	path = module/flute
+	url = https://github.com/The-OpenROAD-Project/flute.git

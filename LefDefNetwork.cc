@@ -163,7 +163,7 @@ LefDefNetwork::setLocation(Instance *instance,
 }
 
 DefPt
-LefDefNetwork::location(const Pin *pin)
+LefDefNetwork::location(const Pin *pin) const
 {
   Instance *inst = instance(pin);
   defiComponent *def_component = def_component_map_.findKey(inst);

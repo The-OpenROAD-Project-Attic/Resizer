@@ -597,7 +597,6 @@ Resizer::makeNetParasitics(const Net *net)
   LefDefNetwork *network = lefDefNetwork();
   SteinerTree *tree = makeSteinerTree(net, false, network);
   if (tree && tree->isPlaced(network)) {
-    tree->findSteinerPtAliases();
     debugPrint1(debug_, "resizer_parasitics", 1, "net %s\n",
 		sdc_network_->pathName(net));
     Parasitic *parasitic = parasitics_->makeParasiticNetwork(net, false,
