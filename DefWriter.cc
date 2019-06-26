@@ -59,10 +59,10 @@ writeDefComponent(Instance *inst,
 		  FILE *out_stream,
 		  LefDefNetwork *network);
 static void
-writeDefPins(double die_lx,
-	     double die_ly,
-	     double die_ux,
-	     double die_uy,
+writeDefPins(double core_lx,
+	     double core_ly,
+	     double core_ux,
+	     double core_uy,
 	     bool auto_place_pins,
 	     FILE *out_stream,
 	     LefDefNetwork *network);
@@ -169,8 +169,8 @@ writeDefFresh(const char *filename,
     fprintf(out_stream, "\n");
     writeDefComponents(sort, out_stream, network);
     fprintf(out_stream, "\n");
-    writeDefPins(die_lx, die_ly, die_ux, die_uy, auto_place_pins,
-		 out_stream, network);
+    writeDefPins(core_lx, core_ly, core_ux, core_uy,
+		 auto_place_pins, out_stream, network);
     fprintf(out_stream, "\n");
     writeDefNets(sort, out_stream, network);
     fprintf(out_stream, "\nEND DESIGN\n");
@@ -390,10 +390,10 @@ writeDefComponent(Instance *inst,
 }
   
 static void
-writeDefPins(double die_lx,
-	     double die_ly,
-	     double die_ux,
-	     double die_uy,
+writeDefPins(double core_lx,
+	     double core_ly,
+	     double core_ux,
+	     double core_uy,
 	     bool auto_place_pins,
 	     FILE *out_stream,
 	     LefDefNetwork *network)
@@ -407,11 +407,11 @@ writeDefPins(double die_lx,
   delete pin_iter1;
 
   if (pin_count > 0) {
-    double dx = abs(die_ux - die_lx);
-    double dy = abs(die_uy - die_ly);
-    double die_perimeter = dx * 2 + dy * 2;
+    double dx = abs(core_ux - core_lx);
+    double dy = abs(core_uy - core_ly);
+    double perimeter = dx * 2 + dy * 2;
     double location = 0.0;
-    double pin_dist = die_perimeter / pin_count;
+    double pin_dist = perimeter / pin_count;
 
     fprintf(out_stream, "PINS %d ;\n", pin_count);
     InstancePinIterator *pin_iter2 = network->pinIterator(network->topInstance());
@@ -421,26 +421,26 @@ writeDefPins(double die_lx,
       const char *orient;
       if (location < dx) {
 	// bottom
-	x = die_lx + location;
-	y = die_ly;
+	x = core_lx + location;
+	y = core_ly;
 	orient = "S";
       }
       else if (location < (dx + dy)) {
 	// right
-	x = die_ux;
-	y = die_ly + (location - dx);
+	x = core_ux;
+	y = core_ly + (location - dx);
 	orient = "E";
       }
       else if (location < (dx * 2 + dy)) {
 	// top
-	x = die_ux - (location - (dx + dy));
-	y = die_uy;
+	x = core_ux - (location - (dx + dy));
+	y = core_uy;
 	orient = "N";
       }
       else {
 	// left
-	x = die_lx;
-	y = die_uy - (location - (dx * 2 + dy));
+	x = core_lx;
+	y = core_uy - (location - (dx * 2 + dy));
 	orient = "W";
       }
       writeDefPin(pin, auto_place_pins, x, y, orient, out_stream, network);

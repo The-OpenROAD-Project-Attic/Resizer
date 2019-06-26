@@ -10,5 +10,7 @@ write_def -units 100 \
   -die_area {0 0 1000 1000} \
   -core_area {100 100 900 900} \
   -site site1 \
-  -auto_place_pins -sort $def_file
+  -auto_place_pins \
+  -sort \
+  $def_file
 report_file $def_file

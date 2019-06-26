@@ -1,11 +1,16 @@
-# write def from verilog (no lef)
+# write verilog to def (no lef)
 source helpers.tcl
 read_liberty liberty1.lib
 read_verilog reg1.v
 link_design top
 
 set def_file [make_result_file write_def3.def]
-write_def -units 100 -die_area {0 0 10000 10000} -auto_place_pins -sort $def_file
+write_def -units 100 \
+  -die_area {0 0 10000 10000} \
+  -core_area {100 100 9000 9000} \
+  -auto_place_pins \
+  -sort \
+  $def_file
 
 # check that we can read and time the def
 read_lef liberty1.lef

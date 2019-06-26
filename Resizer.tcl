@@ -60,6 +60,7 @@ proc write_def { args } {
   set core_ly 0
   set core_ux 0
   set core_uy 0
+  set have_core 0
   if [info exists keys(-core_area)] {
     set core_area $keys(-core_area)
     if { [llength $core_area] != 4 } {
@@ -70,6 +71,7 @@ proc write_def { args } {
     check_positive_float "-core_area" $core_ly
     check_positive_float "-core_area" $core_ux
     check_positive_float "-core_area" $core_uy
+    set have_core 1
   }
 
   set site_name ""
@@ -78,6 +80,9 @@ proc write_def { args } {
   }
 
   set auto_place_pins [info exists flags(-auto_place_pins)]
+  if { $auto_place_pins && !$have_core } {
+    sta_warn "-auto_place_pins but core_* dimensions missing."
+  }
   set sort [info exists flags(-sort)]
 
   check_argc_eq1 "write_def" $args
