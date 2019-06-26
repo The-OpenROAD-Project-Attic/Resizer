@@ -1,0 +1,34 @@
+# lef/def reg1
+read_liberty liberty1.lib
+read_lef liberty1.lef
+read_def reg1.def
+create_clock -name clk -period 10 {clk1 clk2 clk3}
+set_input_delay -clock clk 0 {in1 in2}
+module reg1 (in1,
+    in2,
+    clk1,
+    clk2,
+    clk3,
+    out);
+ input in1;
+ input in2;
+ input clk1;
+ input clk2;
+ input clk3;
+ output out;
+
+ snl_ffqx1 r1 (.Q(r1q),
+    .D(in1),
+    .CP(clk1));
+ snl_ffqx1 r2 (.Q(r2q),
+    .D(in2),
+    .CP(clk2));
+ snl_ffqx1 r3 (.Q(out),
+    .D(u2z),
+    .CP(clk3));
+ snl_bufx1 u1 (.Z(u1z),
+    .A(r2q));
+ snl_and02x1 u2 (.Z(u2z),
+    .A(r1q),
+    .B(u1z));
+endmodule

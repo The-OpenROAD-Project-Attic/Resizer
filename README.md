@@ -164,7 +164,11 @@ read_liberty liberty1.lib
 read_lef liberty1.lef
 read_verilog reg1.v
 link_design top
-write_def -units 100 -die_area {0 0 1000 1000} -site site1 -auto_place_pins reg1.def
+write_def -units 100 -die_area {0 0 1000 1000} \
+	  -core_area {100 100 900 900} \
+	  -site site1 \
+	  -auto_place_pins \
+	  reg1.def
 ```
 
 The `verilog2def` executable can also be used to translate Verilog to

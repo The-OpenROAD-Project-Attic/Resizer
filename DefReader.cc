@@ -29,6 +29,10 @@ namespace sta {
 static void
 registerDefCallbacks();
 static int
+defDesignCbk(defrCallbackType_e,
+	     const char *divider,
+	     defiUserData user);
+static int
 defDividerCbk(defrCallbackType_e,
 	      const char *divider,
 	      defiUserData user);
@@ -82,10 +86,6 @@ readDef(const char *filename,
   // Note that top ports are not known yet because PINS section has not been parsed.
   Library *lef_library = network->lefLibrary();
   if (lef_library) {
-    Cell *top_cell = network->makeCell(lef_library, "top", false, filename);
-    Instance *top_instance = network->makeInstance(top_cell, "", nullptr);
-    network->setTopInstance(top_instance);
-
     defrInitSession();
     registerDefCallbacks();
     DefReader reader(save_def_data, network);
@@ -106,6 +106,7 @@ readDef(const char *filename,
 static void
 registerDefCallbacks()
 {
+  defrSetDesignCbk(defDesignCbk);
   defrSetDividerCbk(defDividerCbk);
   defrSetUnitsCbk(defUnitsCbk);
   defrSetComponentCbk(defComponentCbk);
@@ -134,6 +135,20 @@ defError(defiUserData user,
   va_start(args, fmt);
   report->vprintError(fmt, args);
   va_end(args);
+}
+
+static int
+defDesignCbk(defrCallbackType_e,
+	     const char *design,
+	     defiUserData user)
+{
+  LefDefNetwork *network = getNetwork(user);
+  Library *lef_library = network->lefLibrary();
+  Cell *top_cell = network->makeCell(lef_library, design, false,
+				     network->defFilename());
+  Instance *top_instance = network->makeInstance(top_cell, "", nullptr);
+  network->setTopInstance(top_instance);
+  return 0;
 }
 
 static int
