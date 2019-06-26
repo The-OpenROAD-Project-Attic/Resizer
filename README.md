@@ -156,7 +156,7 @@ report_wns
 
 #### Verilog to DEF
 
-An example Resizer command script to translate DEF to Verilog is shown
+An example Resizer command script to translate Verilog to DEF is shown
 below.
 
 ```
@@ -167,8 +167,8 @@ link_design top
 write_def -units 100 -die_area {0 0 1000 1000} -site site1 -auto_place_pins reg1.def
 ```
 
-The `verilog2def` executable can also be used to translate DEF to
-Verilog using command line arguments.
+The `verilog2def` executable can also be used to translate Verilog to
+DEF using command line arguments.
 
 ```
 verilog2def
