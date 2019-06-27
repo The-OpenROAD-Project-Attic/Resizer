@@ -21,43 +21,9 @@
 #include "Hash.hh"
 #include "LefDefNetwork.hh"
 
-#define FLUTE_UTD
-
-#ifdef FLUTE_2_2
-  // Support for Brazillian butchered Flute 2.2
-  #include "flute.h"
-  typedef DBU FluteDbu;
-  namespace sta { 
-    using Flute::readLUT;
-    using Flute::flute;
-    using Flute::printtree;
-  };
-  typedef Flute::Tree FluteTree;
-  typedef Flute::Branch FluteBranch;
-  typedef FLUTEPTR Flute;
-#endif
-
-#ifdef FLUTE_3_1
-  // Partial support for vanilla Cho-ish 3.1
-  #define DTYPE sta::DefDbu
-  #include "flute.h"
-  typedef sta::DefDbu FluteDbu;
-  // Remove flute turds.
-  #undef max
-  #undef min
-  #undef abs
-#endif
-
-#ifdef FLUTE_UTD
-  // Support for 3.1 "update" to the dark ages from UTD.
-  #define DTYPE sta::DefDbu
-  #include "flute.h"
-  typedef sta::DefDbu FluteDbu;
-  // brain damaged excuse for namespace
-  typedef FLUTE_TREE FluteTree;
-  typedef FLUTE_BRANCH FluteBranch;
-  typedef FLUTEPTR Flute;
-#endif
+#define FLUTE_DTYPE sta::DefDbu
+#include "flute.h"
+typedef sta::DefDbu FluteDbu;
 
 namespace sta {
 
@@ -106,7 +72,7 @@ public:
   SteinerTree() {}
   ~SteinerTree();
   PinSeq &pins() { return pins_; }
-  void setTree(FluteTree tree,
+  void setTree(Flute::Tree tree,
 	       const LefDefNetwork *network);
   int pinCount() const { return pins_.size(); }
   int branchCount() const;
@@ -120,6 +86,7 @@ public:
 	      int &steiner_pt2,
 	      int &wire_length);
   void report(const Network *network);
+  // Return a pin in the same location as the steiner pt if it exists.
   Pin *steinerPtAlias(SteinerPt pt);
   // Return the steiner pt connected to the driver pin.
   SteinerPt drvrPt(const Network *network) const;
@@ -151,7 +118,7 @@ protected:
 		      SteinerPtSeq &adj3);
   void checkSteinerPt(SteinerPt pt) const;
 
-  FluteTree tree_;
+  Flute::Tree tree_;
   PinSeq pins_;
   // Flute steiner pt index -> pin index.
   Vector<Pin*> steiner_pt_pin_map_;
