@@ -37,6 +37,10 @@ defDividerCbk(defrCallbackType_e,
 	      const char *divider,
 	      defiUserData user);
 static int
+defBusBitCbk(defrCallbackType_e,
+	     const char *bus_chars,
+	     defiUserData user);
+static int
 defUnitsCbk(defrCallbackType_e,
 	    double units,
 	    defiUserData user);
@@ -108,6 +112,7 @@ registerDefCallbacks()
 {
   defrSetDesignCbk(defDesignCbk);
   defrSetDividerCbk(defDividerCbk);
+  defrSetBusBitCbk(defBusBitCbk);
   defrSetUnitsCbk(defUnitsCbk);
   defrSetComponentCbk(defComponentCbk);
   defrSetNetCbk(defNetCbk);
@@ -158,6 +163,16 @@ defDividerCbk(defrCallbackType_e,
 {
   LefDefNetwork *network = getNetwork(user);
   network->setDivider(divider[0]);
+  return 0;
+}
+
+static int
+defBusBitCbk(defrCallbackType_e,
+	     const char *bus_chars,
+	     defiUserData user)
+{
+  LefDefNetwork *network = getNetwork(user);
+  network->setBusBrkts(bus_chars[0], bus_chars[1]);
   return 0;
 }
 
@@ -239,6 +254,8 @@ defPinEndCbk(defrCallbackType_e,
 {
   LefDefNetwork *network = getNetwork(user);
   network->initTopInstancePins();
+  Cell *top_cell = network->cell(network->topInstance());  
+  network->groupBusPorts(top_cell);
   return 0;
 }
 
