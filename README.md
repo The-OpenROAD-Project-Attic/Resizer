@@ -92,6 +92,12 @@ write_def [-units dist_units]
 Liberty libraries should be read before LEF and DEF. Only one DEF file
 is supported.
 
+Verilog netlist can also be resized by reading a Verilog netlist as in
+OpenSTA. Because there are no instance locations in the Verilog
+netlist, a wireload model is used to estimate parasitics.  The
+default_wireload model specified in the first liberty file or with the
+SDC set_wire_load command is used to make parasitics.
+
 The `set_wire_rc` command sets the resistance (ohms/meter) and
 capacitance (farads/meter) of routing wires. It adds parasitics based
 on placed component pin locations. The resistance and capacitance are
