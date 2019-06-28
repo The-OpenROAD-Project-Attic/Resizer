@@ -414,7 +414,7 @@ DefWriter::writeLefTracks(double die_lx,
     if (layer.hasPitch()
 	&& layer.hasDirection()) {
       double pitch = layer.pitch() * 1e-6;
-      double offset = pitch;
+      double offset = layer.hasOffset() ? layer.hasOffset() * 1e-6 : pitch;
       const char *lef_dir = layer.direction();
       char dir;
       double width;
