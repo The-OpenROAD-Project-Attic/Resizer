@@ -49,6 +49,10 @@ static int
 lefSiteCbk(lefrCallbackType_e,
 	   lefiSite *site,
 	   lefiUserData user);
+static int
+lefLayerCbk(lefrCallbackType_e,
+	    lefiLayer *layer,
+	    lefiUserData user);
 
 // LEF parser callback routine state.
 class LefReader
@@ -100,11 +104,12 @@ readLef(const char *filename,
 static void
 registerLefCallbacks()
 {
+  lefrSetSiteCbk(lefSiteCbk);
+  lefrSetLayerCbk(lefLayerCbk);
   lefrSetMacroBeginCbk(macroBeginCbk);
   lefrSetMacroEndCbk(macroEndCbk);
   lefrSetMacroCbk(macroCbk);
   lefrSetPinCbk(lefPinCbk);
-  lefrSetSiteCbk(lefSiteCbk);
 }
 
 LefReader::LefReader(const char *filename,
@@ -210,6 +215,17 @@ lefSiteCbk(lefrCallbackType_e,
   LefReader *reader = getLefReader(user);
   LefDefNetwork *network = reader->network();
   network->makeLefSite(site);
+  return 0;
+}
+
+static int
+lefLayerCbk(lefrCallbackType_e,
+	    lefiLayer *layer,
+	    lefiUserData user)
+{
+  LefReader *reader = getLefReader(user);
+  LefDefNetwork *network = reader->network();
+  network->makeLefLayer(layer);
   return 0;
 }
 

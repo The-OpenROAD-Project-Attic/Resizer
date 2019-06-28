@@ -221,6 +221,14 @@ LefDefNetwork::findLefSite(const char *name)
 
 ////////////////////////////////////////////////////////////////
 
+void
+LefDefNetwork::makeLefLayer(lefiLayer *layer)
+{
+  lef_layers_.push_back(*layer);
+}
+
+////////////////////////////////////////////////////////////////
+
 DefPt::DefPt(int x,
 	     int y) :
   x_(x),

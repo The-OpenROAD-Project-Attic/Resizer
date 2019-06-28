@@ -28,6 +28,7 @@
 #include "NetworkCmp.hh"
 #include "defiComponent.hpp"
 #include "defiNet.hpp"
+#include "lefiLayer.hpp"
 #include "DefWriter.hh"
 
 namespace sta {
@@ -93,6 +94,10 @@ protected:
 		   double die_ux,
 		   double die_uy);
   void readTracks(const char *tracks_file);
+  void writeLefTracks(double die_lx,
+		      double die_ly,
+		      double die_ux,
+		      double die_uy);
   void writeComponents();
   void writeComponent(Instance *inst);
   void writePins(double core_lx,
@@ -181,18 +186,25 @@ DefWriter::writeFresh(int units,
     def_units_ = units;
     writeHeader(units, die_lx, die_ly, die_ux, die_uy);
     fprintf(out_stream_, "\n");
+
     writeRows(site_name, core_lx, core_ly, core_ux, core_uy);
     fprintf(out_stream_, "\n");
-    if (tracks_file) {
+
+    if (tracks_file)
       writeTracks(tracks_file, die_lx, die_ly, die_ux, die_uy);
-      fprintf(out_stream_, "\n");
-    }
+    else
+      writeLefTracks(die_lx, die_ly, die_ux, die_uy);
+    fprintf(out_stream_, "\n");
+
     writeComponents();
     fprintf(out_stream_, "\n");
+
     writePins(core_lx, core_ly, core_ux, core_uy, auto_place_pins);
     fprintf(out_stream_, "\n");
+
     writeNets();
     fprintf(out_stream_, "\nEND DESIGN\n");
+
     fclose(out_stream_);
   }
   else
@@ -271,6 +283,7 @@ DefWriter::writeRows(const char *site_name,
 		     double core_ux,
 		     double core_uy)
 {
+  Report *report = network_->report();
   if (site_name
       &&  core_lx >= 0.0 && core_lx >= 0.0 && core_ux >= 0.0 && core_uy >= 0.0) {
     lefiSite *site = network_->findLefSite(site_name);
@@ -302,12 +315,11 @@ DefWriter::writeRows(const char *site_name,
 	}
       }
       else
-	network_->report()->printWarn("Warning: LEF site %s does not have size.\n",
-				   site_name);
+	report->printWarn("Warning: LEF site %s does not have size.\n",
+			  site_name);
     }
     else
-      network_->report()->printWarn("Warning: LEF site %s not found.\n",
-				   site_name);
+      report->printWarn("Warning: LEF site %s not found.\n", site_name);
   }
 }
 
@@ -324,9 +336,9 @@ DefWriter::writeTracks(const char *tracks_file,
   double width_x = die_ux - die_lx;
   double width_y = die_uy - die_ly;
   for (auto track : tracks_) {
-    char dir = track.dir();
     double offset = track.offset();
     double pitch = track.pitch();
+    char dir = track.dir();
     double width = (dir == 'X' ? width_x : width_y);
     int track_count = floor((width - offset) / pitch) + 1;
     // TRACKS Y 1600 DO 307 STEP 1600 LAYER M1 ;
@@ -387,6 +399,48 @@ Track::Track(string layer,
   offset_(offset),
   pitch_(pitch)
 {
+}
+
+void
+DefWriter::writeLefTracks(double die_lx,
+			  double die_ly,
+			  double die_ux,
+			  double die_uy)
+{
+  Report *report = network_->report();
+  double width_x = die_ux - die_lx;
+  double width_y = die_uy - die_ly;
+  for (auto layer : network_->lefLayers()) {
+    if (layer.hasPitch()
+	&& layer.hasDirection()) {
+      double pitch = layer.pitch() * 1e-6;
+      double offset = pitch;
+      const char *lef_dir = layer.direction();
+      char dir;
+      double width;
+      if (stringEqual(lef_dir, "HORIZONTAL")) {
+	dir = 'X';
+	width = width_x;
+      }
+      else if (stringEqual(lef_dir, "VERTICAL")) {
+	dir = 'Y';
+	width = width_y;
+      }
+      else {
+	report->printWarn("Warning: LEF layer %s direction not horzontal or vertical.\n",
+			  layer.name());
+	break;
+      }
+      int track_count = floor((width - offset) / pitch) + 1;
+      // TRACKS Y 1600 DO 307 STEP 1600 LAYER M1 ;
+      fprintf(out_stream_, "TRACKS %c %d DO %d STEP %d LAYER %s ;\n",
+	      dir,
+	      metersToDbu(offset),
+	      track_count,
+	      metersToDbu(pitch),
+	      layer.name());
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////

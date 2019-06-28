@@ -20,6 +20,7 @@
 #include "UnorderedMap.hh"
 #include "ConcreteLibrary.hh"
 #include "ConcreteNetwork.hh"
+#include "lefiLayer.hpp"
 #include "lefiMacro.hpp"
 #include "defiComponent.hpp"
 #include "defiNet.hpp"
@@ -51,6 +52,7 @@ typedef UnorderedMap<Port*, DefPt> DefPortLocations;
 typedef UnorderedMap<Instance*, defiComponent *> InstanceDefComponentMap;
 typedef UnorderedMap<Cell*, lefiMacro*> CellLefMacroMap;
 typedef Map<const char*, lefiSite*, CharPtrLess> LefSiteMap;
+typedef Vector<lefiLayer> LefLayerSeq;
 
 class LefDefNetwork : public ConcreteNetwork
 {
@@ -72,8 +74,12 @@ public:
 			  const char *filename);
   Library *lefLibrary();
   Library *lefLibrary(Cell *cell);
+
   lefiSite *findLefSite(const char *name);
   void makeLefSite(lefiSite *site);
+
+  void makeLefLayer(lefiLayer *layer);
+  LefLayerSeq &lefLayers() { return lef_layers_; }
 
   lefiMacro *lefMacro(Cell *cell);
   void setLefMacro(Cell *cell,
@@ -107,6 +113,7 @@ protected:
   InstanceDefComponentMap def_component_map_;
   CellLefMacroMap lef_macro_map_;
   LefSiteMap lef_size_map_;
+  LefLayerSeq lef_layers_;
 };
 
 } // namespace

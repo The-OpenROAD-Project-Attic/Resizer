@@ -117,15 +117,6 @@ specify a list of patterns of cells to not use. For example, "*/DLY*"
 says do not use cells with names that begin with "DLY" in all
 libraries.
 
-The `write_def` command `-units`, `-die_area`, `-core_area`, `-site` and
-`-auto_place`_pins arguments are only used when writing a DEF file from
-a Verilog netlist. `dist_units` are the DEF database units per
-micron. The die area is a list of corner coordinates in microns (lower
-x, lower y, upper x, upper y). `site_name` is a LEF site name that is
-used to write ROW statements to fill the die area.  The
-`-auto_place_pins` argument adds locations for the pins equally spaced
-around the die perimeter.
-
 A typical resizer command file is shown below.
 
 ```
@@ -156,6 +147,36 @@ report_wns
 ```
 
 #### Verilog to DEF
+
+Resizer can also be used to translate a Verilog netlist to an
+initialized DEF.
+
+The `write_def` command `-units`, `-die_area`, `-core_area`, `-site`,
+`-tracks` and `-auto_place`_pins arguments are only used when writing
+a DEF file from a Verilog netlist to write an initial DEF file. If a
+DEF netlist has been read everything but the COMPONENTS and NETS
+sections are copied from the original DEF file.  `dist_units` are the
+DEF database units per micron. The die area is a list of corner
+coordinates in microns (lower x, lower y, upper x, upper
+y). `site_name` is a LEF site name that is used to write ROW
+statements to fill the die area.  The `-auto_place_pins` argument adds
+locations for the pins equally spaced around the die perimeter.
+
+TRACKS statements are added for each routing layer in the LEF file.
+The optional `tracks_file` allows an alternative specification of the
+routing tracks. The tracks file has one line for each TRACKS statement
+in the DEF in the format shown below:
+
+```
+<layer name> X|Y <offset> <pitch>
+```
+
+The `offset` and `pitch` are in microns. An example file is shown below.
+
+```
+M1 X 0.1 0.2
+M2 Y 0.1 0.2
+```
 
 An example Resizer command script to translate Verilog to DEF is shown
 below.
