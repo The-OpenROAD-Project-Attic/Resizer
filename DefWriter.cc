@@ -88,10 +88,10 @@ protected:
 		 double core_ux,
 		 double core_uy);
   void writeTracks(const char *tracks_file,
-		   double core_lx,
-		   double core_ly,
-		   double core_ux,
-		   double core_uy);
+		   double die_lx,
+		   double die_ly,
+		   double die_ux,
+		   double die_uy);
   void readTracks(const char *tracks_file);
   void writeComponents();
   void writeComponent(Instance *inst);
@@ -184,7 +184,7 @@ DefWriter::writeFresh(int units,
     writeRows(site_name, core_lx, core_ly, core_ux, core_uy);
     fprintf(out_stream_, "\n");
     if (tracks_file) {
-      writeTracks(tracks_file, core_lx, core_ly, core_ux, core_uy);
+      writeTracks(tracks_file, die_lx, die_ly, die_ux, die_uy);
       fprintf(out_stream_, "\n");
     }
     writeComponents();
@@ -315,14 +315,14 @@ DefWriter::writeRows(const char *site_name,
 
 void
 DefWriter::writeTracks(const char *tracks_file,
-		       double core_lx,
-		       double core_ly,
-		       double core_ux,
-		       double core_uy)
+		       double die_lx,
+		       double die_ly,
+		       double die_ux,
+		       double die_uy)
 {
   readTracks(tracks_file);
-  double width_x = core_ux - core_lx;
-  double width_y = core_uy - core_ly;
+  double width_x = die_ux - die_lx;
+  double width_y = die_uy - die_ly;
   for (auto track : tracks_) {
     char dir = track.dir();
     double offset = track.offset();
