@@ -172,7 +172,9 @@ defBusBitCbk(defrCallbackType_e,
 	     defiUserData user)
 {
   LefDefNetwork *network = getNetwork(user);
-  network->setBusBrkts(bus_chars[0], bus_chars[1]);
+  Library *lef_lib = network->lefLibrary();
+  ConcreteLibrary *lef_clib = reinterpret_cast<ConcreteLibrary*>(lef_lib);
+  lef_clib->setBusBrkts(bus_chars[0], bus_chars[1]);
   return 0;
 }
 
