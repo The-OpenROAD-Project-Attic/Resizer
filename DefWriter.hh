@@ -35,7 +35,10 @@ writeDef(const char *filename,
 	 double core_ly,
 	 double core_ux,
 	 double core_uy,
+	 // LEF site name to use for ROWS.
 	 const char *site_name,
+	 // Routing track info filename.
+	 const char *tracks_file,
 	 // Place pins around the die area boundary.
 	 bool auto_place_pins,
 	 bool sort,

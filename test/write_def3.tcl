@@ -1,4 +1,4 @@
-# write verilog to def (no lef)
+# write_def reg1.v (no lef)
 source helpers.tcl
 read_liberty liberty1.lib
 read_verilog reg1.v

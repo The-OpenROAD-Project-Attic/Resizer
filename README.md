@@ -84,6 +84,7 @@ write_def [-units dist_units]
           [-die_area {lx ly ux uy}]
           [-core_area {lx ly ux uy}]
           [-site site_name]
+          [-tracks tracks_file]
           [-auto_place_pins]
           filename
 ```
@@ -167,6 +168,7 @@ link_design top
 write_def -units 100 -die_area {0 0 1000 1000} \
 	  -core_area {100 100 900 900} \
 	  -site site1 \
+          -tracks tracks.info \
 	  -auto_place_pins \
 	  reg1.def
 ```
@@ -185,8 +187,9 @@ verilog2def
   -units units               def units per micron
   [-die_area "lx ly ux uy"]  die area in microns
   [-core_area "lx ly ux uy"] core area in microns
-  [-site site_name]         
-  [-auto_place_pins]        
+  [-site site_name]          LEF site name for ROWS
+  [-tracks tracks_file]      routing track specification
+  [-auto_place_pins]         place pins around core area boundary
   -def def_file              def file to write
 ```
 

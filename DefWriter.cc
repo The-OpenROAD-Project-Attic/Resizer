@@ -15,8 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
 #include "Machine.hh"
 #include "Error.hh"
+#include "Debug.hh"
 #include "Report.hh"
 #include "StringUtil.hh"
 #include "PortDirection.hh"
@@ -29,6 +33,27 @@
 namespace sta {
 
 using std::abs;
+using std::floor;
+using std::ifstream;
+
+class Track
+{
+public:
+  Track(string layer,
+	char dir,
+	double offset,
+	double pitch);
+  string layer() const { return layer_; }
+  char dir() const { return dir_; }
+  double offset() const { return offset_; }
+  double pitch() const { return pitch_; }
+
+protected:
+  string layer_;
+  char dir_; 			// X or Y
+  double offset_;		// meters
+  double pitch_;		// meters
+};
 
 class DefWriter
 {
@@ -36,53 +61,63 @@ public:
   DefWriter(const char *filename,
 	    bool sort,
 	    LefDefNetwork *network);
-  void rewriteDef(const char *in_filename);
-  void writeDefFresh(int units,
-		     double die_lx,
-		     double die_ly,
-		     double die_ux,
-		     double die_uy,
-		     double core_lx,
-		     double core_ly,
-		     double core_ux,
-		     double core_uy,
-		     const char *site_name,
-		     bool auto_place_pins);
+  void rewrite(const char *in_filename);
+  void writeFresh(int units,
+		  double die_lx,
+		  double die_ly,
+		  double die_ux,
+		  double die_uy,
+		  double core_lx,
+		  double core_ly,
+		  double core_ux,
+		  double core_uy,
+		  const char *site_name,
+		  const char *tracks_file,
+		  bool auto_place_pins);
 
 protected:
-  void writeDefHeader(int units,
-		      // Die area.
-		      double die_lx,
-		      double die_ly,
-		      double die_ux,
-		      double die_uy);
-  void writeDefRows(const char *site_name,
-		    double core_lx,
-		    double core_ly,
-		    double core_ux,
-		    double core_uy);
-  void writeDefComponents();
-  void writeDefComponent(Instance *inst);
-  void writeDefPins(double core_lx,
-		    double core_ly,
-		    double core_ux,
-		    double core_uy,
-		    bool auto_place_pins);
-  void writeDefPin(Pin *pin,
-		   bool is_placed,
-		   double x,
-		   double y,
-		   const char *orient);
+  void writeHeader(int units,
+		   // Die area.
+		   double die_lx,
+		   double die_ly,
+		   double die_ux,
+		   double die_uy);
+  void writeRows(const char *site_name,
+		 double core_lx,
+		 double core_ly,
+		 double core_ux,
+		 double core_uy);
+  void writeTracks(const char *tracks_file,
+		   double core_lx,
+		   double core_ly,
+		   double core_ux,
+		   double core_uy);
+  void readTracks(const char *tracks_file);
+  void writeComponents();
+  void writeComponent(Instance *inst);
+  void writePins(double core_lx,
+		 double core_ly,
+		 double core_ux,
+		 double core_uy,
+		 bool auto_place_pins);
+  void writePin(Pin *pin,
+		bool is_placed,
+		double x,
+		double y,
+		const char *orient);
   const char *staToDef(PortDirection *dir);
-  void writeDefNets();
-  void writeDefNets(const Instance *inst);
-  void writeDefNet(Net *net);
+  void writeNets();
+  void writeNets(const Instance *inst);
+  void writeNet(Net *net);
   const char *staToDef(const char *token);
+  DefDbu metersToDbu(double dist) const;
 
   const char *filename_;
+  int def_units_;		// dbu/micron
   bool sort_;
   LefDefNetwork *network_;
   FILE *out_stream_;
+  Vector<Track> tracks_;
 };
 
 ////////////////////////////////////////////////////////////////
@@ -100,6 +135,7 @@ writeDef(const char *filename,
 	 double core_ux,
 	 double core_uy,
 	 const char *site_name,
+	 const char *tracks_file,
 	 bool auto_place_pins,
 	 bool sort,
 	 LefDefNetwork *network)
@@ -107,12 +143,12 @@ writeDef(const char *filename,
   DefWriter writer(filename, sort, network);
   const char *in_filename = network->defFilename();
   if (in_filename)
-    writer.rewriteDef(in_filename);
+    writer.rewrite(in_filename);
   else
-    writer.writeDefFresh(units,
-			 die_lx, die_ly, die_ux, die_uy,
-			 core_lx, core_ly, core_ux, core_uy,
-			 site_name, auto_place_pins);
+    writer.writeFresh(units,
+		      die_lx, die_ly, die_ux, die_uy,
+		      core_lx, core_ly, core_ux, core_uy,
+		      site_name, tracks_file, auto_place_pins);
 }
 
 DefWriter::DefWriter(const char *filename,
@@ -126,31 +162,36 @@ DefWriter::DefWriter(const char *filename,
 
 // Write a fresh DEF file from the network.
 void
-DefWriter::writeDefFresh(int units,
-			 // Die area.
-			 double die_lx,
-			 double die_ly,
-			 double die_ux,
-			 double die_uy,
-			 double core_lx,
-			 double core_ly,
-			 double core_ux,
-			 double core_uy,
-			 const char *site_name,
-			 bool auto_place_pins)
+DefWriter::writeFresh(int units,
+		      // Die area.
+		      double die_lx,
+		      double die_ly,
+		      double die_ux,
+		      double die_uy,
+		      double core_lx,
+		      double core_ly,
+		      double core_ux,
+		      double core_uy,
+		      const char *site_name,
+		      const char *tracks_file,
+		      bool auto_place_pins)
 {
   out_stream_ = fopen(filename_, "w");
   if (out_stream_) {
-    network_->setDefUnits(units);
-    writeDefHeader(units, die_lx, die_ly, die_ux, die_uy);
+    def_units_ = units;
+    writeHeader(units, die_lx, die_ly, die_ux, die_uy);
     fprintf(out_stream_, "\n");
-    writeDefRows(site_name, core_lx, core_ly, core_ux, core_uy);
+    writeRows(site_name, core_lx, core_ly, core_ux, core_uy);
     fprintf(out_stream_, "\n");
-    writeDefComponents();
+    if (tracks_file) {
+      writeTracks(tracks_file, core_lx, core_ly, core_ux, core_uy);
+      fprintf(out_stream_, "\n");
+    }
+    writeComponents();
     fprintf(out_stream_, "\n");
-    writeDefPins(core_lx, core_ly, core_ux, core_uy, auto_place_pins);
+    writePins(core_lx, core_ly, core_ux, core_uy, auto_place_pins);
     fprintf(out_stream_, "\n");
-    writeDefNets();
+    writeNets();
     fprintf(out_stream_, "\nEND DESIGN\n");
     fclose(out_stream_);
   }
@@ -162,7 +203,7 @@ DefWriter::writeDefFresh(int units,
 // Preserve everything but the COMPONENT and NET sections by copying them
 // and replacing those sections.
 void
-DefWriter::rewriteDef(const char *in_filename)
+DefWriter::rewrite(const char *in_filename)
 {
   FILE *in_stream = fopen(in_filename, "r");
   if (in_stream) {
@@ -177,7 +218,7 @@ DefWriter::rewriteDef(const char *in_filename)
 	    getline(&buffer, &buffer_size, in_stream);
 	  } while (!stringBeginEqual(buffer, "END COMPONENTS")
 		   && !feof(in_stream));
-	  writeDefComponents();
+	  writeComponents();
 	}
 	else if (stringBeginEqual(buffer, "NETS ")) {
 	  // Skip the nets.
@@ -185,7 +226,7 @@ DefWriter::rewriteDef(const char *in_filename)
 	    getline(&buffer, &buffer_size, in_stream);
 	  } while (!stringBeginEqual(buffer, "END NETS")
 		   && !feof(in_stream));
-	  writeDefNets();
+	  writeNets();
 	}
 	else
 	  fputs(buffer, out_stream_);
@@ -202,12 +243,12 @@ DefWriter::rewriteDef(const char *in_filename)
 }
 
 void
-DefWriter::writeDefHeader(int units,
-			  // Die area.
-			  double die_lx,
-			  double die_ly,
-			  double die_ux,
-			  double die_uy)
+DefWriter::writeHeader(int units,
+		       // Die area.
+		       double die_lx,
+		       double die_ly,
+		       double die_ux,
+		       double die_uy)
 {
   fprintf(out_stream_, "VERSION 5.5 ;\n");
   fprintf(out_stream_, "NAMESCASESENSITIVE ON ;\n");
@@ -217,18 +258,18 @@ DefWriter::writeDefHeader(int units,
 	  network_->name(network_->cell(network_->topInstance())));
   fprintf(out_stream_, "UNITS DISTANCE MICRONS %d ;\n", units);
   fprintf(out_stream_, "DIEAREA ( %d %d ) ( %d %d ) ;\n",
-	  network_->metersToDbu(die_lx),
-	  network_->metersToDbu(die_ly),
-	  network_->metersToDbu(die_ux),
-	  network_->metersToDbu(die_uy));
+	  metersToDbu(die_lx),
+	  metersToDbu(die_ly),
+	  metersToDbu(die_ux),
+	  metersToDbu(die_uy));
 }
 
 void
-DefWriter::writeDefRows(const char *site_name,
-			double core_lx,
-			double core_ly,
-			double core_ux,
-			double core_uy)
+DefWriter::writeRows(const char *site_name,
+		     double core_lx,
+		     double core_ly,
+		     double core_ux,
+		     double core_uy)
 {
   if (site_name
       &&  core_lx >= 0.0 && core_lx >= 0.0 && core_ux >= 0.0 && core_uy >= 0.0) {
@@ -238,15 +279,15 @@ DefWriter::writeDefRows(const char *site_name,
 	// LEF site size is in microns. Convert to meters.
 	double site_dx = site->sizeX() * 1e-6;
 	double site_dy = site->sizeY() * 1e-6;
-	int site_dx_dbu = network_->metersToDbu(site_dx);
-	int site_dy_dbu = network_->metersToDbu(site_dy);
+	int site_dx_dbu = metersToDbu(site_dx);
+	int site_dy_dbu = metersToDbu(site_dy);
 	double core_dx = abs(core_ux - core_lx);
 	double core_dy = abs(core_uy - core_ly);
 	int rows_x = core_dx / site_dx;
 	int rows_y = core_dy / site_dy;
 
-	int core_lx_dbu = network_->metersToDbu(core_lx);
-	int y = network_->metersToDbu(core_ly);;
+	int core_lx_dbu = metersToDbu(core_lx);
+	int y = metersToDbu(core_ly);;
 	for (int row = 0; row < rows_y; row++) {
 	  const char *orient = (row % 2 == 0) ? "FS" : "N";
 	  fprintf(out_stream_, "ROW ROW_%d %s %d %d %s DO %d by 1 STEP %d 0 ;\n",
@@ -270,8 +311,88 @@ DefWriter::writeDefRows(const char *site_name,
   }
 }
 
+////////////////////////////////////////////////////////////////
+
 void
-DefWriter::writeDefComponents()
+DefWriter::writeTracks(const char *tracks_file,
+		       double core_lx,
+		       double core_ly,
+		       double core_ux,
+		       double core_uy)
+{
+  readTracks(tracks_file);
+  double width_x = core_ux - core_lx;
+  double width_y = core_uy - core_ly;
+  for (auto track : tracks_) {
+    char dir = track.dir();
+    double offset = track.offset();
+    double pitch = track.pitch();
+    double width = (dir == 'X' ? width_x : width_y);
+    int track_count = floor((width - offset) / pitch) + 1;
+    // TRACKS Y 1600 DO 307 STEP 1600 LAYER M1 ;
+    fprintf(out_stream_, "TRACKS %c %d DO %d STEP %d LAYER %s ;\n",
+	    track.dir(),
+	    metersToDbu(offset),
+	    track_count,
+	    metersToDbu(pitch),
+	    track.layer().c_str());
+  }
+}
+
+void
+DefWriter::readTracks(const char *tracks_file)
+{
+  Report *report = network_->report();
+  Debug *debug = network_->debug();
+  ifstream tracks_stream(tracks_file);
+  if (tracks_stream.is_open()) {
+    int line_count = 1;
+    string line;
+    while (getline(tracks_stream, line)) {
+      StringVector tokens;
+      split(line, " \t", tokens);
+      if (tokens.size() == 4) {
+	string layer = tokens[0];
+	string dir_str = tokens[1];
+	char dir = 'X';
+	if (stringEqual(dir_str.c_str(), "x")
+	    || stringEqual(dir_str.c_str(), "y"))
+	  dir = dir_str[0];
+	else
+	  report->warn("Warning: track file line %d direction must be X or Y'.\n",
+		       line_count);
+	// microns -> meters
+	double offset = strtod(tokens[2].c_str(), nullptr) * 1e-6;
+	double pitch = strtod(tokens[3].c_str(), nullptr) * 1e-6;
+	tracks_.push_back(Track(layer, dir, offset, pitch));
+	debugPrint4(debug, "track", 1, "%s %c %f %f\n", layer.c_str(), dir, offset, pitch);
+      }
+      else
+	report->warn("Warning: track file line %d does not match 'layer X|Y offset pitch'.\n",
+				 line_count);
+      line_count++;
+    }
+    tracks_stream.close();
+  }
+  else
+    throw FileNotReadable(tracks_file);
+}
+
+Track::Track(string layer,
+	     char dir,
+	     double offset,
+	     double pitch) :
+  layer_(layer),
+  dir_(dir),
+  offset_(offset),
+  pitch_(pitch)
+{
+}
+
+////////////////////////////////////////////////////////////////
+
+void
+DefWriter::writeComponents()
 {
   fprintf(out_stream_, "COMPONENTS %d ;\n",
 	  network_->leafInstanceCount());
@@ -288,13 +409,13 @@ DefWriter::writeDefComponents()
     sort(insts, InstancePathNameLess(network_));
   
   for (auto inst : insts)
-    writeDefComponent(inst);
+    writeComponent(inst);
 
   fprintf(out_stream_, "END COMPONENTS\n");
 }
 
 void
-DefWriter::writeDefComponent(Instance *inst)
+DefWriter::writeComponent(Instance *inst)
 {
   defiComponent *def_component = network_->defComponent(inst);
   fprintf(out_stream_, "- %s %s",
@@ -356,11 +477,11 @@ DefWriter::writeDefComponent(Instance *inst)
 }
   
 void
-DefWriter::writeDefPins(double core_lx,
-			double core_ly,
-			double core_ux,
-			double core_uy,
-			bool auto_place_pins)
+DefWriter::writePins(double core_lx,
+		     double core_ly,
+		     double core_ux,
+		     double core_uy,
+		     bool auto_place_pins)
 {
   int pin_count = 0;
   InstancePinIterator *pin_iter1 = network_->pinIterator(network_->topInstance());
@@ -407,7 +528,7 @@ DefWriter::writeDefPins(double core_lx,
 	y = core_uy - (location - (dx * 2 + dy));
 	orient = "W";
       }
-      writeDefPin(pin, auto_place_pins, x, y, orient);
+      writePin(pin, auto_place_pins, x, y, orient);
       location += pin_dist;
     }
     delete pin_iter2;
@@ -417,11 +538,11 @@ DefWriter::writeDefPins(double core_lx,
 }
 
 void
-DefWriter::writeDefPin(Pin *pin,
-		       bool is_placed,
-		       double x,
-		       double y,
-		       const char *orient)
+DefWriter::writePin(Pin *pin,
+		    bool is_placed,
+		    double x,
+		    double y,
+		    const char *orient)
 {
   fprintf(out_stream_, "- %s",
 	  network_->pathName(pin));
@@ -434,8 +555,8 @@ DefWriter::writeDefPin(Pin *pin,
 	  staToDef(dir));
   if (is_placed)
     fprintf(out_stream_, " + FIXED ( %d %d ) %s",
-	    network_->metersToDbu(x),
-	    network_->metersToDbu(y),
+	    metersToDbu(x),
+	    metersToDbu(y),
 	    orient);
   fprintf(out_stream_, " ;\n");
 }
@@ -456,16 +577,16 @@ DefWriter::staToDef(PortDirection *dir)
 }
 
 void
-DefWriter::writeDefNets()
+DefWriter::writeNets()
 {
   fprintf(out_stream_, "NETS %d ;\n",
 	  network_->netCount());
-  writeDefNets(network_->topInstance());  
+  writeNets(network_->topInstance());  
   fprintf(out_stream_, "END NETS\n");
 }
 
 void
-DefWriter::writeDefNets(const Instance *inst)
+DefWriter::writeNets(const Instance *inst)
 {
   NetSeq nets;
   NetIterator *net_iter = network_->netIterator(inst);
@@ -480,20 +601,20 @@ DefWriter::writeDefNets(const Instance *inst)
     sort(nets, NetPathNameLess(network_));
 
   for (auto net : nets)
-    writeDefNet(net);
+    writeNet(net);
 
   // Decend the hierarchy.
   InstanceChildIterator *child_iter = network_->childIterator(inst);
   while (child_iter->hasNext()) {
     Instance *child = child_iter->next();
     if (network_->isHierarchical(child))
-      writeDefNets(child);
+      writeNets(child);
   }
   delete child_iter;
 }
 
 void
-DefWriter::writeDefNet(Net *net)
+DefWriter::writeNet(Net *net)
 {
   const char *sta_net_name = network_->pathName(net);
   const char *def_net_name = staToDef(sta_net_name);
@@ -538,6 +659,8 @@ DefWriter::writeDefNet(Net *net)
   fprintf(out_stream_, " ;\n");
 }
 
+////////////////////////////////////////////////////////////////
+
 // Remove path divider escapes in token.
 const char *
 DefWriter::staToDef(const char *token)
@@ -553,6 +676,12 @@ DefWriter::staToDef(const char *token)
   }
   *u = '\0';
   return unescaped;
+}
+
+DefDbu
+DefWriter::metersToDbu(double dist) const
+{
+  return round((dist * 1e6) * def_units_);
 }
 
 } // namespace

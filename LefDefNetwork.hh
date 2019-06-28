@@ -66,8 +66,8 @@ public:
   // dbu/micron
   float defUnits() const { return def_units_; }
   void setDefUnits(int def_units);
-  double dbuToMeters(int dbu) const;
-  int metersToDbu(double dist) const;
+  double dbuToMeters(DefDbu dbu) const;
+  DefDbu metersToDbu(double dist) const;
   Library *makeLefLibrary(const char *name,
 			  const char *filename);
   Library *lefLibrary();

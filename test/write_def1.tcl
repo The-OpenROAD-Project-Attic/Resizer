@@ -1,4 +1,4 @@
-# write_def reg1
+# write_def reg1.def
 source helpers.tcl
 read_liberty liberty1.lib
 read_lef liberty1.lef

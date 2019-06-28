@@ -146,6 +146,9 @@ main(int argc,
   }
 
   const char *site_name = findCmdLineKey(argc, argv, "-site");
+
+  const char *tracks_file = findCmdLineKey(argc, argv, "-tracks");
+
   bool auto_place_pins = findCmdLineFlag(argc, argv, "-auto_place_pins");
 
   const char *def_filename = findCmdLineKey(argc, argv, "-def");
@@ -186,7 +189,8 @@ main(int argc,
       writeDef(def_filename, units,
 	       die_lx, die_ly, die_ux, die_uy,
 	       core_lx, core_ly, core_ux, core_uy,
-	       site_name, auto_place_pins, true, &network);
+	       site_name, tracks_file, auto_place_pins, true,
+	       &network);
       if (verbose)
 	report->print("\n");
     }

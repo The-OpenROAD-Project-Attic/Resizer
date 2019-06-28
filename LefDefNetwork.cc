@@ -69,12 +69,12 @@ LefDefNetwork::setDefUnits(int def_units)
 }
 
 double
-LefDefNetwork::dbuToMeters(int dbu) const
+LefDefNetwork::dbuToMeters(DefDbu dbu) const
 {
   return (dbu / def_units_) * 1e-6;
 }
 
-int
+DefDbu
 LefDefNetwork::metersToDbu(double dist) const
 {
   return round((dist * 1e6) * def_units_);

@@ -146,6 +146,7 @@ record_resizer_tests {
   write_def3
   write_def4
   write_def5
+  write_def6
   verilog2def1
   write_verilog1
   write_verilog2

@@ -1,4 +1,4 @@
-# write def from verilog
+# write_def from hierarchical verilog
 source helpers.tcl
 read_liberty liberty1.lib
 read_verilog write_def4.v

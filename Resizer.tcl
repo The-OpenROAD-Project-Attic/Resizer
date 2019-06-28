@@ -28,10 +28,14 @@ define_cmd_args "write_def" {-units def_units\
 			       [-die_area {lx ly ux uy}]\
 			       [-core_area {lx ly ux uy}]\
 			       [-site site_name]\
+			       [-tracks tracks_file]\
+			       [-auto_place_pins]\
+			       [-sort]\
 			       filename}
 
 proc write_def { args } {
-  parse_key_args "write_def" args keys {-units -die_area -core_area -site} \
+  parse_key_args "write_def" args \
+    keys {-units -die_area -core_area -site -tracks} \
     flags {-auto_place_pins -sort}
 
   set units 1000
@@ -79,10 +83,19 @@ proc write_def { args } {
     set site_name $keys(-site)
   }
 
+  set tracks_file ""
+  if { [info exists keys(-tracks)] } {
+    set tracks_file $keys(-tracks)
+    if { !$have_core } {
+      sta_warn "-tracks file but core_* dimensions missing."
+    }
+  }
+
   set auto_place_pins [info exists flags(-auto_place_pins)]
   if { $auto_place_pins && !$have_core } {
     sta_warn "-auto_place_pins but core_* dimensions missing."
   }
+
   set sort [info exists flags(-sort)]
 
   check_argc_eq1 "write_def" $args
@@ -94,7 +107,7 @@ proc write_def { args } {
     [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
     [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
     [expr $core_ux * 1e-6] [expr $core_uy * 1e-6] \
-    $site_name $auto_place_pins $sort
+    $site_name $tracks_file $auto_place_pins $sort
 }
 
 define_cmd_args "set_wire_rc" {[-resistance res ][-capacitance cap]\
