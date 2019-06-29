@@ -45,6 +45,13 @@ Alternatively, you can use the `DESTDIR` variable with make.
 make DESTDIR=<prefix_path> install
 ```
 
+There are a set of regression tests in `/test`.
+From `/build`,
+
+```
+../test/regression fast
+```
+
 #### Running Resizer
 
 ```
