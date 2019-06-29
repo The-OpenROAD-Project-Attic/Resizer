@@ -34,7 +34,7 @@ Path Type: max
           -5.75   slack (VIOLATED)
 
 
-tns -8429.60
+tns -8431.87
 wns -5.75
 Resized 35888 instances.
 After resizing
@@ -75,13 +75,13 @@ Path Type: max
           -2.97   slack (VIOLATED)
 
 
-tns -3887.54
+tns -3887.53
 wns -2.97
 Inserted 20 buffers in 20 nets.
 After buffering
 Startpoint: fdct_zigzag/dct_mod/ddin_reg_7_
             (rising edge-triggered flip-flop clocked by clk)
-Endpoint: fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/mult_res_reg_16_
+Endpoint: fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/mult_res_reg_16_
           (rising edge-triggered flip-flop clocked by clk)
 Path Group: clk
 Path Type: max
@@ -92,35 +92,37 @@ Path Type: max
    0.00    0.00   clock network delay (ideal)
    0.00    0.00 ^ fdct_zigzag/dct_mod/ddin_reg_7_/CK (EDFFQ_X3M_A12TL)
    0.14    0.14 ^ fdct_zigzag/dct_mod/ddin_reg_7_/Q (EDFFQ_X3M_A12TL)
-   0.43    0.58 ^ buffer546/Y (BUF_X9M_A12TL)
-   0.46    1.04 ^ buffer659/Y (BUF_X9M_A12TL)
-   0.13    1.17 ^ buffer701/Y (BUF_X9M_A12TL)
-   0.05    1.22 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U323/Y (XNOR2_X3M_A12TL)
-   0.08    1.31 v fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U259/Y (OAI22_X3M_A12TL)
-   0.06    1.36 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U16/Y (INV_X0P5B_A12TL)
-   0.06    1.42 v fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U55/Y (NOR2_X0P5M_A12TL)
-   0.20    1.62 v fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U159/CO (ADDFH_X1P4M_A12TL)
-   0.15    1.76 v fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U310/CO (ADDFH_X2M_A12TL)
-   0.07    1.84 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U308/Y (NOR2_X1P4A_A12TL)
-   0.08    1.92 v fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U283/Y (NOR2_X2B_A12TL)
-   0.09    2.01 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U281/Y (AOI21_X1P4M_A12TL)
-   0.06    2.07 v fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U196/Y (OAI21_X4M_A12TL)
-   0.09    2.15 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U287/Y (AOI21_X1M_A12TL)
-   0.07    2.23 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/U47/Y (XOR2_X1P4M_A12TL)
-   0.00    2.23 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/mult_res_reg_16_/D (EDFFQ_X1M_A12TL)
-           2.23   data arrival time
+   0.43    0.57 ^ buffer542/Y (BUF_X9M_A12TL)
+   0.47    1.05 ^ buffer655/Y (BUF_X9M_A12TL)
+   0.12    1.17 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U29/Y (XNOR2_X3M_A12TL)
+   0.07    1.24 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U216/Y (OAI22_X3M_A12TL)
+   0.05    1.29 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U210/Y (INV_X0P5B_A12TL)
+   0.05    1.34 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U55/Y (NOR2_X0P5M_A12TL)
+   0.21    1.55 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U353/SUM (ADDFH_X2M_A12TL)
+   0.06    1.62 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U44/Y (XNOR2_X2M_A12TL)
+   0.07    1.68 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U331/Y (XNOR2_X2M_A12TL)
+   0.08    1.77 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U335/Y (NOR2_X1P4A_A12TL)
+   0.06    1.82 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U233/Y (INV_X0P5M_A12TL)
+   0.07    1.89 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U218/Y (NAND2_X1M_A12TL)
+   0.06    1.95 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U317/Y (INV_X0P5B_A12TL)
+   0.07    2.02 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U214/Y (NAND2_X1P4M_A12TL)
+   0.06    2.08 v fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U207/Y (OAI21_X4M_A12TL)
+   0.09    2.17 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U206/Y (AOI21_X1M_A12TL)
+   0.07    2.24 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/U294/Y (XNOR2_X1P4M_A12TL)
+   0.00    2.24 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/mult_res_reg_16_/D (EDFFQ_X2M_A12TL)
+           2.24   data arrival time
 
    7.00    7.00   clock clk (rise edge)
    0.00    7.00   clock network delay (ideal)
    0.00    7.00   clock reconvergence pessimism
-           7.00 ^ fdct_zigzag/dct_mod/dct_block_4/dct_unit_2/macu/mult_res_reg_16_/CK (EDFFQ_X1M_A12TL)
-  -0.10    6.90   library setup time
-           6.90   data required time
+           7.00 ^ fdct_zigzag/dct_mod/dct_block_3/dct_unit_2/macu/mult_res_reg_16_/CK (EDFFQ_X2M_A12TL)
+  -0.09    6.91   library setup time
+           6.91   data required time
 ---------------------------------------------------------
-           6.90   data required time
-          -2.23   data arrival time
+           6.91   data required time
+          -2.24   data arrival time
 ---------------------------------------------------------
-           4.68   slack (MET)
+           4.67   slack (MET)
 
 
 tns -0.01

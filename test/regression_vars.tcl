@@ -141,6 +141,7 @@ record_resizer_tests {
   resize2
   resize3
   resize4
+  resize5
   write_def1
   write_def2
   write_def3
@@ -159,6 +160,7 @@ record_test_design {
   aes2/aes2_resize1
   mea/mea_resize1
   jpeg/jpeg_resize1
+  vanilla_bean/vanilla_bean_resize1
 }
 
 ################################################################
@@ -171,6 +173,7 @@ define_test_group med {
   mea_resize1
   aes2_resize1
   aes2_rebuffer1
+  vanilla_bean_resize1
 }
 
 define_test_group slow {
