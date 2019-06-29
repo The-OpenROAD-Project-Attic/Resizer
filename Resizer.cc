@@ -862,31 +862,33 @@ Resizer::rebuffer(const Pin *drvr_pin,
     net = network_->net(drvr_pin);
     drvr_port = network_->libertyPort(drvr_pin);
   }
-  LefDefNetwork *network = lefDefNetwork();
-  SteinerTree *tree = makeSteinerTree(net, true, network);
-  SteinerPt drvr_pt = tree->drvrPt(network_);
-  Required drvr_req = pinRequired(drvr_pin);
-  // Make sure the driver is constrained.
-  if (!fuzzyInf(drvr_req)) {
-    debugPrint1(debug_, "rebuffer", 2, "driver %s\n",
-		sdc_network_->pathName(drvr_pin));
-    RebufferOptionSeq Z = rebufferBottomUp(tree, tree->left(drvr_pt),
-					   drvr_pt,
-					   1, buffer_cell);
-    Required Tbest = -INF;
-    RebufferOption *best = nullptr;
-    for (auto p : Z) {
-      Required Tb = p->required() - gateDelay(drvr_port, p->cap());
-      if (fuzzyGreater(Tb, Tbest)) {
-	Tbest = Tb;
-	best = p;
+  if (drvr_port) {
+    LefDefNetwork *network = lefDefNetwork();
+    SteinerTree *tree = makeSteinerTree(net, true, network);
+    SteinerPt drvr_pt = tree->drvrPt(network_);
+    Required drvr_req = pinRequired(drvr_pin);
+    // Make sure the driver is constrained.
+    if (!fuzzyInf(drvr_req)) {
+      debugPrint1(debug_, "rebuffer", 2, "driver %s\n",
+		  sdc_network_->pathName(drvr_pin));
+      RebufferOptionSeq Z = rebufferBottomUp(tree, tree->left(drvr_pt),
+					     drvr_pt,
+					     1, buffer_cell);
+      Required Tbest = -INF;
+      RebufferOption *best = nullptr;
+      for (auto p : Z) {
+	Required Tb = p->required() - gateDelay(drvr_port, p->cap());
+	if (fuzzyGreater(Tb, Tbest)) {
+	  Tbest = Tb;
+	  best = p;
+	}
       }
-    }
-    if (best) {
-      int insert_count = rebufferTopDown(best, net, 1, buffer_cell);
-      if (insert_count > 0) {
-	inserted_buffer_count_ += insert_count;
-	rebuffer_net_count_++;
+      if (best) {
+	int insert_count = rebufferTopDown(best, net, 1, buffer_cell);
+	if (insert_count > 0) {
+	  inserted_buffer_count_ += insert_count;
+	  rebuffer_net_count_++;
+	}
       }
     }
   }

@@ -151,12 +151,14 @@ macroEndCbk(lefrCallbackType_e,
   LibertyCell *lib_cell = network->findLibertyCell(network->name(lef_macro));
   if (lib_cell) {
     ccell->setLibertyCell(lib_cell);
-    LibertyCellPortIterator port_iter(lib_cell);
+    LibertyCellPortBitIterator port_iter(lib_cell);
     while (port_iter.hasNext()) {
       LibertyPort *lib_port = port_iter.next();
-      ConcretePort *port = ccell->findPort(lib_port->name());
-      if (port)
-	port->setLibertyPort(lib_port);
+      if (lib_port->direction() != PortDirection::internal()) {
+	ConcretePort *port = ccell->findPort(lib_port->name());
+	if (port)
+	  port->setLibertyPort(lib_port);
+      }
     }
   }
   reader->setLefMacro(nullptr);
