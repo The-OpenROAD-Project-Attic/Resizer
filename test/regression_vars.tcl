@@ -158,8 +158,9 @@ record_resizer_tests {
 record_test_design {
   aes2/aes2_rebuffer1
   aes2/aes2_resize1
-  mea/mea_resize1
+  coyote/coyote_resize1
   jpeg/jpeg_resize1
+  mea/mea_resize1
   vanilla_bean/vanilla_bean_resize1
 }
 
@@ -177,6 +178,7 @@ define_test_group med {
 }
 
 define_test_group slow {
+  coyote_resize1
   jpeg_resize1
 }
 
