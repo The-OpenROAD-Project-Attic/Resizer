@@ -21,6 +21,7 @@
 #include "Error.hh"
 #include "Debug.hh"
 #include "LefDefNetwork.hh"
+#include "NetworkCmp.hh"
 #include "SteinerTree.hh"
 
 namespace sta {
@@ -78,6 +79,9 @@ makeSteinerTree(const Net *net,
   SteinerTree *tree = new SteinerTree();
   PinSeq &pins = tree->pins();
   connectedPins(net, network, pins);
+  // Steiner tree is apparently sensitive to pin order.
+  // Pay the price to stabilize the results.
+  sort(pins, PinPathNameLess(network));
   int pin_count = pins.size();
   if (pin_count >= 2) {
     FluteDbu x[pin_count];

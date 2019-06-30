@@ -178,8 +178,8 @@ define_test_group med {
 }
 
 define_test_group slow {
-  coyote_resize1
   jpeg_resize1
+  coyote_resize1
 }
 
 set fast [group_tests all]
