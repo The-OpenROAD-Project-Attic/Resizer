@@ -719,6 +719,8 @@ DefWriter::writeNet(Net *net)
 const char *
 DefWriter::staToDef(const char *token)
 {
+  return token;
+#if 0
   char path_escape = network_->pathEscape();
   char *unescaped = makeTmpString(strlen(token) + 1);
   char *u = unescaped;
@@ -730,6 +732,7 @@ DefWriter::staToDef(const char *token)
   }
   *u = '\0';
   return unescaped;
+#endif
 }
 
 DefDbu

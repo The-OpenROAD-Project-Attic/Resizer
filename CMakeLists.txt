@@ -201,6 +201,7 @@ set(RESIZER_SOURCE
   DefWriter.cc
   LefReader.cc
   LefDefNetwork.cc
+  LefDefSdcNetwork.cc
   Resizer.cc
   ResizerMain.cc
   Resizer_wrap.cc
@@ -213,6 +214,7 @@ set(RESIZER_HEADERS
   DefWriter.hh
   LefReader.hh
   LefDefNetwork.hh
+  LefDefSdcNetwork.hh
   Resizer.hh
   SteinerTree.hh
   )

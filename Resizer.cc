@@ -35,6 +35,7 @@
 #include "Bfs.hh"
 #include "Search.hh"
 #include "LefDefNetwork.hh"
+#include "LefDefSdcNetwork.hh"
 #include "SteinerTree.hh"
 #include "Resizer.hh"
 
@@ -81,7 +82,15 @@ Resizer::makeNetwork()
 LefDefNetwork *
 Resizer::lefDefNetwork()
 {
-  return dynamic_cast<LefDefNetwork*>(network_);
+  return static_cast<LefDefNetwork*>(network_);
+}
+
+void
+Resizer::makeCmdNetwork()
+{
+  sdc_network_ = new LefDefSdcNetwork(network_);
+  cmd_network_ = sdc_network_;
+  cmd_namespace_ = CmdNamespace::sdc;
 }
 
 ////////////////////////////////////////////////////////////////

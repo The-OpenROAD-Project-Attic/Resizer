@@ -64,6 +64,7 @@ public:
 
 protected:
   virtual void makeNetwork();
+  virtual void makeCmdNetwork();
   void init();
   void ensureCorner();
   void initCorner(Corner *corner);

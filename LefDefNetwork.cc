@@ -204,6 +204,18 @@ LefDefNetwork::isPlaced(const Pin *pin) const
   }
 }
 
+Instance *
+LefDefNetwork::findInstance(const char *path_name) const
+{
+  return findChild(top_instance_, path_name);
+}
+
+Net *
+LefDefNetwork::findNet(const char *path_name) const
+{
+  return findNet(top_instance_, path_name);
+}
+
 ////////////////////////////////////////////////////////////////
 
 void

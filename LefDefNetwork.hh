@@ -100,10 +100,13 @@ public:
   void setLocation(Port *port,
 		   DefPt location);
   bool isPlaced(const Pin *pin) const;
+  virtual Instance *findInstance(const char *path_name) const;
 
+  virtual Net *findNet(const char *path_name) const;
   void connectedPins(const Net *net,
 		     PinSeq &pins);
   using ConcreteNetwork::connect;
+  using ConcreteNetwork::findNet;
 
 protected:
   const char *def_filename_;

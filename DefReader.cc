@@ -290,7 +290,8 @@ defNetCbk(defrCallbackType_e,
 	network->makeTerm(pin, net);
     }
     else {
-      Instance *inst = network->findInstance(sta_inst_name);
+      Instance *top_inst = network->topInstance();
+      Instance *inst = network->findChild(top_inst, sta_inst_name);
       if (inst) {
 	Cell *cell = network->cell(inst);
 	Port *port = network->findPort(cell, pin_name);
@@ -312,14 +313,17 @@ defNetCbk(defrCallbackType_e,
   return 0;
 }
 
-// Escape path dividers in token.
+// Nada.
+// Note that the DEF names violate the normal sta namespace conventions
+// because the netlist is flattend.
+// Both of the following are valid in DEF and correspond to different Verilog names.
+//  h1/r1
+//  h1\/r1
 static const char *
 defToSta(const char *token,
-	 Network *network)
+	 Network *)
 {
-  char path_divider = network->pathDivider();
-  char path_escape = network->pathEscape();
-  return escapeChars(token, path_divider, '\0', path_escape);
+  return token;
 }
 
 } // namespace

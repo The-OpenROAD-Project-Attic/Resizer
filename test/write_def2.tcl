@@ -1,4 +1,4 @@
-# write_def from def with hierarchical instance,net names
+# write_def from def with hierarchical instance, net names
 source helpers.tcl
 read_liberty liberty1.lib
 read_lef liberty1.lef
