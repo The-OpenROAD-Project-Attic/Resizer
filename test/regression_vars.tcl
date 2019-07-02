@@ -152,6 +152,7 @@ record_resizer_tests {
   verilog2def2
   write_verilog1
   write_verilog2
+  write_verilog3
 }
 
 # Record tests in $STAX/designs

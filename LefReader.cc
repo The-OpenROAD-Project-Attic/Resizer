@@ -145,21 +145,39 @@ macroEndCbk(lefrCallbackType_e,
 {
   LefReader *reader = getLefReader(user);
   LefDefNetwork *network = reader->network();
-  Cell *lef_macro = reader->lefMacro();
+  Cell *cell = reader->lefMacro();
+  // Group bus bits into bus ports.
+  network->groupBusPorts(cell);
   // Set corresponding liberty cell and ports for reference by Network.
-  ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(lef_macro);
-  LibertyCell *lib_cell = network->findLibertyCell(network->name(lef_macro));
+  LibertyCell *lib_cell = network->findLibertyCell(network->name(cell));
   if (lib_cell) {
+    ConcreteCell *ccell = reinterpret_cast<ConcreteCell*>(cell);
     ccell->setLibertyCell(lib_cell);
-    LibertyCellPortBitIterator port_iter(lib_cell);
-    while (port_iter.hasNext()) {
-      LibertyPort *lib_port = port_iter.next();
-      if (lib_port->direction() != PortDirection::internal()) {
-	ConcretePort *port = ccell->findPort(lib_port->name());
-	if (port)
-	  port->setLibertyPort(lib_port);
+    CellPortIterator *port_iter = network->portIterator(cell);
+    while (port_iter->hasNext()) {
+      Port *port = port_iter->next();
+      const char *port_name = network->name(port);
+      LibertyPort *lib_port = lib_cell->findLibertyPort(port_name);
+      if (lib_port) {
+	ConcretePort *cport = reinterpret_cast<ConcretePort*>(port);
+	cport->setLibertyPort(lib_port);
+
+	if (network->isBus(port)) {
+	  PortMemberIterator *member_iter = network->memberIterator(port);
+	  while (member_iter->hasNext()) {
+	    Port *member = member_iter->next();
+	    const char *member_name = network->name(member);
+	    LibertyPort *member_lport = lib_cell->findLibertyPort(member_name);
+	    if (member_lport) {
+	      ConcretePort *member_cport = reinterpret_cast<ConcretePort*>(member);
+	      member_cport->setLibertyPort(member_lport);
+	    }
+	  }
+	  delete member_iter;
+	}
       }
     }
+    delete port_iter;
   }
   reader->setLefMacro(nullptr);
   return 0;
