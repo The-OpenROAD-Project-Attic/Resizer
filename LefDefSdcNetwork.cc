@@ -21,6 +21,10 @@
 
 namespace sta {
 
+static const char *
+escapeDividers(const char *token,
+	       const Network *network);
+
 LefDefSdcNetwork::LefDefSdcNetwork(Network *network) :
   SdcNetwork(network)
 {
@@ -30,7 +34,10 @@ LefDefSdcNetwork::LefDefSdcNetwork(Network *network) :
 Instance *
 LefDefSdcNetwork::findInstance(const char *path_name) const
 {
-  return network_->findInstance(path_name);
+  Instance *inst = network_->findInstance(path_name);
+  if (inst == nullptr)
+    inst = network_->findInstance(escapeDividers(path_name, this));
+  return inst;
 }
 
 void
@@ -140,14 +147,6 @@ LefDefSdcNetwork::findPinsMatching(const Instance *instance,
   }
 }
 
-static const char *
-escapeDividers(const char *token,
-	       const Network *network)
-{
-  return escapeChars(token, network->pathDivider(), '\0',
-		     network->pathEscape());
-}
-
 void
 LefDefSdcNetwork::findMatchingPins(const Instance *instance,
 				   const PatternMatch *port_pattern,
@@ -204,6 +203,14 @@ LefDefSdcNetwork::findPin(const char *path_name) const
   }
   else
     return findPin(topInstance(), path_name);
+}
+
+static const char *
+escapeDividers(const char *token,
+	       const Network *network)
+{
+  return escapeChars(token, network->pathDivider(), '\0',
+		     network->pathEscape());
 }
 
 } // namespace
