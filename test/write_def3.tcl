@@ -5,9 +5,10 @@ read_verilog reg1.v
 link_design top
 
 set def_file [make_result_file write_def3.def]
+set_design_size \
+  -die {0 0 10000 10000} \
+  -core {100 100 9000 9000}
 write_def -units 100 \
-  -die_area {0 0 10000 10000} \
-  -core_area {100 100 9000 9000} \
   -auto_place_pins \
   -sort \
   $def_file

@@ -81,15 +81,16 @@ Addtional commands are shown below.
 read_lef filename
 read_def filename
 set_wire_rc [-resistance res ] [-capacitance cap] [-corner corner_name]
+set_design_size [-die {lx ly ux uy}]
+                [-core {lx ly ux uy}]
 resize [-resize]
        [-resize_libraries resize_libraries]
        [-repair_max_cap]
        [-repair_max_slew]
        [-buffer_cell buffer_cell]
        [-dont_use cells]
+       [-max_utilization util]
 write_def [-units dist_units]
-          [-die_area {lx ly ux uy}]
-          [-core_area {lx ly ux uy}]
           [-site site_name]
           [-tracks tracks_file]
           [-auto_place_pins]
@@ -114,6 +115,10 @@ called before resizing, the default_wireload model specified in the
 first liberty file or with the SDC set_wire_load command is used to
 make parasitics.
 
+The `set_design_size` command set the corners of the die (for DEF
+DIEAREA) and core (placeable area) of the design. All dimensions are
+in microns.
+
 The `resize` command resizes gates and then uses buffer insertion to
 repair maximum capacitance and slew violations. Use the `-resize`,
 `-repair_max_cap` and `-repair_max_slew` options to invoke a single
@@ -130,6 +135,9 @@ specify a list of patterns of cells to not use. For example, "*/DLY*"
 says do not use cells with names that begin with "DLY" in all
 libraries.
 
+The resizer stops when the design area is `-max_utilization util`
+percent of the core area. `util` is between 0 and 100.
+
 A typical resizer command file is shown below.
 
 ```
@@ -138,6 +146,7 @@ read_lef nlc18.lef
 read_def mea.def
 read_sdc mea.sdc
 set_wire_rc -resistance 1.67e+05 -capacitance 1.33e-10
+set_design_size -die "0 0 1000 1000" -core "100 100 900 900"
 resize -buffer_cell [get_lib_cell nlc18_worst/snl_bufx4]
 write_def mea_resized.def
 ```
@@ -199,8 +208,8 @@ read_liberty liberty1.lib
 read_lef liberty1.lef
 read_verilog reg1.v
 link_design top
-write_def -units 100 -die_area {0 0 1000 1000} \
-	  -core_area {100 100 900 900} \
+set_design_size -die "0 0 1000 1000" -core "100 100 900 900"
+write_def -units 100 \
 	  -site site1 \
           -tracks tracks.info \
 	  -auto_place_pins \

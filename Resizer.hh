@@ -41,6 +41,29 @@ public:
   void setWireRC(float wire_res, // ohms/meter
 		 float wire_cap, // farads/meter
 		 Corner *corner);
+  void setDesignSize(// Die area (meters).
+		     double die_lx,
+		     double die_ly,
+		     double die_ux,
+		     double die_uy,
+		     // Core area (meters).
+		     double core_lx,
+		     double core_ly,
+		     double core_ux,
+		     double core_uy);
+  // Die area (meters).
+  void designDieSize(// Return values.
+		      double &die_lx,
+		      double &die_ly,
+		      double &die_ux,
+		      double &die_uy);
+  // Core area (meters).
+  void designCoreSize(// Return values.
+		      double &core_lx,
+		      double &core_ly,
+		      double &core_ux,
+		      double &core_uy);
+
   // Resize all instances in the network
   // and insert buffers to fix max cap/slew violations.
   void resize(bool resize,
@@ -48,7 +71,9 @@ public:
 	      bool repair_max_slew,
 	      LibertyCell *buffer_cell,
 	      LibertyLibrarySeq *resize_libs,
-	      LibertyCellSeq *dont_use);
+	      LibertyCellSeq *dont_use,
+	      // Fraction of core_area 0.0:1.0
+	      double max_utilization);
 
   // The functions below are for testing phases of the resizer.
   // Resize a single instance to the target load.
@@ -152,6 +177,17 @@ protected:
   float wire_cap_;
   Corner *corner_;
   LibertyCellSet dont_use_;
+  double max_area_;
+  // Die area (meters).
+  double die_lx_;
+  double die_ly_;
+  double die_ux_;
+  double die_uy_;
+  // Core area (meters).
+  double core_lx_;
+  double core_ly_;
+  double core_ux_;
+  double core_uy_;
 
   const MinMax *min_max_;
   const DcalcAnalysisPt *dcalc_ap_;
@@ -168,6 +204,7 @@ protected:
   int resize_count_;
   int inserted_buffer_count_;
   int rebuffer_net_count_;
+  double core_area_;
   double design_area_;
 };
 

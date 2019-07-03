@@ -129,28 +129,40 @@ read_def(const char *filename)
 }
 
 void
+set_design_size_cmd(// Die area (meters).
+		    double die_lx,
+		    double die_ly,
+		    double die_ux,
+		    double die_uy,
+		    // Core area (meters).
+		    double core_lx,
+		    double core_ly,
+		    double core_ux,
+		    double core_uy)
+{
+  Resizer *resizer = getResizer();
+  resizer->setDesignSize(die_lx, die_ly, die_ux, die_uy,
+			 core_lx, core_ly, core_ux, core_uy);
+}
+
+void
 write_def_cmd(const char *filename,
 	      int units,
-	      // Die area.
-	      double die_lx,
-	      double die_ly,
-	      double die_ux,
-	      double die_uy,
-	      // Core area.
-	      double core_lx,
-	      double core_ly,
-	      double core_ux,
-	      double core_uy,
 	      const char *site_name,
 	      const char *tracks_file,
 	      bool auto_place_pins,
 	      bool sort)
 {
   LefDefNetwork *network = lefDefNetwork();
+  Resizer *resizer = getResizer();
   if (site_name[0] == '\0')
     site_name = nullptr;
   if (tracks_file[0] == '\0')
     tracks_file = nullptr;
+  double die_lx, die_ly, die_ux, die_uy;
+  resizer->designDieSize(die_lx, die_ly, die_ux, die_uy);
+  double core_lx, core_ly, core_ux, core_uy;
+  resizer->designCoreSize(core_lx, core_ly, core_ux, core_uy);
   writeDef(filename, units,
 	   die_lx, die_ly, die_ux, die_uy,
 	   core_lx, core_ly, core_ux, core_uy,
@@ -172,11 +184,12 @@ resize_cmd(bool resize,
 	   bool repair_max_slew,
 	   LibertyCell *buffer_cell,
 	   LibertyLibrarySeq *resize_libs,
-	   LibertyCellSeq *dont_use)
+	   LibertyCellSeq *dont_use,
+	   double max_utilization)
 {
   Resizer *resizer = getResizer();
   resizer->resize(resize, repair_max_cap, repair_max_slew,
-		  buffer_cell, resize_libs, dont_use);
+		  buffer_cell, resize_libs, dont_use, max_utilization);
 }
 
 void

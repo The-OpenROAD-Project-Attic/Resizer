@@ -66,10 +66,12 @@ Resizer::Resizer() :
   wire_res_(0.0),
   wire_cap_(0.0),
   corner_(nullptr),
+  max_area_(0.0),
   clk_nets__valid_(false),
   level_drvr_verticies_valid_(false),
   unique_net_index_(1),
   unique_buffer_index_(1),
+  core_area_(0.0),
   design_area_(0.0)
 {
 }
@@ -162,12 +164,60 @@ Resizer::setWireRC(float wire_res,
 }
 
 void
+Resizer::setDesignSize(double die_lx,
+		       double die_ly,
+		       double die_ux,
+		       double die_uy,
+		       double core_lx,
+		       double core_ly,
+		       double core_ux,
+		       double core_uy)
+{
+  die_lx_ = die_lx;
+  die_ly_ = die_ly;
+  die_ux_ = die_ux;
+  die_uy_ = die_uy;
+  core_lx_ = core_lx;
+  core_ly_ = core_ly;
+  core_ux_ = core_ux;
+  core_uy_ = core_uy;
+  core_area_ = abs(core_uy_ - core_ly_) * abs(core_ux_ - core_lx_);
+}
+
+void
+Resizer::designDieSize(// Return values.
+		       double &die_lx,
+		       double &die_ly,
+		       double &die_ux,
+		       double &die_uy)
+{
+  die_lx = die_lx_;
+  die_ly = die_ly_;
+  die_ux = die_ux_;
+  die_uy = die_uy_;
+}
+
+void
+Resizer::designCoreSize(// Return values.
+			double &core_lx,
+			double &core_ly,
+			double &core_ux,
+			double &core_uy)
+{
+  core_lx = core_lx_;
+  core_ly = core_ly_;
+  core_ux = core_ux_;
+  core_uy = core_uy_;
+}
+
+void
 Resizer::resize(bool resize,
 		bool repair_max_cap,
 		bool repair_max_slew,
 		LibertyCell *buffer_cell,
 		LibertyLibrarySeq *resize_libs,
-		LibertyCellSeq *dont_use)
+		LibertyCellSeq *dont_use,
+		double max_utilization)
 {
   if (dont_use) {
     for (auto cell : *dont_use)
@@ -176,6 +226,7 @@ Resizer::resize(bool resize,
 
   init();
   ensureCorner();
+  max_area_ = core_area_ * max_utilization;
   // Find a target slew for the libraries and then
   // a target load for each cell that gives the target slew.
   findTargetLoads(resize_libs);

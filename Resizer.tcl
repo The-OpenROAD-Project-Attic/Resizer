@@ -27,6 +27,50 @@ define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}
 
+define_cmd_args "set_design_size" {[-die {lx ly ux uy}]\
+				     [-core {lx ly ux uy}]}
+
+proc set_design_size { args } {
+  parse_key_args "set_design_size" args keys {-die -core} flags {}
+
+  set die_lx 0
+  set die_ly 0
+  set die_ux 0
+  set die_uy 0
+  if [info exists keys(-die)] {
+    set die $keys(-die)
+    if { [llength $die] != 4 } {
+      sta_error "-die_area is a list of 4 coordinates."
+    }
+    lassign $die die_lx die_ly die_ux die_uy
+    check_positive_float "-die" $die_lx
+    check_positive_float "-die" $die_ly
+    check_positive_float "-die" $die_ux
+    check_positive_float "-die" $die_uy
+  }
+
+  set core_lx 0
+  set core_ly 0
+  set core_ux 0
+  set core_uy 0
+  if [info exists keys(-core)] {
+    set core $keys(-core)
+    if { [llength $core] != 4 } {
+      sta_error "-core_area is a list of 4 coordinates."
+    }
+    lassign $core core_lx core_ly core_ux core_uy
+    check_positive_float "-core" $core_lx
+    check_positive_float "-core" $core_ly
+    check_positive_float "-core" $core_ux
+    check_positive_float "-core" $core_uy
+  }
+  set_design_size_cmd \
+    [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
+    [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
+    [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
+    [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
+}
+
 define_cmd_args "write_def" {-units def_units\
 			       [-die_area {lx ly ux uy}]\
 			       [-core_area {lx ly ux uy}]\
@@ -51,7 +95,9 @@ proc write_def { args } {
   set die_ly 0
   set die_ux 0
   set die_uy 0
+  set have_die 0
   if [info exists keys(-die_area)] {
+    sta_warn "Warning: write_def -die_area deprecated. Use the set_design_size command."
     set die_area $keys(-die_area)
     if { [llength $die_area] != 4 } {
       sta_error "-die_area is a list of 4 coordinates."
@@ -61,6 +107,7 @@ proc write_def { args } {
     check_positive_float "-die_area" $die_ly
     check_positive_float "-die_area" $die_ux
     check_positive_float "-die_area" $die_uy
+    set have_die 1
   }
 
   set core_lx 0
@@ -69,6 +116,7 @@ proc write_def { args } {
   set core_uy 0
   set have_core 0
   if [info exists keys(-core_area)] {
+    sta_warn "Warning: write_def -core_area deprecated. Use the set_design_size command."
     set core_area $keys(-core_area)
     if { [llength $core_area] != 4 } {
       sta_error "-core_area is a list of 4 coordinates."
@@ -80,6 +128,13 @@ proc write_def { args } {
     check_positive_float "-core_area" $core_uy
     set have_core 1
   }
+  if { $have_die || $have_core } {
+    set_design_size_cmd \
+      [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
+      [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
+      [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
+      [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
+  }
 
   set site_name ""
   if [info exists keys(-site)] {
@@ -89,15 +144,9 @@ proc write_def { args } {
   set tracks_file ""
   if { [info exists keys(-tracks)] } {
     set tracks_file $keys(-tracks)
-    if { !$have_core } {
-      sta_warn "-tracks file but core_* dimensions missing."
-    }
   }
 
   set auto_place_pins [info exists flags(-auto_place_pins)]
-  if { $auto_place_pins && !$have_core } {
-    sta_warn "-auto_place_pins but core_* dimensions missing."
-  }
 
   set sort [info exists flags(-sort)]
 
@@ -106,10 +155,6 @@ proc write_def { args } {
 
   # convert die coordinates to meters.
   write_def_cmd $filename $units \
-    [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
-    [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
-    [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
-    [expr $core_ux * 1e-6] [expr $core_uy * 1e-6] \
     $site_name $tracks_file $auto_place_pins $sort
 }
 
@@ -144,7 +189,7 @@ define_cmd_args "resize" {[-resize]\
 
 proc resize { args } {
   parse_key_args "resize" args \
-    keys {-buffer_cell -resize_libraries -dont_use} \
+    keys {-buffer_cell -resize_libraries -dont_use -max_utilization} \
     flags {-resize -repair_max_cap -repair_max_slew}
 
   set resize [info exists flags(-resize)]
@@ -183,10 +228,19 @@ proc resize { args } {
     set dont_use [get_lib_cells -quiet $keys(-dont_use)]
   }
 
+  set max_util 1.0
+  if { [info exists keys(-max_utilization)] } {
+    set max_util $keys(-max_utilization)
+    if {!([string is double $max_util] && $max_util >= 0.0 && $max_util <= 100)} {
+      sta_error "-max_utilization must be between 0 and 100%."
+    }
+    max_util [expr $max_util / 100.0]
+  }
+
   check_argc_eq0 "resize" $args
 
   resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell \
-    $resize_libs $dont_use
+    $resize_libs $dont_use $max_util
 }
 
 define_cmd_args "get_pin_net" {pin_name}
