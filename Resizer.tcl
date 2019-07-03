@@ -47,12 +47,11 @@ proc set_design_size { args } {
     check_positive_float "-die" $die_ly
     check_positive_float "-die" $die_ux
     check_positive_float "-die" $die_uy
+    set_design_die_size_cmd \
+      [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
+      [expr $die_ux * 1e-6] [expr $die_uy * 1e-6]
   }
 
-  set core_lx 0
-  set core_ly 0
-  set core_ux 0
-  set core_uy 0
   if [info exists keys(-core)] {
     set core $keys(-core)
     if { [llength $core] != 4 } {
@@ -63,12 +62,10 @@ proc set_design_size { args } {
     check_positive_float "-core" $core_ly
     check_positive_float "-core" $core_ux
     check_positive_float "-core" $core_uy
+    set_design_core_size_cmd \
+      [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
+      [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
   }
-  set_design_size_cmd \
-    [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
-    [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
-    [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
-    [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
 }
 
 define_cmd_args "write_def" {-units def_units\
@@ -91,11 +88,6 @@ proc write_def { args } {
     check_positive_integer "-units" $units
   }
 
-  set die_lx 0
-  set die_ly 0
-  set die_ux 0
-  set die_uy 0
-  set have_die 0
   if [info exists keys(-die_area)] {
     sta_warn "Warning: write_def -die_area deprecated. Use the set_design_size command."
     set die_area $keys(-die_area)
@@ -107,14 +99,11 @@ proc write_def { args } {
     check_positive_float "-die_area" $die_ly
     check_positive_float "-die_area" $die_ux
     check_positive_float "-die_area" $die_uy
-    set have_die 1
+    set_design_die_size_cmd \
+      [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
+      [expr $die_ux * 1e-6] [expr $die_uy * 1e-6]
   }
 
-  set core_lx 0
-  set core_ly 0
-  set core_ux 0
-  set core_uy 0
-  set have_core 0
   if [info exists keys(-core_area)] {
     sta_warn "Warning: write_def -core_area deprecated. Use the set_design_size command."
     set core_area $keys(-core_area)
@@ -126,12 +115,7 @@ proc write_def { args } {
     check_positive_float "-core_area" $core_ly
     check_positive_float "-core_area" $core_ux
     check_positive_float "-core_area" $core_uy
-    set have_core 1
-  }
-  if { $have_die || $have_core } {
-    set_design_size_cmd \
-      [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
-      [expr $die_ux * 1e-6] [expr $die_uy * 1e-6] \
+    set_design_core_size_cmd \
       [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
       [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
   }

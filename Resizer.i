@@ -129,20 +129,25 @@ read_def(const char *filename)
 }
 
 void
-set_design_size_cmd(// Die area (meters).
-		    double die_lx,
-		    double die_ly,
-		    double die_ux,
-		    double die_uy,
-		    // Core area (meters).
-		    double core_lx,
-		    double core_ly,
-		    double core_ux,
-		    double core_uy)
+set_design_die_size_cmd(// Die area (meters).
+			double die_lx,
+			double die_ly,
+			double die_ux,
+			double die_uy)
 {
   Resizer *resizer = getResizer();
-  resizer->setDesignSize(die_lx, die_ly, die_ux, die_uy,
-			 core_lx, core_ly, core_ux, core_uy);
+  resizer->setDesignDieSize(die_lx, die_ly, die_ux, die_uy);
+}
+
+void
+set_design_core_size_cmd(// Core area (meters).
+			 double core_lx,
+			 double core_ly,
+			 double core_ux,
+			 double core_uy)
+{
+  Resizer *resizer = getResizer();
+  resizer->setDesignCoreSize(core_lx, core_ly, core_ux, core_uy);
 }
 
 void

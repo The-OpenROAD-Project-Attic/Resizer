@@ -41,28 +41,26 @@ public:
   void setWireRC(float wire_res, // ohms/meter
 		 float wire_cap, // farads/meter
 		 Corner *corner);
-  void setDesignSize(// Die area (meters).
-		     double die_lx,
-		     double die_ly,
-		     double die_ux,
-		     double die_uy,
-		     // Core area (meters).
-		     double core_lx,
-		     double core_ly,
-		     double core_ux,
-		     double core_uy);
   // Die area (meters).
   void designDieSize(// Return values.
 		      double &die_lx,
 		      double &die_ly,
 		      double &die_ux,
 		      double &die_uy);
+  void setDesignDieSize(double die_lx,
+			double die_ly,
+			double die_ux,
+			double die_uy);
   // Core area (meters).
   void designCoreSize(// Return values.
 		      double &core_lx,
 		      double &core_ly,
 		      double &core_ux,
 		      double &core_uy);
+  void setDesignCoreSize(double core_lx,
+			 double core_ly,
+			 double core_ux,
+			 double core_uy);
 
   // Resize all instances in the network
   // and insert buffers to fix max cap/slew violations.

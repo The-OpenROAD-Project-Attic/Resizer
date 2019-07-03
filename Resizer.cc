@@ -164,27 +164,6 @@ Resizer::setWireRC(float wire_res,
 }
 
 void
-Resizer::setDesignSize(double die_lx,
-		       double die_ly,
-		       double die_ux,
-		       double die_uy,
-		       double core_lx,
-		       double core_ly,
-		       double core_ux,
-		       double core_uy)
-{
-  die_lx_ = die_lx;
-  die_ly_ = die_ly;
-  die_ux_ = die_ux;
-  die_uy_ = die_uy;
-  core_lx_ = core_lx;
-  core_ly_ = core_ly;
-  core_ux_ = core_ux;
-  core_uy_ = core_uy;
-  core_area_ = abs(core_uy_ - core_ly_) * abs(core_ux_ - core_lx_);
-}
-
-void
 Resizer::designDieSize(// Return values.
 		       double &die_lx,
 		       double &die_ly,
@@ -198,6 +177,18 @@ Resizer::designDieSize(// Return values.
 }
 
 void
+Resizer::setDesignDieSize(double die_lx,
+			  double die_ly,
+			  double die_ux,
+			  double die_uy)
+{
+  die_lx_ = die_lx;
+  die_ly_ = die_ly;
+  die_ux_ = die_ux;
+  die_uy_ = die_uy;
+}
+
+void
 Resizer::designCoreSize(// Return values.
 			double &core_lx,
 			double &core_ly,
@@ -208,6 +199,19 @@ Resizer::designCoreSize(// Return values.
   core_ly = core_ly_;
   core_ux = core_ux_;
   core_uy = core_uy_;
+}
+
+void
+Resizer::setDesignCoreSize(double core_lx,
+			   double core_ly,
+			   double core_ux,
+			   double core_uy)
+{
+  core_lx_ = core_lx;
+  core_ly_ = core_ly;
+  core_ux_ = core_ux;
+  core_uy_ = core_uy;
+  core_area_ = abs(core_uy_ - core_ly_) * abs(core_ux_ - core_lx_);
 }
 
 void
