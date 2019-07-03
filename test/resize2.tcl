@@ -1,4 +1,4 @@
-# resize reg1
+# resize reg1 (no placement)
 source helpers.tcl
 read_liberty nlc18.lib
 read_lef nlc18.lef

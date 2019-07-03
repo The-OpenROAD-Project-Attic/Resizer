@@ -20,6 +20,9 @@ namespace eval sta {
 define_cmd_args "set_dont_use" {cell dont_use}
 
 # Defined by SWIG interface Resizer.i
+define_cmd_args "design_area" {}
+
+# Defined by SWIG interface Resizer.i
 define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}

@@ -72,8 +72,7 @@ public:
   DefDbu metersToDbu(double dist) const;
   Library *makeLefLibrary(const char *name,
 			  const char *filename);
-  Library *lefLibrary();
-  Library *lefLibrary(Cell *cell);
+  Library *lefLibrary() const { return lef_library_; }
 
   lefiSite *findLefSite(const char *name);
   void makeLefSite(lefiSite *site);
@@ -81,11 +80,12 @@ public:
   void makeLefLayer(lefiLayer *layer);
   LefLayerSeq &lefLayers() { return lef_layers_; }
 
-  lefiMacro *lefMacro(Cell *cell);
+  lefiMacro *lefMacro(Cell *cell) const;
   void setLefMacro(Cell *cell,
 		   lefiMacro *lef_macro);
   Cell *lefCell(LibertyCell *cell);
   bool isLefCell(Cell *cell) const;
+  double area(Cell *cell) const;
 
   void initTopInstancePins();
   Instance *makeDefComponent(Cell *cell,
@@ -100,6 +100,7 @@ public:
   void setLocation(Port *port,
 		   DefPt location);
   bool isPlaced(const Pin *pin) const;
+  double area(Instance *inst) const;
   virtual Instance *findInstance(const char *path_name) const;
 
   virtual Net *findNet(const char *path_name) const;

@@ -94,12 +94,6 @@ LefDefNetwork::makeLefLibrary(const char *name,
   return lef_library_;
 }
 
-Library *
-LefDefNetwork::lefLibrary()
-{
-  return lef_library_;
-}
-
 void
 LefDefNetwork::setLefMacro(Cell *cell,
 			   lefiMacro *lef_macro)
@@ -108,7 +102,7 @@ LefDefNetwork::setLefMacro(Cell *cell,
 }
 
 lefiMacro *
-LefDefNetwork::lefMacro(Cell *cell)
+LefDefNetwork::lefMacro(Cell *cell) const
 {
   return lef_macro_map_.findKey(cell);
 }
@@ -202,6 +196,27 @@ LefDefNetwork::isPlaced(const Pin *pin) const
     return def_component
       && def_component->isPlaced();
   }
+}
+
+double
+LefDefNetwork::area(Instance *inst) const
+{
+  return area(cell(inst));
+}
+
+double
+LefDefNetwork::area(Cell *cell) const
+{
+  const char *cell_name = name(cell);
+  if (lef_library_) {
+    Cell *lef_cell = findCell(lef_library_, cell_name);
+    if (lef_cell) {
+      lefiMacro *lef_macro = lefMacro(lef_cell);
+      if (lef_macro && lef_macro->hasSize())
+	return lef_macro->sizeX() * 1e-6 * lef_macro->sizeY() * 1e-6;
+    }
+  }
+  return 0.0;
 }
 
 Instance *

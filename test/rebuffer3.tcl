@@ -85,15 +85,10 @@ read_def $def_file
 
 create_clock clk -period 1
 
-set wire_res_per_meter 1.7e+5
-#set wire_cap_per_meter 1.3e-10
 # use 100x wire cap to tickle buffer insertion
-set wire_cap_per_meter 1.3e-8
+set_wire_rc -resistance 1.7e+5 -capacitance 1.3e-8
 set buffer_cell [get_lib_cell liberty1/snl_bufx2]
+report_worst_slack
 
-sta::make_net_parasitics $wire_res_per_meter $wire_cap_per_meter
-report_checks
-
-sta::set_debug rebuffer 2
-sta::rebuffer $buffer_cell $wire_res_per_meter $wire_cap_per_meter
-report_checks
+resize -repair_max_cap -repair_max_slew -buffer_cell $buffer_cell
+report_worst_slack

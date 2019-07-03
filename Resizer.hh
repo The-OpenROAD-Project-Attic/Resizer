@@ -33,6 +33,7 @@ class Resizer : public Sta
 public:
   Resizer();
   LefDefNetwork *lefDefNetwork();
+  const LefDefNetwork *lefDefNetwork() const;
   void initFlute(const char *resizer_path);
 
   // Set the resistance and capacitance used for parasitics.
@@ -61,6 +62,8 @@ public:
 		LibertyLibrarySeq *resize_libs);
   Slew targetSlew(const TransRiseFall *tr);
   float targetLoadCap(LibertyCell *cell);
+  // Area of the design in meter^2.
+  double designArea();
 
 protected:
   virtual void makeNetwork();
@@ -116,10 +119,10 @@ protected:
 				     SteinerPt prev,
 				     int level,
 				     LibertyCell *buffer_cell);
-  int rebufferTopDown(RebufferOption *choice,
-		      Net *net,
-		      int level,
-		      LibertyCell *buffer_cell);
+  void rebufferTopDown(RebufferOption *choice,
+		       Net *net,
+		       int level,
+		       LibertyCell *buffer_cell);
   RebufferOptionSeq
   addWireAndBuffer(RebufferOptionSeq Z,
 		   SteinerTree *tree,
@@ -140,6 +143,7 @@ protected:
   string makeUniqueNetName();
   string makeUniqueBufferName();
   bool dontUse(LibertyCell *cell);
+  void findDesignArea();
 
   friend class RebufferOption;
   using Sta::makeEquivCells;
@@ -164,6 +168,7 @@ protected:
   int resize_count_;
   int inserted_buffer_count_;
   int rebuffer_net_count_;
+  double design_area_;
 };
 
 } // namespace

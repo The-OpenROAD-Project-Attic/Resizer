@@ -55,6 +55,10 @@ Path Type: max
                   -5.81   slack (VIOLATED)
 
 
+###############################################################################
+# r1 driving r2-r5 from end
+###############################################################################
+
 VERSION 5.5 ; 
 NAMESCASESENSITIVE ON ;
 DIVIDERCHAR "/" ;
@@ -65,7 +69,7 @@ TECHNOLOGY technology ;
 
 UNITS DISTANCE MICRONS 1000 ;
 
-DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
+DIEAREA ( 0 0 ) ( 1000 1000 ) ;
 
 COMPONENTS 6 ;
 - buffer1 snl_bufx2

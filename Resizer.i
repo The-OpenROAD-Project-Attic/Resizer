@@ -221,4 +221,11 @@ set_dont_use(LibertyCell *cell,
   cell->setDontUse(dont_use);
 }
 
+float
+design_area()
+{
+  Resizer *resizer = getResizer();
+  return resizer->designArea();
+}
+
 %} // inline

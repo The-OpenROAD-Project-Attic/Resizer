@@ -69,7 +69,8 @@ Resizer::Resizer() :
   clk_nets__valid_(false),
   level_drvr_verticies_valid_(false),
   unique_net_index_(1),
-  unique_buffer_index_(1)
+  unique_buffer_index_(1),
+  design_area_(0.0)
 {
 }
 
@@ -83,6 +84,12 @@ LefDefNetwork *
 Resizer::lefDefNetwork()
 {
   return static_cast<LefDefNetwork*>(network_);
+}
+
+const LefDefNetwork *
+Resizer::lefDefNetwork() const
+{
+  return static_cast<const LefDefNetwork*>(network_);
 }
 
 void
@@ -292,11 +299,13 @@ Resizer::resizeToTargetSlew1(Instance *inst)
 			cell->name(),
 			best_cell->name());
 	    if (network->isLefCell(network_->cell(inst))) {
-	      // Replace LEF with LEF so ports stay aligned.
+	      // Replace LEF with LEF so ports stay aligned in instance.
 	      Cell *best_lef = network->lefCell(best_cell);
 	      if (best_lef) {
+		design_area_ -= network->area(inst);
 		replaceCell(inst, best_lef);
 		resize_count_++;
+		design_area_ += network->area(inst);
 	      }
 	    }
 	    else {
@@ -893,11 +902,10 @@ Resizer::rebuffer(const Pin *drvr_pin,
 	}
       }
       if (best) {
-	int insert_count = rebufferTopDown(best, net, 1, buffer_cell);
-	if (insert_count > 0) {
-	  inserted_buffer_count_ += insert_count;
+	int before = inserted_buffer_count_;
+	rebufferTopDown(best, net, 1, buffer_cell);
+	if (inserted_buffer_count_ != before)
 	  rebuffer_net_count_++;
-	}
       }
     }
   }
@@ -1080,7 +1088,7 @@ Resizer::addWireAndBuffer(RebufferOptionSeq Z,
 }
 
 // Return inserted buffer count.
-int
+void
 Resizer::rebufferTopDown(RebufferOption *choice,
 			 Net *net,
 			 int level,
@@ -1096,6 +1104,8 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     Instance *buffer = network->makeInstance(buffer_cell,
 					     buffer_name.c_str(),
 					     parent);
+    inserted_buffer_count_++;
+    design_area_ += network->area(buffer);
     level_drvr_verticies_valid_ = false;
     LibertyPort *input, *output;
     buffer_cell->bufferPorts(input, output);
@@ -1110,16 +1120,17 @@ Resizer::rebufferTopDown(RebufferOption *choice,
     rebufferTopDown(choice->ref(), net2, level + 1, buffer_cell);
     makeNetParasitics(net);
     makeNetParasitics(net2);
-    return 1;
+    break;
   }
   case RebufferOption::Type::wire:
     debugPrint2(debug_, "rebuffer", 3, "%*swire\n", level, "");
-    return rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
+    rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
+    break;
   case RebufferOption::Type::junction: {
     debugPrint2(debug_, "rebuffer", 3, "%*sjunction\n", level, "");
-    int insert_count1 = rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
-    int insert_count2 = rebufferTopDown(choice->ref2(), net, level + 1, buffer_cell);
-    return insert_count1 + insert_count2;
+    rebufferTopDown(choice->ref(), net, level + 1, buffer_cell);
+    rebufferTopDown(choice->ref2(), net, level + 1, buffer_cell);
+    break;
   }
   case RebufferOption::Type::sink: {
     Pin *load_pin = choice->loadPin();
@@ -1134,7 +1145,7 @@ Resizer::rebufferTopDown(RebufferOption *choice,
       disconnectPin(load_pin);
       connectPin(load_inst, load_port, net);
     }
-    return 0;
+    break;
   }
   }
 }
@@ -1248,6 +1259,27 @@ Resizer::gateDelay(LibertyPort *out_port,
     }
   }
   return max_delay;
+}
+
+double
+Resizer::designArea()
+{
+  if (design_area_ == 0.0)
+    findDesignArea();
+  return design_area_;
+}
+
+void
+Resizer::findDesignArea()
+{
+  LefDefNetwork *network = lefDefNetwork();
+  design_area_ = 0.0;
+  LeafInstanceIterator *leaf_iter = network_->leafInstanceIterator();
+  while (leaf_iter->hasNext()) {
+    Instance *leaf = leaf_iter->next();
+    design_area_ += network->area(leaf);
+  }
+  delete leaf_iter;
 }
 
 };

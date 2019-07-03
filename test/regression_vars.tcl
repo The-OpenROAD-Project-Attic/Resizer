@@ -142,6 +142,7 @@ record_resizer_tests {
   resize3
   resize4
   resize5
+  resize6
   write_def1
   write_def2
   write_def3
