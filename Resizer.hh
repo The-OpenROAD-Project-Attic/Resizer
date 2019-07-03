@@ -167,6 +167,7 @@ protected:
   string makeUniqueBufferName();
   bool dontUse(LibertyCell *cell);
   void findDesignArea();
+  bool overMaxArea();
 
   friend class RebufferOption;
   using Sta::makeEquivCells;

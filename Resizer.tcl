@@ -218,7 +218,7 @@ proc resize { args } {
     if {!([string is double $max_util] && $max_util >= 0.0 && $max_util <= 100)} {
       sta_error "-max_utilization must be between 0 and 100%."
     }
-    max_util [expr $max_util / 100.0]
+    set max_util [expr $max_util / 100.0]
   }
 
   check_argc_eq0 "resize" $args
@@ -232,6 +232,12 @@ define_cmd_args "get_pin_net" {pin_name}
 proc get_pin_net { pin_name } {
   set pin [get_pin_error "pin_name" $pin_name]
   return [$pin net]
+}
+
+define_cmd_args "report_design_area" {}
+
+proc report_design_area {} {
+  puts "Design area [format %.0f [expr [design_area] *1e12]] u^2"
 }
 
 # sta namespace end

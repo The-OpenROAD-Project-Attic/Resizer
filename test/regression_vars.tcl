@@ -137,6 +137,7 @@ record_resizer_tests {
   rebuffer2
   rebuffer4
   rebuffer5
+  rebuffer6
   resize1
   resize2
   resize3

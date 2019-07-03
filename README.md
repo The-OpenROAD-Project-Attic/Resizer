@@ -147,7 +147,7 @@ read_def mea.def
 read_sdc mea.sdc
 set_wire_rc -resistance 1.67e+05 -capacitance 1.33e-10
 set_design_size -die "0 0 1000 1000" -core "100 100 900 900"
-resize -buffer_cell [get_lib_cell nlc18_worst/snl_bufx4]
+resize -buffer_cell [get_lib_cell nlc18_worst/snl_bufx4] -max_utilization 90
 write_def mea_resized.def
 ```
 
@@ -173,16 +173,15 @@ report_wns
 Resizer can also be used to translate a Verilog netlist to an
 initialized DEF.
 
-The `write_def` command `-units`, `-die_area`, `-core_area`, `-site`,
+The `write_def` command `-units`, `-site`,
 `-tracks` and `-auto_place`_pins arguments are only used when writing
 a DEF file from a Verilog netlist to write an initial DEF file. If a
 DEF netlist has been read everything but the COMPONENTS and NETS
 sections are copied from the original DEF file.  `dist_units` are the
-DEF database units per micron. The die area is a list of corner
-coordinates in microns (lower x, lower y, upper x, upper
-y). `site_name` is a LEF site name that is used to write ROW
-statements to fill the die area.  The `-auto_place_pins` argument adds
-locations for the pins equally spaced around the die perimeter.
+DEF database units per micron. `site_name` is a LEF site name that is
+used to write ROW statements to fill the die area.  The
+`-auto_place_pins` argument adds locations for the pins equally spaced
+around the die perimeter.
 
 TRACKS statements are added for each routing layer in the LEF file.
 The optional `tracks_file` allows an alternative specification of the
@@ -241,5 +240,5 @@ Multiple Liberty files can be read by using multiple -liberty keywords.
 ## Authors
 
 * James Cherry (coding)
-* Lukas van Ginneken (algorithm)
-* Chris Cho (flute steiner tree package)
+* Lukas van Ginneken (resizing algorithm)
+* Chris Cho (Flute steiner tree package)

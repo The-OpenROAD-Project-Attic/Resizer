@@ -301,7 +301,17 @@ Resizer::resizeToTargetSlew(LibertyLibrarySeq *resize_libs)
     Pin *drvr_pin = vertex->pin();
     Instance *inst = network_->instance(drvr_pin);
     resizeToTargetSlew1(inst);
+    if (overMaxArea()) {
+      report_->warn("max utilization reached.\n");
+      break;
+    }
   }
+}
+
+bool
+Resizer::overMaxArea()
+{
+  return max_area_ && design_area_ > max_area_;
 }
 
 void
@@ -808,8 +818,13 @@ Resizer::rebuffer(bool repair_max_cap,
       if ((repair_max_cap
 	   && hasMaxCapViolation(drvr_pin))
 	  || (repair_max_slew
-	      && hasMaxSlewViolation(drvr_pin)))
+	      && hasMaxSlewViolation(drvr_pin))) {
 	rebuffer(drvr_pin, buffer_cell);
+	if (overMaxArea()) {
+	  report_->warn("Max utilization reached.\n");
+	  break;
+	}
+      }
     }
   }
 }
