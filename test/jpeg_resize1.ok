@@ -77,7 +77,7 @@ Path Type: max
 
 tns -3959.29
 wns -3.01
-Inserted 20 buffers in 20 nets.
+Inserted 2216 buffers in 20 nets.
 After buffering
 Startpoint: fdct_zigzag/dct_mod/ddin_reg_7_
             (rising edge-triggered flip-flop clocked by clk)
