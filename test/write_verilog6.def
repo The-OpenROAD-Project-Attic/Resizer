@@ -24,8 +24,8 @@ COMPONENTS 5 ;
 END COMPONENTS
 
 PINS 6 ;
-- in1 + NET in1 + DIRECTION INPUT ;
-- in2 + NET in2 + DIRECTION INPUT ;
+- in\[0\][0] + NET in\[0\][0] + DIRECTION INPUT ;
+- in\[0\][1] + NET in\[0\][1] + DIRECTION INPUT ;
 - clk1 + NET clk1 + DIRECTION INPUT ;
 - clk2 + NET clk2 + DIRECTION INPUT ;
 - clk3 + NET clk3 + DIRECTION INPUT ;
@@ -40,8 +40,8 @@ SPECIALNETS 2 ;
 END SPECIALNETS
 
 NETS 10 ;
-- in1 ( PIN in1 ) ( r1 D ) ;
-- in2 ( PIN in2 ) ( r2 D ) ;
+- in\[0\][0] ( PIN in\[0\][0] ) ( r1 D ) ;
+- in\[0\][1] ( PIN in\[0\][1] ) ( r2 D ) ;
 - clk1 ( PIN clk1 ) ( r1 CP ) ;
 - clk2 ( PIN clk2 ) ( r2 CP ) ;
 - clk3 ( PIN clk3 ) ( r3 CP ) ;

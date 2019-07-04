@@ -1,27 +1,19 @@
-# lef/def reg1
-read_liberty liberty1.lib
-read_lef liberty1.lef
-read_def reg1.def
-create_clock -name clk -period 10 {clk1 clk2 clk3}
-set_input_delay -clock clk 0 {in1 in2}
-module top (in1,
-    in2,
-    clk1,
+module top (clk1,
     clk2,
     clk3,
-    out);
- input in1;
- input in2;
+    out,
+    \in[0] );
  input clk1;
  input clk2;
  input clk3;
  output out;
+ input [0:1] \in[0] ;
 
  snl_ffqx1 r1 (.Q(r1q),
-    .D(in1),
+    .D(\in[0] [0]),
     .CP(clk1));
  snl_ffqx1 r2 (.Q(r2q),
-    .D(in2),
+    .D(\in[0] [1]),
     .CP(clk2));
  snl_ffqx1 r3 (.Q(out),
     .D(u2z),

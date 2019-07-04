@@ -7,4 +7,4 @@ write_verilog  $verilog_file
 report_file $verilog_file
 
 read_verilog  $verilog_file
-link_design reg1
+link_design top
