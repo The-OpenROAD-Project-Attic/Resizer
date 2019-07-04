@@ -929,8 +929,11 @@ Resizer::rebuffer(Net *net,
   ensureCorner();
   findBufferTargetSlews(resize_libs);
   PinSet *drvrs = network_->drivers(net);
-  for (auto drvr : *drvrs)
+  PinSet::Iterator drvr_iter(drvrs);
+  if (drvr_iter.hasNext()) {
+    Pin *drvr = drvr_iter.next();
     rebuffer(drvr, buffer_cell);
+  }
   report_->print("Inserted %d buffers.\n", inserted_buffer_count_);
 }
 
@@ -950,7 +953,11 @@ Resizer::rebuffer(const Pin *drvr_pin,
     net = network_->net(drvr_pin);
     drvr_port = network_->libertyPort(drvr_pin);
   }
-  if (drvr_port) {
+  if (drvr_port
+      // Verilog connects by net name, so there is no way to distinguish the
+      // net from the port. We could isolate the output port with a buffer
+      // and move the connections to a safe net but for now just skip them.
+      && !hasTopLevelOutputPort(net)) {
     LefDefNetwork *network = lefDefNetwork();
     SteinerTree *tree = makeSteinerTree(net, true, network);
     SteinerPt drvr_pt = tree->drvrPt(network_);
@@ -979,6 +986,22 @@ Resizer::rebuffer(const Pin *drvr_pin,
       }
     }
   }
+}
+
+bool
+Resizer::hasTopLevelOutputPort(Net *net)
+{
+  NetConnectedPinIterator *pin_iter = network_->connectedPinIterator(net);
+  while (pin_iter->hasNext()) {
+    Pin *pin = pin_iter->next();
+    if (network_->isTopLevelPort(pin)
+	&& network_->direction(pin)->isOutput()) {
+      delete pin_iter;
+      return true;
+    }
+  }
+  delete pin_iter;
+  return false;
 }
 
 class RebufferOptionBufferReqGreater

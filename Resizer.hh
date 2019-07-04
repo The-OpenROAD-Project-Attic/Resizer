@@ -168,6 +168,7 @@ protected:
   bool dontUse(LibertyCell *cell);
   void findDesignArea();
   bool overMaxArea();
+  bool hasTopLevelOutputPort(Net *net);
 
   friend class RebufferOption;
   using Sta::makeEquivCells;
