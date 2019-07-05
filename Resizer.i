@@ -124,30 +124,51 @@ lef_exists()
 void
 read_def(const char *filename)
 {
-  LefDefNetwork *network = lefDefNetwork();
-  readDef(filename, true, network);
+  Resizer *resizer = getResizer();
+  resizer->readDef(filename);
 }
 
 void
-set_design_die_size_cmd(// Die area (meters).
-			double die_lx,
-			double die_ly,
-			double die_ux,
-			double die_uy)
+set_die_size_cmd(// Die area (meters).
+		 double die_lx,
+		 double die_ly,
+		 double die_ux,
+		 double die_uy)
 {
   Resizer *resizer = getResizer();
-  resizer->setDesignDieSize(die_lx, die_ly, die_ux, die_uy);
+  resizer->setDieSize(die_lx, die_ly, die_ux, die_uy);
+}
+
+bool
+have_die_area()
+{
+  Resizer *resizer = getResizer();
+  return resizer->haveDieArea();
 }
 
 void
-set_design_core_size_cmd(// Core area (meters).
-			 double core_lx,
-			 double core_ly,
-			 double core_ux,
-			 double core_uy)
+set_core_size_cmd(// Core area (meters).
+		  double core_lx,
+		  double core_ly,
+		  double core_ux,
+		  double core_uy)
 {
   Resizer *resizer = getResizer();
-  resizer->setDesignCoreSize(core_lx, core_ly, core_ux, core_uy);
+  resizer->setCoreSize(core_lx, core_ly, core_ux, core_uy);
+}
+
+bool
+have_core_area()
+{
+  Resizer *resizer = getResizer();
+  return resizer->haveCoreArea();
+}
+
+double
+utilization()
+{
+  Resizer *resizer = getResizer();
+  return resizer->utilization();
 }
 
 void
@@ -165,9 +186,9 @@ write_def_cmd(const char *filename,
   if (tracks_file[0] == '\0')
     tracks_file = nullptr;
   double die_lx, die_ly, die_ux, die_uy;
-  resizer->designDieSize(die_lx, die_ly, die_ux, die_uy);
+  resizer->dieSize(die_lx, die_ly, die_ux, die_uy);
   double core_lx, core_ly, core_ux, core_uy;
-  resizer->designCoreSize(core_lx, core_ly, core_ux, core_uy);
+  resizer->coreSize(core_lx, core_ly, core_ux, core_uy);
   writeDef(filename, units,
 	   die_lx, die_ly, die_ux, die_uy,
 	   core_lx, core_ly, core_ux, core_uy,

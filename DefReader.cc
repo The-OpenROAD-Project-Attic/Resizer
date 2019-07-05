@@ -45,6 +45,10 @@ defUnitsCbk(defrCallbackType_e,
 	    double units,
 	    defiUserData user);
 static int
+defDieAreaCbk(defrCallbackType_e,
+	      defiBox *box,
+	      defiUserData user);
+static int
 defComponentCbk(defrCallbackType_e,
 		defiComponent *def_component,
 		defiUserData user);
@@ -114,6 +118,7 @@ registerDefCallbacks()
   defrSetDividerCbk(defDividerCbk);
   defrSetBusBitCbk(defBusBitCbk);
   defrSetUnitsCbk(defUnitsCbk);
+  defrSetDieAreaCbk(defDieAreaCbk);
   defrSetComponentCbk(defComponentCbk);
   defrSetNetCbk(defNetCbk);
   defrSetPinCbk(defPinCbk);
@@ -185,6 +190,19 @@ defUnitsCbk(defrCallbackType_e,
 {
   LefDefNetwork *network = getNetwork(user);
   network->setDefUnits(units);
+  return 0;
+}
+
+static int
+defDieAreaCbk(defrCallbackType_e,
+	      defiBox *box,
+	      defiUserData user)
+{
+  LefDefNetwork *network = getNetwork(user);
+  defiPoints points = box->getPoint();
+  if (points.numPoints == 2)
+    network->setDieArea(points.x[0], points.y[0],
+			points.x[1], points.y[1]);
   return 0;
 }
 

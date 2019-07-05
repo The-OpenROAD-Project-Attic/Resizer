@@ -119,6 +119,33 @@ LefDefNetwork::isLefCell(Cell *cell) const
   return library(cell) == lef_library_;
 }
 
+////////////////////////////////////////////////////////////////
+
+void
+LefDefNetwork::setDieArea(DefDbu die_lx,
+			  DefDbu die_ly,
+			  DefDbu die_ux,
+			  DefDbu die_uy)
+{
+  die_lx_ = die_lx;
+  die_ly_ = die_ly;
+  die_ux_ = die_ux;
+  die_uy_ = die_uy;
+}
+
+void
+LefDefNetwork::dieArea(// Return values.
+		       DefDbu &die_lx,
+		       DefDbu &die_ly,
+		       DefDbu &die_ux,
+		       DefDbu &die_uy)
+{
+  die_lx = die_lx_;
+  die_ly = die_ly_;
+  die_ux = die_ux_;
+  die_uy = die_uy_;
+}
+
 void
 LefDefNetwork::initTopInstancePins()
 {

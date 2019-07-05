@@ -36,6 +36,7 @@
 #include "Search.hh"
 #include "LefDefNetwork.hh"
 #include "LefDefSdcNetwork.hh"
+#include "DefReader.hh"
 #include "SteinerTree.hh"
 #include "Resizer.hh"
 
@@ -50,6 +51,7 @@
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
 // rename option to -insert_buffers
+// buffer inputs and outputs
 
 namespace sta {
 
@@ -100,6 +102,108 @@ Resizer::makeCmdNetwork()
   sdc_network_ = new LefDefSdcNetwork(network_);
   cmd_network_ = sdc_network_;
   cmd_namespace_ = CmdNamespace::sdc;
+}
+
+void
+Resizer::readDef(const char *filename)
+{
+  LefDefNetwork *network = lefDefNetwork();
+  sta::readDef(filename, true, network);
+
+  DefDbu die_lx, die_ly, die_ux, die_uy;
+  network->dieArea(die_lx, die_ly, die_ux, die_uy);
+  double lx = network->dbuToMeters(die_lx);
+  double ly = network->dbuToMeters(die_ly);
+  double ux = network->dbuToMeters(die_ux);
+  double uy = network->dbuToMeters(die_uy);
+  setDieSize(lx, ly, ux, uy);
+  setCoreSize(lx, ly, ux, uy);
+}
+
+////////////////////////////////////////////////////////////////
+
+double
+Resizer::dieArea() const
+{
+  return abs(die_ux_ - die_lx_) * abs(die_uy_ - die_ly_);
+}
+
+bool
+Resizer::haveDieArea() const
+{
+  return dieArea() > 0.0;
+}
+
+void
+Resizer::dieSize(// Return values.
+		 double &die_lx,
+		 double &die_ly,
+		 double &die_ux,
+		 double &die_uy)
+{
+  die_lx = die_lx_;
+  die_ly = die_ly_;
+  die_ux = die_ux_;
+  die_uy = die_uy_;
+}
+
+void
+Resizer::setDieSize(double die_lx,
+		    double die_ly,
+		    double die_ux,
+		    double die_uy)
+{
+  die_lx_ = die_lx;
+  die_ly_ = die_ly;
+  die_ux_ = die_ux;
+  die_uy_ = die_uy;
+}
+
+double
+Resizer::coreArea() const
+{
+  return core_area_;
+}
+
+bool
+Resizer::haveCoreArea() const
+{
+  return core_area_ > 0.0;
+}
+
+void
+Resizer::coreSize(// Return values.
+		  double &core_lx,
+		  double &core_ly,
+		  double &core_ux,
+		  double &core_uy)
+{
+  core_lx = core_lx_;
+  core_ly = core_ly_;
+  core_ux = core_ux_;
+  core_uy = core_uy_;
+}
+
+void
+Resizer::setCoreSize(double core_lx,
+		     double core_ly,
+		     double core_ux,
+		     double core_uy)
+{
+  core_lx_ = core_lx;
+  core_ly_ = core_ly;
+  core_ux_ = core_ux;
+  core_uy_ = core_uy;
+  core_area_ = abs(core_ux_ - core_lx_) * abs(core_uy_ - core_ly_);
+}
+
+double
+Resizer::utilization()
+{
+  if (haveCoreArea())
+    return designArea() / coreArea();
+  else
+    return 1.0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -161,57 +265,6 @@ Resizer::setWireRC(float wire_res,
   initCorner(corner);
   init();;
   makeNetParasitics();
-}
-
-void
-Resizer::designDieSize(// Return values.
-		       double &die_lx,
-		       double &die_ly,
-		       double &die_ux,
-		       double &die_uy)
-{
-  die_lx = die_lx_;
-  die_ly = die_ly_;
-  die_ux = die_ux_;
-  die_uy = die_uy_;
-}
-
-void
-Resizer::setDesignDieSize(double die_lx,
-			  double die_ly,
-			  double die_ux,
-			  double die_uy)
-{
-  die_lx_ = die_lx;
-  die_ly_ = die_ly;
-  die_ux_ = die_ux;
-  die_uy_ = die_uy;
-}
-
-void
-Resizer::designCoreSize(// Return values.
-			double &core_lx,
-			double &core_ly,
-			double &core_ux,
-			double &core_uy)
-{
-  core_lx = core_lx_;
-  core_ly = core_ly_;
-  core_ux = core_ux_;
-  core_uy = core_uy_;
-}
-
-void
-Resizer::setDesignCoreSize(double core_lx,
-			   double core_ly,
-			   double core_ux,
-			   double core_uy)
-{
-  core_lx_ = core_lx;
-  core_ly_ = core_ly;
-  core_ux_ = core_ux;
-  core_uy_ = core_uy;
-  core_area_ = abs(core_uy_ - core_ly_) * abs(core_ux_ - core_lx_);
 }
 
 void
@@ -821,7 +874,7 @@ Resizer::rebuffer(bool repair_max_cap,
 	      && hasMaxSlewViolation(drvr_pin))) {
 	rebuffer(drvr_pin, buffer_cell);
 	if (overMaxArea()) {
-	  report_->warn("Max utilization reached.\n");
+	  report_->warn("max utilization reached.\n");
 	  break;
 	}
       }

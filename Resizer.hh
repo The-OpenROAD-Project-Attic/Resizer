@@ -36,31 +36,41 @@ public:
   const LefDefNetwork *lefDefNetwork() const;
   void initFlute(const char *resizer_path);
 
+  void readDef(const char *filename);
+
   // Set the resistance and capacitance used for parasitics.
   // Make net wire parasitics based on DEF locations.
   void setWireRC(float wire_res, // ohms/meter
 		 float wire_cap, // farads/meter
 		 Corner *corner);
+
   // Die area (meters).
-  void designDieSize(// Return values.
-		      double &die_lx,
-		      double &die_ly,
-		      double &die_ux,
-		      double &die_uy);
-  void setDesignDieSize(double die_lx,
-			double die_ly,
-			double die_ux,
-			double die_uy);
+  double dieArea() const;
+  bool haveDieArea() const;
+  void dieSize(// Return values.
+	       double &die_lx,
+	       double &die_ly,
+	       double &die_ux,
+	       double &die_uy);
+  void setDieSize(double die_lx,
+		  double die_ly,
+		  double die_ux,
+		  double die_uy);
+
   // Core area (meters).
-  void designCoreSize(// Return values.
-		      double &core_lx,
-		      double &core_ly,
-		      double &core_ux,
-		      double &core_uy);
-  void setDesignCoreSize(double core_lx,
-			 double core_ly,
-			 double core_ux,
-			 double core_uy);
+  double coreArea() const;
+  bool haveCoreArea() const;
+  void coreSize(// Return values.
+		double &core_lx,
+		double &core_ly,
+		double &core_ux,
+		double &core_uy);
+  void setCoreSize(double core_lx,
+		   double core_ly,
+		   double core_ux,
+		   double core_uy);
+  // 0.0 - 1.0 (100%) of core size.
+  double utilization();
 
   // Resize all instances in the network
   // and insert buffers to fix max cap/slew violations.

@@ -65,7 +65,7 @@ TECHNOLOGY technology ;
 
 UNITS DISTANCE MICRONS 1000 ;
 
-DIEAREA ( 0 0 ) ( 1000 1000 ) ;
+DIEAREA ( 0 0 ) ( 100000 100000 ) ;
 
 COMPONENTS 7 ;
 - buffer1 snl_bufx2

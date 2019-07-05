@@ -70,6 +70,8 @@ public:
   void setDefUnits(int def_units);
   double dbuToMeters(DefDbu dbu) const;
   DefDbu metersToDbu(double dist) const;
+
+  // LEF
   Library *makeLefLibrary(const char *name,
 			  const char *filename);
   Library *lefLibrary() const { return lef_library_; }
@@ -87,6 +89,16 @@ public:
   bool isLefCell(Cell *cell) const;
   double area(Cell *cell) const;
 
+  // DEF
+  void setDieArea(DefDbu die_lx,
+		  DefDbu die_ly,
+		  DefDbu die_ux,
+		  DefDbu die_uy);
+  void dieArea(// Return values.
+	       DefDbu &die_lx,
+	       DefDbu &die_ly,
+	       DefDbu &die_ux,
+	       DefDbu &die_uy);
   void initTopInstancePins();
   Instance *makeDefComponent(Cell *cell,
 			     const char *name,
@@ -106,6 +118,7 @@ public:
   virtual Net *findNet(const char *path_name) const;
   void connectedPins(const Net *net,
 		     PinSeq &pins);
+
   using ConcreteNetwork::connect;
   using ConcreteNetwork::findNet;
 
@@ -113,6 +126,10 @@ protected:
   const char *def_filename_;
   Library *lef_library_;
   int def_units_;		// dbu/micron
+  DefDbu die_lx_;
+  DefDbu die_ly_;
+  DefDbu die_ux_;
+  DefDbu die_uy_;
   DefPortLocations port_locations_;
   InstanceDefComponentMap def_component_map_;
   CellLefMacroMap lef_macro_map_;

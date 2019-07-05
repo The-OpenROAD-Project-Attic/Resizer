@@ -20,9 +20,6 @@ namespace eval sta {
 define_cmd_args "set_dont_use" {cell dont_use}
 
 # Defined by SWIG interface Resizer.i
-define_cmd_args "design_area" {}
-
-# Defined by SWIG interface Resizer.i
 define_cmd_args "read_lef" {filename}
 
 define_cmd_args "read_def" {filename}
@@ -47,7 +44,7 @@ proc set_design_size { args } {
     check_positive_float "-die" $die_ly
     check_positive_float "-die" $die_ux
     check_positive_float "-die" $die_uy
-    set_design_die_size_cmd \
+    set_die_size_cmd \
       [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
       [expr $die_ux * 1e-6] [expr $die_uy * 1e-6]
   }
@@ -62,7 +59,7 @@ proc set_design_size { args } {
     check_positive_float "-core" $core_ly
     check_positive_float "-core" $core_ux
     check_positive_float "-core" $core_uy
-    set_design_core_size_cmd \
+    set_core_size_cmd \
       [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
       [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
   }
@@ -212,7 +209,7 @@ proc resize { args } {
     set dont_use [get_lib_cells -quiet $keys(-dont_use)]
   }
 
-  set max_util 1.0
+  set max_util 0.0
   if { [info exists keys(-max_utilization)] } {
     set max_util $keys(-max_utilization)
     if {!([string is double $max_util] && $max_util >= 0.0 && $max_util <= 100)} {
@@ -237,7 +234,8 @@ proc get_pin_net { pin_name } {
 define_cmd_args "report_design_area" {}
 
 proc report_design_area {} {
-  puts "Design area [format %.0f [expr [design_area] *1e12]] u^2"
+  set util [format %.0f [expr [sta::utilization] * 100]]
+  puts "Design area [format %.0f [expr [sta::design_area] *1e12]] u^2 ${util}% utilization."
 }
 
 # sta namespace end
