@@ -103,7 +103,7 @@ LefDefSdcNetwork::findNetsMatching(const Instance *,
 
 void
 LefDefSdcNetwork::findNetsMatching1(const PatternMatch *pattern,
-					 NetSeq *nets) const
+				    NetSeq *nets) const
 {
   NetIterator *net_iter = netIterator(topInstance());
   while (net_iter->hasNext()) {
