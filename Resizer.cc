@@ -52,6 +52,7 @@
 //   to fix max slew/cap violations
 // rename option to -insert_buffers
 // buffer inputs and outputs
+// http://vlsicad.eecs.umich.edu/BK/Slots/cache/dropzone.tamu.edu/~zhuoli/GSRC/fast_buffer_insertion.html
 
 namespace sta {
 

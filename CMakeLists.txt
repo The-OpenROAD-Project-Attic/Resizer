@@ -30,7 +30,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Disable compiler specific extensions like gnu++11.
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-message(STATUS "Resizer version: ${PROJECT_VERSION}")
+set(RESIZER_VERSION ${PROJECT_VERSION})
+message(STATUS "Resizer version: ${RESIZER_VERSION}")
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC RESIZER_GIT_SHA1)
+message(STATUS "Resizer git sha: ${RESIZER_GIT_SHA1}")
 
 # Default to bulding optimnized/release executable.
 if(NOT CMAKE_BUILD_TYPE)

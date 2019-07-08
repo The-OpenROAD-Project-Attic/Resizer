@@ -112,7 +112,7 @@ resizerTclAppInit(Tcl_Interp *interp)
   evalTclInit(interp, sta::resizer_tcl_inits);
 
   if (!findCmdLineFlag(argc, argv, "-no_splash"))
-    Tcl_Eval(interp, "sta::show_splash");
+    Tcl_Eval(interp, "sta::show_resizer_splash");
 
   // Import exported commands from sta namespace to global namespace.
   Tcl_Eval(interp, "sta::define_sta_cmds");

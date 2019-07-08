@@ -1,3 +1,5 @@
-#define RESIZER_VERSION "${resizer_VERSION}"
+#define RESIZER_VERSION "${RESIZER_VERSION}"
 
+#define RESIZER_GIT_SHA1 "${RESIZER_GIT_SHA1}"
+				      
 #define ZLIB ${ZLIB}

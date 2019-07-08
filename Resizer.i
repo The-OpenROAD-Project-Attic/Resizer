@@ -21,6 +21,7 @@
 %{
 
 #include "Machine.hh"
+#include "ResizerConfig.hh"  // RESIZER_VERSION
 #include "Error.hh"
 #include "Liberty.hh"
 #include "LefReader.hh"
@@ -106,6 +107,18 @@ using namespace sta;
 ////////////////////////////////////////////////////////////////
 
 %inline %{
+
+const char *
+resizer_version()
+{
+  return RESIZER_VERSION;
+}
+
+const char *
+resizer_git_sha1()
+{
+  return RESIZER_GIT_SHA1;
+}
 
 void
 read_lef(const char *filename)
