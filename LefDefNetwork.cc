@@ -225,27 +225,6 @@ LefDefNetwork::isPlaced(const Pin *pin) const
   }
 }
 
-double
-LefDefNetwork::area(Instance *inst) const
-{
-  return area(cell(inst));
-}
-
-double
-LefDefNetwork::area(Cell *cell) const
-{
-  const char *cell_name = name(cell);
-  if (lef_library_) {
-    Cell *lef_cell = findCell(lef_library_, cell_name);
-    if (lef_cell) {
-      lefiMacro *lef_macro = lefMacro(lef_cell);
-      if (lef_macro && lef_macro->hasSize())
-	return lef_macro->sizeX() * 1e-6 * lef_macro->sizeY() * 1e-6;
-    }
-  }
-  return 0.0;
-}
-
 Instance *
 LefDefNetwork::findInstance(const char *path_name) const
 {
@@ -279,6 +258,42 @@ void
 LefDefNetwork::makeLefLayer(lefiLayer *layer)
 {
   lef_layers_.push_back(*layer);
+}
+
+////////////////////////////////////////////////////////////////
+
+double
+LefDefNetwork::designArea()
+{
+  double design_area = 0.0;
+  LeafInstanceIterator *leaf_iter = leafInstanceIterator();
+  while (leaf_iter->hasNext()) {
+    Instance *leaf = leaf_iter->next();
+    design_area += area(leaf);
+  }
+  delete leaf_iter;
+  return design_area;
+}
+
+double
+LefDefNetwork::area(Instance *inst) const
+{
+  return area(cell(inst));
+}
+
+double
+LefDefNetwork::area(Cell *cell) const
+{
+  const char *cell_name = name(cell);
+  if (lef_library_) {
+    Cell *lef_cell = findCell(lef_library_, cell_name);
+    if (lef_cell) {
+      lefiMacro *lef_macro = lefMacro(lef_cell);
+      if (lef_macro && lef_macro->hasSize())
+	return lef_macro->sizeX() * 1e-6 * lef_macro->sizeY() * 1e-6;
+    }
+  }
+  return 0.0;
 }
 
 ////////////////////////////////////////////////////////////////

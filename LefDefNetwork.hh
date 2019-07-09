@@ -87,7 +87,6 @@ public:
 		   lefiMacro *lef_macro);
   Cell *lefCell(LibertyCell *cell);
   bool isLefCell(Cell *cell) const;
-  double area(Cell *cell) const;
 
   // DEF
   void setDieArea(DefDbu die_lx,
@@ -112,12 +111,15 @@ public:
   void setLocation(Port *port,
 		   DefPt location);
   bool isPlaced(const Pin *pin) const;
-  double area(Instance *inst) const;
   virtual Instance *findInstance(const char *path_name) const;
 
   virtual Net *findNet(const char *path_name) const;
   void connectedPins(const Net *net,
 		     PinSeq &pins);
+
+  double area(Cell *cell) const;
+  double area(Instance *inst) const;
+  double designArea();
 
   using ConcreteNetwork::connect;
   using ConcreteNetwork::findNet;

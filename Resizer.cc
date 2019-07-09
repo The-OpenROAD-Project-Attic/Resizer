@@ -1411,22 +1411,11 @@ Resizer::gateDelay(LibertyPort *out_port,
 double
 Resizer::designArea()
 {
-  if (design_area_ == 0.0)
-    findDesignArea();
-  return design_area_;
-}
-
-void
-Resizer::findDesignArea()
-{
-  LefDefNetwork *network = lefDefNetwork();
-  design_area_ = 0.0;
-  LeafInstanceIterator *leaf_iter = network_->leafInstanceIterator();
-  while (leaf_iter->hasNext()) {
-    Instance *leaf = leaf_iter->next();
-    design_area_ += network->area(leaf);
+  if (design_area_ == 0.0) {
+    LefDefNetwork *network = lefDefNetwork();
+    design_area_ = network->designArea();
   }
-  delete leaf_iter;
+  return design_area_;
 }
 
 };

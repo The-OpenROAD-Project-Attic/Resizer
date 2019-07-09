@@ -176,7 +176,6 @@ protected:
   string makeUniqueNetName();
   string makeUniqueBufferName();
   bool dontUse(LibertyCell *cell);
-  void findDesignArea();
   bool overMaxArea();
   bool hasTopLevelOutputPort(Net *net);
 

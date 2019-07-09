@@ -222,13 +222,20 @@ DEF using command line arguments.
 verilog2def
   [-help]                    show help and exit
   [-version]                 show version and exit
+  [-verbose]                 report progress
   -liberty liberty_file      liberty library
   -lef lef_file              lef_file for site size
   -verilog verilog_file     
   -top_module module_name    verilog module to expand
   -units units               def units per micron
-  [-die_area "lx ly ux uy"]  die area in microns
+
+  -die_area "lx ly ux uy"    die area in microns
   [-core_area "lx ly ux uy"] core area in microns
+or
+  -utilization util          utilization (0-100 percent)
+  [-aspect_ratio ratio]      height / width, default 1.0
+  [-core_space space]        space around core, default 0.0 (microns)
+
   [-site site_name]          LEF site name for ROWS
   [-tracks tracks_file]      routing track specification
   [-auto_place_pins]         place pins around core area boundary
@@ -236,6 +243,17 @@ verilog2def
 ```
 
 Multiple Liberty files can be read by using multiple -liberty keywords.
+
+The die area and core size used to write ROWs can be specified
+explicitly with the -die_area and -core_area arguments. Alternatively,
+the die and core area can be computed from the design size and
+utilization as show below:
+
+ core_area = design_area / (utilization / 100)
+ core_width = sqrt(core_area / aspect_ratio)
+ core_height = core_width * aspect_ratio
+ core = ( core_space, core_space ) ( core_space + core_width, core_space + core_height )
+ die = ( 0, 0 ) ( core_width + core_space * 2, core_height + core_space * 2 )
 
 ## Authors
 

@@ -15,6 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <inttypes.h>
+#include <cmath> 		// sqrt
+#include <stdlib.h>
 #include "Machine.hh"
 #include "Report.hh"
 #include "ReportStd.hh"
@@ -30,7 +32,7 @@
 #include "Sta.hh" // initSta
 
 // ../build/verilog2def -lef liberty1.lef -liberty liberty1.lib -verilog reg1.v -top_module top -units 100 -die_area "0 0 1000 1000" -site site1 -auto_place_pins -def results/foo.def
-// -lef ../test/liberty1.lef -liberty ../test/liberty1.lib -verilog ../test/reg1.v -top_module top -units 100 -die_area "0 0 1000 1000" -site site1 -auto_place_pins -def ../test/results/foo.def
+// -lef ../test/liberty1.lef -liberty ../test/liberty1.lib -verilog ../test/reg1.v -top_module top -units 100 -utilization 30 -aspect_ratio 1.0 -core_space 2 -site site1 -auto_place_pins -verbose -def ../test/results/foo.def
 
 using std::string;
 using sta::StringVector;
@@ -46,6 +48,10 @@ using sta::StaException;
 
 static void
 showUsage(const char *prog);
+static double
+metersToMicrons(double meters);
+static double
+micronsToMeters(double microns);
 
 int
 main(int argc,
@@ -109,11 +115,16 @@ main(int argc,
     units = strtol(units_str, nullptr, 10);
   }
 
-  const char *die_area = findCmdLineKey(argc, argv, "-die_area");
   double die_lx = 0.0;
   double die_ly = 0.0;
   double die_ux = 0.0;
   double die_uy = 0.0;
+  double core_lx = 0.0;
+  double core_ly = 0.0;
+  double core_ux = 0.0;
+  double core_uy = 0.0;
+
+  const char *die_area = findCmdLineKey(argc, argv, "-die_area");
   if (die_area) {
     string die_area1(die_area);
     StringVector die_tokens;
@@ -121,17 +132,13 @@ main(int argc,
     if (die_tokens.size() != 4)
       report->printWarn("Warning: -die_area should be a list of 4 coordinates\n");
     // microns to meters.
-    die_lx = strtod(die_tokens[0].c_str(), nullptr) * 1e-6;
-    die_ly = strtod(die_tokens[1].c_str(), nullptr) * 1e-6;
-    die_ux = strtod(die_tokens[2].c_str(), nullptr) * 1e-6;
-    die_uy = strtod(die_tokens[3].c_str(), nullptr) * 1e-6;
+    die_lx = micronsToMeters(strtod(die_tokens[0].c_str(), nullptr));
+    die_ly = micronsToMeters(strtod(die_tokens[1].c_str(), nullptr));
+    die_ux = micronsToMeters(strtod(die_tokens[2].c_str(), nullptr));
+    die_uy = micronsToMeters(strtod(die_tokens[3].c_str(), nullptr));
   }
 
   const char *core_area = findCmdLineKey(argc, argv, "-core_area");
-  double core_lx = 0.0;
-  double core_ly = 0.0;
-  double core_ux = 0.0;
-  double core_uy = 0.0;
   if (core_area) {
     string core_area1(core_area);
     StringVector core_tokens;
@@ -139,16 +146,17 @@ main(int argc,
     if (core_tokens.size() != 4)
       report->printWarn("Warning: -core_area should be a list of 4 coordinates\n");
     // microns to meters.
-    core_lx = strtod(core_tokens[0].c_str(), nullptr) * 1e-6;
-    core_ly = strtod(core_tokens[1].c_str(), nullptr) * 1e-6;
-    core_ux = strtod(core_tokens[2].c_str(), nullptr) * 1e-6;
-    core_uy = strtod(core_tokens[3].c_str(), nullptr) * 1e-6;
+    core_lx = micronsToMeters(strtod(core_tokens[0].c_str(), nullptr));
+    core_ly = micronsToMeters(strtod(core_tokens[1].c_str(), nullptr));
+    core_ux = micronsToMeters(strtod(core_tokens[2].c_str(), nullptr));
+    core_uy = micronsToMeters(strtod(core_tokens[3].c_str(), nullptr));
   }
 
+  const char *utilization = findCmdLineKey(argc, argv, "-utilization");
+  const char *aspect_ratio = findCmdLineKey(argc, argv, "-aspect_ratio");
+  const char *core_space = findCmdLineKey(argc, argv, "-core_space");
   const char *site_name = findCmdLineKey(argc, argv, "-site");
-
   const char *tracks_file = findCmdLineKey(argc, argv, "-tracks");
-
   bool auto_place_pins = findCmdLineFlag(argc, argv, "-auto_place_pins");
 
   const char *def_filename = findCmdLineKey(argc, argv, "-def");
@@ -184,6 +192,38 @@ main(int argc,
       if (verbose)
 	report->print("\nLinking...");
       network.linkNetwork(top_module, true, report);
+
+      if (utilization) {
+	double util = strtod(utilization, nullptr) / 100.0;
+	double aspect_ratio1 = aspect_ratio ? strtod(aspect_ratio, nullptr) : 1.0;
+	double core_sp = core_space ? micronsToMeters(strtod(core_space, nullptr)) : 0.0;
+	double design_area = network.designArea();
+	double core_area = design_area / util;
+	double core_width = std::sqrt(core_area / aspect_ratio1);
+	double core_height = core_width / aspect_ratio1;
+
+	core_lx = core_sp;
+	core_ly = core_sp;
+	core_ux = core_sp + core_width;
+	core_uy = core_sp + core_height;
+	if (verbose)
+	  report->print("\nCore size ( %.0fum %.0fum ) ( %.0fum %.0fum )",
+			metersToMicrons(core_lx),
+			metersToMicrons(core_ly),
+			metersToMicrons(core_ux),
+			metersToMicrons(core_uy));
+	die_lx = 0.0;
+	die_ly = 0.0;
+	die_ux = core_width + core_sp * 2.0;
+	die_uy = core_height + core_sp * 2.0;
+	if (verbose)
+	  report->print("\nDie size ( %.0fum %.0fum ) ( %.0fum %.0fum )",
+			metersToMicrons(die_lx),
+			metersToMicrons(die_ly),
+			metersToMicrons(die_ux),
+			metersToMicrons(die_uy));
+      }
+
       if (verbose)
 	report->print("\nWriting DEF %s...", def_filename);
       writeDef(def_filename, units,
@@ -216,9 +256,27 @@ showUsage(const char *prog)
   printf("  -verilog verilog_file      \n");
   printf("  -top_module module_name    verilog module to expand\n");
   printf("  -units units               def units per micron\n");
-  printf("  [-die_area \"lx ly ux uy\"]  die area in microns\n");
-  printf("  [-core_area \"lx ly ux uy\"] core area in microns\n");
+  printf("\n");
+  printf("  -utilization util          utilization (0-100 percent)\n");
+  printf("  [-aspect_ratio ratio]      height / width (default 1.0)\n");
+  printf("  [-core_space space]        space around core (microns)\n");
+  printf("  or\n");
+  printf("  -die_area \"lx ly ux uy\"   die area in microns\n");
+  printf("  -core_area \"lx ly ux uy\"  core area in microns\n");
+  printf("\n");
   printf("  [-site site_name]          \n");
   printf("  [-auto_place_pins]         \n");
   printf("  -def def_file              def file to write\n");
+}
+
+static double
+metersToMicrons(double meters)
+{
+  return meters * 1e+6;
+}
+
+static double
+micronsToMeters(double microns)
+{
+  return microns * 1e-6;
 }

@@ -1,6 +1,6 @@
-# verilog2def
+# verilog2def -tracks
 source "helpers.tcl"
-set def_file [make_result_file write_def3.def]
+set def_file [make_result_file verilog2def2.def]
 exec ../build/verilog2def \
   -lef liberty1.lef \
   -liberty liberty1.lib \
