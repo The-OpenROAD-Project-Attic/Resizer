@@ -52,6 +52,14 @@ static double
 metersToMicrons(double meters);
 static double
 micronsToMeters(double microns);
+static double
+parseFloat(const char *token,
+	   const char *arg_name,
+	   Report *report);
+static int
+parseInt(const char *token,
+	 const char *arg_name,
+	 Report *report);
 
 int
 main(int argc,
@@ -112,7 +120,7 @@ main(int argc,
   else {
     if (!isDigits(units_str))
       report->printError("Error: -units is not a positiveinteger\n");
-    units = strtol(units_str, nullptr, 10);
+    units = parseInt(units_str, "-units", report);
   }
 
   double die_lx = 0.0;
@@ -132,10 +140,10 @@ main(int argc,
     if (die_tokens.size() != 4)
       report->printWarn("Warning: -die_area should be a list of 4 coordinates\n");
     // microns to meters.
-    die_lx = micronsToMeters(strtod(die_tokens[0].c_str(), nullptr));
-    die_ly = micronsToMeters(strtod(die_tokens[1].c_str(), nullptr));
-    die_ux = micronsToMeters(strtod(die_tokens[2].c_str(), nullptr));
-    die_uy = micronsToMeters(strtod(die_tokens[3].c_str(), nullptr));
+    die_lx = micronsToMeters(parseFloat(die_tokens[0].c_str(), "-die_area", report));
+    die_ly = micronsToMeters(parseFloat(die_tokens[1].c_str(), "-die_area", report));
+    die_ux = micronsToMeters(parseFloat(die_tokens[2].c_str(), "-die_area", report));
+    die_uy = micronsToMeters(parseFloat(die_tokens[3].c_str(), "-die_area", report));
   }
 
   const char *core_area = findCmdLineKey(argc, argv, "-core_area");
@@ -146,10 +154,10 @@ main(int argc,
     if (core_tokens.size() != 4)
       report->printWarn("Warning: -core_area should be a list of 4 coordinates\n");
     // microns to meters.
-    core_lx = micronsToMeters(strtod(core_tokens[0].c_str(), nullptr));
-    core_ly = micronsToMeters(strtod(core_tokens[1].c_str(), nullptr));
-    core_ux = micronsToMeters(strtod(core_tokens[2].c_str(), nullptr));
-    core_uy = micronsToMeters(strtod(core_tokens[3].c_str(), nullptr));
+    core_lx = micronsToMeters(parseFloat(core_tokens[0].c_str(), "-core_area", report));
+    core_ly = micronsToMeters(parseFloat(core_tokens[1].c_str(), "-core_area", report));
+    core_ux = micronsToMeters(parseFloat(core_tokens[2].c_str(), "-core_area", report));
+    core_uy = micronsToMeters(parseFloat(core_tokens[3].c_str(), "-core_area", report));
   }
 
   const char *utilization = findCmdLineKey(argc, argv, "-utilization");
@@ -194,9 +202,11 @@ main(int argc,
       network.linkNetwork(top_module, true, report);
 
       if (utilization) {
-	double util = strtod(utilization, nullptr) / 100.0;
+	double util = parseFloat(utilization, "-utilization", report) / 100.0;
 	double aspect_ratio1 = aspect_ratio ? strtod(aspect_ratio, nullptr) : 1.0;
-	double core_sp = core_space ? micronsToMeters(strtod(core_space, nullptr)) : 0.0;
+	double core_sp = 0.0;
+	if (core_space)
+	  core_sp = micronsToMeters(parseFloat(core_space, "-core_space", report));
 	double design_area = network.designArea();
 	double core_area = design_area / util;
 	double core_width = std::sqrt(core_area / aspect_ratio1);
@@ -279,4 +289,28 @@ static double
 micronsToMeters(double microns)
 {
   return microns * 1e-6;
+}
+
+static double
+parseFloat(const char *token,
+	   const char *arg_name,
+	   Report *report)
+{
+  char *end;
+  double value = strtod(token, &end);
+  if (*end != '\0')
+    report->printError("Error: %s value '%s' is not a float.\n", arg_name, token);
+  return value;
+}
+
+static int
+parseInt(const char *token,
+	 const char *arg_name,
+	 Report *report)
+{
+  char *end;
+  int value = strtol(token, &end, 10);
+  if (*end != '\0')
+    report->printError("Error: %s value '%s' is not a integer.\n", arg_name, token);
+  return value;
 }
