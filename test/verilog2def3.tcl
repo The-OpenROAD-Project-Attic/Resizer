@@ -8,7 +8,7 @@ exec ../build/verilog2def \
   -top_module top \
   -units 100 \
   -utilization 30 \
-  -aspect_ratio 1.0 \
+  -aspect_ratio 0.5 \
   -core_space 2 \
   -site site1 \
   -tracks write_def6.tracks \

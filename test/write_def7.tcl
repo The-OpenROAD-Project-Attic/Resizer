@@ -7,7 +7,7 @@ link_design top
 
 set utilization .3
 # height / width
-set aspect_ratio 1.0
+set aspect_ratio 0.5
 set core_space 2
 
 # unit problem - don't want to mess with it right now

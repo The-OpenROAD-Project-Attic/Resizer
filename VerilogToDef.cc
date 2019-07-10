@@ -210,7 +210,7 @@ main(int argc,
 	double design_area = network.designArea();
 	double core_area = design_area / util;
 	double core_width = std::sqrt(core_area / aspect_ratio1);
-	double core_height = core_width / aspect_ratio1;
+	double core_height = core_width * aspect_ratio1;
 
 	core_lx = core_sp;
 	core_ly = core_sp;
