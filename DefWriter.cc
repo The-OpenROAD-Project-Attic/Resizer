@@ -35,6 +35,7 @@ namespace sta {
 
 using std::abs;
 using std::floor;
+using std::round;
 using std::ifstream;
 
 class Track
@@ -738,7 +739,11 @@ DefWriter::staToDef(const char *token)
 DefDbu
 DefWriter::metersToDbu(double dist) const
 {
-  return round((dist * 1e6) * def_units_);
+  double grid = network_->manufacturingGrid();
+  if (grid != 0.0)
+    return round(round(dist * 1e6 / grid) * grid * def_units_);
+  else
+    return round(dist * 1e6 * def_units_);
 }
 
 } // namespace

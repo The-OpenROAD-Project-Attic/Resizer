@@ -30,6 +30,10 @@ class LefReader;
 static void
 registerLefCallbacks();
 static int
+manufacturingGridCbk(lefrCallbackType_e,
+		     double grid,
+		     lefiUserData user);
+static int
 macroBeginCbk(lefrCallbackType_e,
 	      const char *macro_name,
 	      lefiUserData user);
@@ -104,6 +108,7 @@ readLef(const char *filename,
 static void
 registerLefCallbacks()
 {
+  lefrSetManufacturingCbk(manufacturingGridCbk);
   lefrSetSiteCbk(lefSiteCbk);
   lefrSetLayerCbk(lefLayerCbk);
   lefrSetMacroBeginCbk(macroBeginCbk);
@@ -123,6 +128,17 @@ LefReader::LefReader(const char *filename,
 }
 
 #define getLefReader(user) (reinterpret_cast<LefReader *>(user))
+
+static int
+manufacturingGridCbk(lefrCallbackType_e,
+		     double grid,
+		     lefiUserData user)
+{
+  LefReader *reader = getLefReader(user);
+  LefDefNetwork *network = reader->network();
+  network->setManufacturingGrid(grid);
+  return 0;
+}
 
 static int
 macroBeginCbk(lefrCallbackType_e,

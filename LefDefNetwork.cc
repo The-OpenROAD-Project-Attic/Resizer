@@ -26,7 +26,8 @@ using std::round;
 LefDefNetwork::LefDefNetwork() :
   ConcreteNetwork(),
   def_filename_(nullptr),
-  lef_library_(nullptr)
+  lef_library_(nullptr),
+  manufacturing_grid_(0.0)
 {
 }
 
@@ -44,6 +45,7 @@ LefDefNetwork::clear()
   def_component_map_.deleteContents();
   lef_macro_map_.deleteContents();
   lef_size_map_.deleteContents();
+  manufacturing_grid_ = 0.0;
   ConcreteNetwork::clear();
 }
 
@@ -84,6 +86,12 @@ void
 LefDefNetwork::setDefFilename(const char *filename)
 {
   def_filename_ = stringCopy(filename);
+}
+
+void
+LefDefNetwork::setManufacturingGrid(double grid)
+{
+  manufacturing_grid_ = grid;
 }
 
 Library *

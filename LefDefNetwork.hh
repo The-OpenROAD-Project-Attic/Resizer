@@ -72,6 +72,9 @@ public:
   DefDbu metersToDbu(double dist) const;
 
   // LEF
+  void setManufacturingGrid(double grid);
+  // microns
+  double manufacturingGrid() const { return manufacturing_grid_; }
   Library *makeLefLibrary(const char *name,
 			  const char *filename);
   Library *lefLibrary() const { return lef_library_; }
@@ -128,6 +131,7 @@ protected:
   const char *def_filename_;
   Library *lef_library_;
   int def_units_;		// dbu/micron
+  double manufacturing_grid_;   // microns
   DefDbu die_lx_;
   DefDbu die_ly_;
   DefDbu die_ux_;
