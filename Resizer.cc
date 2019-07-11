@@ -247,6 +247,7 @@ Resizer::init()
   ensureLevelized();
   ensureLevelDrvrVerticies();
   ensureClkNets();
+  ensureCorner();
   resize_count_ = 0;
   inserted_buffer_count_ = 0;
   rebuffer_net_count_ = 0;
@@ -263,41 +264,20 @@ Resizer::setWireRC(float wire_res,
 
   wire_res_ = wire_res;
   wire_cap_ = wire_cap;
+
   initCorner(corner);
-  init();;
+  init();
   makeNetParasitics();
 }
 
 void
-Resizer::resize(bool resize,
-		bool repair_max_cap,
-		bool repair_max_slew,
-		LibertyCell *buffer_cell,
-		LibertyLibrarySeq *resize_libs,
-		LibertyCellSeq *dont_use,
-		double max_utilization)
+Resizer::bufferInputs(LibertyCell *buffer_cell)
 {
-  if (dont_use) {
-    for (auto cell : *dont_use)
-      dont_use_.insert(cell);
-  }
-
-  init();
-  ensureCorner();
-  max_area_ = core_area_ * max_utilization;
-  // Find a target slew for the libraries and then
-  // a target load for each cell that gives the target slew.
-  findTargetLoads(resize_libs);
-  if (resize) {
-    resizeToTargetSlew(resize_libs);
-    report_->print("Resized %d instances.\n", resize_count_);
-  }
-  if (repair_max_cap || repair_max_slew) {
-    rebuffer(repair_max_cap, repair_max_slew, buffer_cell);
-    report_->print("Inserted %d buffers in %d nets.\n",
-		   inserted_buffer_count_,
-		   rebuffer_net_count_);
-  }
+}
+   
+void
+Resizer::bufferOutputs(LibertyCell *buffer_cell)
+{
 }
 
 void
@@ -333,39 +313,37 @@ Resizer::ensureLevelDrvrVerticies()
   }
 }
 
+////////////////////////////////////////////////////////////////
+
 void
-Resizer::resizeToTargetSlew(Instance *inst,
-			    LibertyLibrarySeq *resize_libs,
-			    Corner *corner)
+Resizer::resizePreamble(LibertyLibrarySeq *resize_libs)
 {
   init();
-  initCorner(corner);
   makeEquivCells(resize_libs);
   findTargetLoads(resize_libs);
-  resizeToTargetSlew1(inst);
 }
 
 void
-Resizer::resizeToTargetSlew(LibertyLibrarySeq *resize_libs)
+Resizer::resizeToTargetSlew()
 {
-  makeEquivCells(resize_libs);
+  resizeToTargetSlew1();
+  report_->print("Resized %d instances.\n", resize_count_);
+}
+
+void
+Resizer::resizeToTargetSlew1()
+{
   // Resize in reverse level order.
   for (int i = level_drvr_verticies_.size() - 1; i >= 0; i--) {
     Vertex *vertex = level_drvr_verticies_[i];
     Pin *drvr_pin = vertex->pin();
     Instance *inst = network_->instance(drvr_pin);
-    resizeToTargetSlew1(inst);
+    resizeToTargetSlew(inst);
     if (overMaxArea()) {
       report_->warn("max utilization reached.\n");
       break;
     }
   }
-}
-
-bool
-Resizer::overMaxArea()
-{
-  return max_area_ && design_area_ > max_area_;
 }
 
 void
@@ -383,7 +361,7 @@ Resizer::makeEquivCells(LibertyLibrarySeq *resize_libs)
 }
 
 void
-Resizer::resizeToTargetSlew1(Instance *inst)
+Resizer::resizeToTargetSlew(Instance *inst)
 {
   LefDefNetwork *network = lefDefNetwork();
   LibertyCell *cell = network_->libertyCell(inst);
@@ -459,6 +437,27 @@ singleOutputPin(const Instance *inst,
   return output;
 }
 
+void
+Resizer::setMaxUtilization(double max_utilization)
+{
+  max_area_ = core_area_ * max_utilization;
+}
+
+bool
+Resizer::overMaxArea()
+{
+  return max_area_ && design_area_ > max_area_;
+}
+
+void
+Resizer::setDontUse(LibertyCellSeq *dont_use)
+{
+  if (dont_use) {
+    for (auto cell : *dont_use)
+      dont_use_.insert(cell);
+  }
+}
+
 bool
 Resizer::dontUse(LibertyCell *cell)
 {
@@ -468,7 +467,8 @@ Resizer::dontUse(LibertyCell *cell)
 
 ////////////////////////////////////////////////////////////////
 
-// Find the target load for each library cell that gives the target slew.
+// Find a target slew for the libraries and then
+// a target load for each cell that gives the target slew.
 void
 Resizer::findTargetLoads(LibertyLibrarySeq *resize_libs)
 {
@@ -794,6 +794,19 @@ Resizer::findParasiticNode(SteinerTree *tree,
 
 ////////////////////////////////////////////////////////////////
 
+void
+Resizer::rebufferNets(bool repair_max_cap,
+		      bool repair_max_slew,
+		      LibertyCell *buffer_cell)
+{
+  if (repair_max_cap || repair_max_slew) {
+    rebuffer(repair_max_cap, repair_max_slew, buffer_cell);
+    report_->print("Inserted %d buffers in %d nets.\n",
+		   inserted_buffer_count_,
+		   rebuffer_net_count_);
+  }
+}
+
 class RebufferOption
 {
 public:
@@ -976,12 +989,10 @@ Resizer::slewLimit(const Pin *pin,
 
 void
 Resizer::rebuffer(Net *net,
-		  LibertyCell *buffer_cell,
-		  LibertyLibrarySeq *resize_libs)
+		  LibertyCell *buffer_cell)
 {
-  init();
-  ensureCorner();
-  findBufferTargetSlews(resize_libs);
+  inserted_buffer_count_ = 0;
+  rebuffer_net_count_ = 0;
   PinSet *drvrs = network_->drivers(net);
   PinSet::Iterator drvr_iter(drvrs);
   if (drvr_iter.hasNext()) {

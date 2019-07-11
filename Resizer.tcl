@@ -229,8 +229,15 @@ proc resize { args } {
 
   check_argc_eq0 "resize" $args
 
-  resize_cmd $resize $repair_max_cap $repair_max_slew $buffer_cell \
-    $resize_libs $dont_use $max_util
+  resizer_preamble $resize_libs
+  set_dont_use $dont_use
+  set_max_utilization $max_util
+  if { $resize } {
+    resize_to_target_slew
+  }
+  if { $repair_max_cap || $repair_max_slew } {
+    rebuffer_nets $repair_max_cap $repair_max_slew $buffer_cell
+  }
 }
 
 define_cmd_args "get_pin_net" {pin_name}

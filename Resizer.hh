@@ -72,27 +72,29 @@ public:
   // 0.0 - 1.0 (100%) of core size.
   double utilization();
 
-  // Resize all instances in the network
-  // and insert buffers to fix max cap/slew violations.
-  void resize(bool resize,
-	      bool repair_max_cap,
-	      bool repair_max_slew,
-	      LibertyCell *buffer_cell,
-	      LibertyLibrarySeq *resize_libs,
-	      LibertyCellSeq *dont_use,
-	      // Fraction of core_area 0.0:1.0
-	      double max_utilization);
+  void init();
+  void setDontUse(LibertyCellSeq *dont_use);
+  void setMaxUtilization(double max_utilization);
+  void resizePreamble(LibertyLibrarySeq *resize_libs);
+  void bufferInputs(LibertyCell *buffer_cell);
+  void bufferOutputs(LibertyCell *buffer_cell);
+  // Resize all instances in the network.
+  // resizerPreamble() required.
+  void resizeToTargetSlew();
+  // Resize inst to target slew (for testing).
+  // resizerPreamble() required.
+  void resizeToTargetSlew(Instance *inst);
 
-  // The functions below are for testing phases of the resizer.
-  // Resize a single instance to the target load.
-  void resizeToTargetSlew(Instance *inst,
-			  LibertyLibrarySeq *resize_libs,
-			  Corner *corner);
-  // Rebuffer net.
+  // Insert buffers to fix max cap/slew violations.
+  // resizerPreamble() required.
+  void rebufferNets(bool repair_max_cap,
+		    bool repair_max_slew,
+		    LibertyCell *buffer_cell);
+  // Rebuffer net (for testing).
   // Assumes buffer_cell->isBuffer() is true.
+  // resizerPreamble() required.
   void rebuffer(Net *net,
-		LibertyCell *buffer_cell,
-		LibertyLibrarySeq *resize_libs);
+		LibertyCell *buffer_cell);
   Slew targetSlew(const TransRiseFall *tr);
   float targetLoadCap(LibertyCell *cell);
   // Area of the design in meter^2.
@@ -101,16 +103,14 @@ public:
 protected:
   virtual void makeNetwork();
   virtual void makeCmdNetwork();
-  void init();
   void ensureCorner();
   void initCorner(Corner *corner);
   void ensureClkNets();
   void findClkNets();
   bool isClock(Net *net);
   void ensureLevelDrvrVerticies();
-  void resizeToTargetSlew(LibertyLibrarySeq *resize_libs);
+  void resizeToTargetSlew1();
   void makeEquivCells(LibertyLibrarySeq *resize_libs);
-  void resizeToTargetSlew1(Instance *inst);
   void findTargetLoads(LibertyLibrarySeq *resize_libs);
   void findTargetLoads(LibertyLibrary *library,
 		       Slew slews[]);

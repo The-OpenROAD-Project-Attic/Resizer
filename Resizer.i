@@ -218,27 +218,47 @@ set_wire_rc_cmd(float res,
 }
 
 void
-resize_cmd(bool resize,
-	   bool repair_max_cap,
-	   bool repair_max_slew,
-	   LibertyCell *buffer_cell,
-	   LibertyLibrarySeq *resize_libs,
-	   LibertyCellSeq *dont_use,
-	   double max_utilization)
+set_max_utilization(double max_utilization)
 {
   Resizer *resizer = getResizer();
-  resizer->resize(resize, repair_max_cap, repair_max_slew,
-		  buffer_cell, resize_libs, dont_use, max_utilization);
+  resizer->setMaxUtilization(max_utilization);
 }
 
 void
-resize_to_target_slew(Instance *inst)
+set_dont_use(LibertyCellSeq *dont_use)
 {
   Resizer *resizer = getResizer();
-  Network *network = resizer->network();
-  LibertyLibrarySeq resize_libs;
-  networkLibertyLibraries(network, resize_libs);
-  resizer->resizeToTargetSlew(inst, &resize_libs, resizer->cmdCorner());
+  resizer->setDontUse(dont_use);
+}
+
+void
+resizer_preamble(LibertyLibrarySeq *resize_libs)
+{
+  Resizer *resizer = getResizer();
+  resizer->resizePreamble(resize_libs);
+}
+
+void
+resize_to_target_slew()
+{
+  Resizer *resizer = getResizer();
+  resizer->resizeToTargetSlew();
+}
+
+void
+rebuffer_nets(bool repair_max_cap,
+	      bool repair_max_slew,
+	      LibertyCell *buffer_cell)
+{
+  Resizer *resizer = getResizer();
+  resizer->rebufferNets(repair_max_cap, repair_max_slew, buffer_cell);
+}
+
+void
+resize_instance_to_target_slew(Instance *inst)
+{
+  Resizer *resizer = getResizer();
+  resizer->resizeToTargetSlew(inst);
 }
 
 void
@@ -246,10 +266,7 @@ rebuffer_net(Net *net,
 	     LibertyCell *buffer_cell)
 {
   Resizer *resizer = getResizer();
-  Network *network = resizer->network();
-  LibertyLibrarySeq resize_libs;
-  networkLibertyLibraries(network, resize_libs);
-  resizer->rebuffer(net, buffer_cell, &resize_libs);
+  resizer->rebuffer(net, buffer_cell);
 }
 
 double
@@ -264,13 +281,6 @@ resize_target_load_cap(LibertyCell *cell)
 {
   Resizer *resizer = getResizer();
   return resizer->targetLoadCap(cell);
-}
-
-void
-set_dont_use(LibertyCell *cell,
-	     bool dont_use)
-{
-  cell->setDontUse(dont_use);
 }
 
 float
