@@ -170,7 +170,9 @@ proc set_wire_rc { args } {
   set_wire_rc_cmd $res $cap $corner
 }
 
-define_cmd_args "resize" {[-resize]\
+define_cmd_args "resize" {[-buffer_inputs]\
+			    [-buffer_outputs]\
+			    [-resize]\
 			    [-repair_max_cap]\
 			    [-repair_max_slew]\
 			    [-resize_libraries resize_libs]\
@@ -180,12 +182,18 @@ define_cmd_args "resize" {[-resize]\
 proc resize { args } {
   parse_key_args "resize" args \
     keys {-buffer_cell -resize_libraries -dont_use -max_utilization} \
-    flags {-resize -repair_max_cap -repair_max_slew}
+    flags {-buffer_inputs -buffer_outputs -resize -repair_max_cap -repair_max_slew}
 
+  set buffer_inputs [info exists flags(-buffer_inputs)]
+  set buffer_outputs [info exists flags(-buffer_outputs)]
   set resize [info exists flags(-resize)]
   set repair_max_cap [info exists flags(-repair_max_cap)]
   set repair_max_slew [info exists flags(-repair_max_slew)]
-  if { !($resize || $repair_max_cap || $repair_max_slew) } {
+  # With no options you get the whole salmai.
+  if { !($buffer_inputs || $buffer_outputs || $resize \
+	   || $repair_max_cap || $repair_max_slew) } {
+    set buffer_inputs 1
+    set buffer_outputs 1
     set resize 1
     set repair_max_cap 1
     set repair_max_slew 1
@@ -203,7 +211,8 @@ proc resize { args } {
       }
     }
   }
-  if { $buffer_cell == "NULL" && ($repair_max_cap || $repair_max_slew) } {
+  if { $buffer_cell == "NULL" && ($buffer_inputs || $buffer_outputs \
+				    || $repair_max_cap || $repair_max_slew) } {
     sta_error "Error: resize -buffer_cell required for buffer insertion."
   }
 
@@ -232,6 +241,12 @@ proc resize { args } {
   resizer_preamble $resize_libs
   set_dont_use $dont_use
   set_max_utilization $max_util
+  if { $buffer_inputs } {
+    buffer_inputs $buffer_cell
+  }
+  if { $buffer_outputs } {
+    buffer_outputs $buffer_cell
+  }
   if { $resize } {
     resize_to_target_slew
   }

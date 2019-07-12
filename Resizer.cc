@@ -248,9 +248,6 @@ Resizer::init()
   ensureLevelDrvrVerticies();
   ensureClkNets();
   ensureCorner();
-  resize_count_ = 0;
-  inserted_buffer_count_ = 0;
-  rebuffer_net_count_ = 0;
 }
 
 void
@@ -268,16 +265,6 @@ Resizer::setWireRC(float wire_res,
   initCorner(corner);
   init();
   makeNetParasitics();
-}
-
-void
-Resizer::bufferInputs(LibertyCell *buffer_cell)
-{
-}
-   
-void
-Resizer::bufferOutputs(LibertyCell *buffer_cell)
-{
 }
 
 void
@@ -323,16 +310,102 @@ Resizer::resizePreamble(LibertyLibrarySeq *resize_libs)
   findTargetLoads(resize_libs);
 }
 
+////////////////////////////////////////////////////////////////
+
 void
-Resizer::resizeToTargetSlew()
+Resizer::bufferInputs(LibertyCell *buffer_cell)
 {
-  resizeToTargetSlew1();
-  report_->print("Resized %d instances.\n", resize_count_);
+  inserted_buffer_count_ = 0;
+  InstancePinIterator *port_iter(network_->pinIterator(network_->topInstance()));
+  while (port_iter->hasNext()) {
+    Pin *pin = port_iter->next();
+    if (network_->direction(pin)->isInput())
+      bufferInput(pin, buffer_cell);
+  }
+  delete port_iter;
+  report_->print("Inserted %d input buffers.\n",
+		 inserted_buffer_count_);
+}
+   
+void
+Resizer::bufferInput(Pin *top_pin,
+		     LibertyCell *buffer_cell)
+{
+  LefDefNetwork *network = lefDefNetwork();
+  Term *term = network_->term(top_pin);
+  Net *input_net = network_->net(term);
+  LibertyPort *input, *output;
+  buffer_cell->bufferPorts(input, output);
+  string buffer_out_net_name = makeUniqueNetName();
+  string buffer_name = makeUniqueBufferName();
+  Instance *parent = network->topInstance();
+  Net *buffer_out = network->makeNet(buffer_out_net_name.c_str(), parent);
+  Instance *buffer = network->makeInstance(buffer_cell,
+					   buffer_name.c_str(),
+					   parent);
+  network->setLocation(buffer, network->location(top_pin));
+  inserted_buffer_count_++;
+
+  NetPinIterator *pin_iter(network->pinIterator(input_net));
+  while (pin_iter->hasNext()) {
+    Pin *pin = pin_iter->next();
+    disconnectPin(pin);
+    connectPin(network->instance(pin), network->port(pin), buffer_out);
+  }
+  connectPin(buffer, input, input_net);
+  connectPin(buffer, output, buffer_out);
 }
 
 void
-Resizer::resizeToTargetSlew1()
+Resizer::bufferOutputs(LibertyCell *buffer_cell)
 {
+  inserted_buffer_count_ = 0;
+  InstancePinIterator *port_iter(network_->pinIterator(network_->topInstance()));
+  while (port_iter->hasNext()) {
+    Pin *pin = port_iter->next();
+    if (network_->direction(pin)->isOutput())
+      bufferOutput(pin, buffer_cell);
+  }
+  delete port_iter;
+  report_->print("Inserted %d output buffers.\n",
+		 inserted_buffer_count_);
+}
+
+void
+Resizer::bufferOutput(Pin *top_pin,
+		     LibertyCell *buffer_cell)
+{
+  LefDefNetwork *network = lefDefNetwork();
+  Term *term = network_->term(top_pin);
+  Net *output_net = network_->net(term);
+  LibertyPort *input, *output;
+  buffer_cell->bufferPorts(input, output);
+  string buffer_in_net_name = makeUniqueNetName();
+  string buffer_name = makeUniqueBufferName();
+  Instance *parent = network->topInstance();
+  Net *buffer_in = network->makeNet(buffer_in_net_name.c_str(), parent);
+  Instance *buffer = network->makeInstance(buffer_cell,
+					   buffer_name.c_str(),
+					   parent);
+  network->setLocation(buffer, network->location(top_pin));
+  inserted_buffer_count_++;
+
+  NetPinIterator *pin_iter(network->pinIterator(output_net));
+  while (pin_iter->hasNext()) {
+    Pin *pin = pin_iter->next();
+    disconnectPin(pin);
+    connectPin(network->instance(pin), network->port(pin), buffer_in);
+  }
+  connectPin(buffer, input, buffer_in);
+  connectPin(buffer, output, output_net);
+}
+
+////////////////////////////////////////////////////////////////
+
+void
+Resizer::resizeToTargetSlew()
+{
+  resize_count_ = 0;
   // Resize in reverse level order.
   for (int i = level_drvr_verticies_.size() - 1; i >= 0; i--) {
     Vertex *vertex = level_drvr_verticies_[i];
@@ -344,6 +417,7 @@ Resizer::resizeToTargetSlew1()
       break;
     }
   }
+  report_->print("Resized %d instances.\n", resize_count_);
 }
 
 void
@@ -875,6 +949,8 @@ Resizer::rebuffer(bool repair_max_cap,
 		  bool repair_max_slew,
 		  LibertyCell *buffer_cell)
 {
+  inserted_buffer_count_ = 0;
+  rebuffer_net_count_ = 0;
   findDelays();
   // Rebuffer in reverse level order.
   for (int i = level_drvr_verticies_.size() - 1; i >= 0; i--) {
@@ -1020,8 +1096,7 @@ Resizer::rebuffer(const Pin *drvr_pin,
   }
   if (drvr_port
       // Verilog connects by net name, so there is no way to distinguish the
-      // net from the port. We could isolate the output port with a buffer
-      // and move the connections to a safe net but for now just skip them.
+      // net from the port.
       && !hasTopLevelOutputPort(net)) {
     LefDefNetwork *network = lefDefNetwork();
     SteinerTree *tree = makeSteinerTree(net, true, network);

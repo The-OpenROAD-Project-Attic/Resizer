@@ -109,7 +109,10 @@ protected:
   void findClkNets();
   bool isClock(Net *net);
   void ensureLevelDrvrVerticies();
-  void resizeToTargetSlew1();
+  void bufferInput(Pin *top_pin,
+		   LibertyCell *buffer_cell);
+  void bufferOutput(Pin *top_pin,
+		    LibertyCell *buffer_cell);
   void makeEquivCells(LibertyLibrarySeq *resize_libs);
   void findTargetLoads(LibertyLibrarySeq *resize_libs);
   void findTargetLoads(LibertyLibrary *library,

@@ -239,6 +239,20 @@ resizer_preamble(LibertyLibrarySeq *resize_libs)
 }
 
 void
+buffer_inputs(LibertyCell *buffer_cell)
+{
+  Resizer *resizer = getResizer();
+  resizer->bufferInputs(buffer_cell);
+}
+
+void
+buffer_outputs(LibertyCell *buffer_cell)
+{
+  Resizer *resizer = getResizer();
+  resizer->bufferOutputs(buffer_cell);
+}
+
+void
 resize_to_target_slew()
 {
   Resizer *resizer = getResizer();

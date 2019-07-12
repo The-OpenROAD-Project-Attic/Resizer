@@ -83,7 +83,9 @@ read_def filename
 set_wire_rc [-resistance res ] [-capacitance cap] [-corner corner_name]
 set_design_size [-die {lx ly ux uy}]
                 [-core {lx ly ux uy}]
-resize [-resize]
+resize [-buffer_inputs]
+       [-buffer_outputs]
+       [-resize]
        [-resize_libraries resize_libraries]
        [-repair_max_cap]
        [-repair_max_slew]
@@ -119,8 +121,9 @@ The `set_design_size` command set the corners of the die (for DEF
 DIEAREA) and core (placeable area) of the design. All dimensions are
 in microns.
 
-The `resize` command resizes gates and then uses buffer insertion to
-repair maximum capacitance and slew violations. Use the `-resize`,
+The `resize` command buffers inputs and outputs, resizes gates, and
+then uses buffer insertion to repair maximum capacitance and slew
+violations. Use the `-buffer_inputs`, `-buffer_outputs`, `-resize`,
 `-repair_max_cap` and `-repair_max_slew` options to invoke a single
 mode. With none of the options specified all are done. The
 `-buffer_cell` argument is required for buffer insertion

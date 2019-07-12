@@ -141,6 +141,7 @@ record_resizer_tests {
   rebuffer7
   rebuffer8
   rebuffer9
+  rebuffer_ports1
   resize1
   resize2
   resize3
