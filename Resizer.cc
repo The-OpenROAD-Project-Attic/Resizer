@@ -47,11 +47,8 @@
 //  tcl cmds to set liberty pin cap and limit for testing
 //  check one def
 //  check lef/liberty library cell ports match
-//  test rebuffering on input ports
 //  option to place buffers between driver and load on long wires
 //   to fix max slew/cap violations
-// rename option to -insert_buffers
-// buffer inputs and outputs
 // http://vlsicad.eecs.umich.edu/BK/Slots/cache/dropzone.tamu.edu/~zhuoli/GSRC/fast_buffer_insertion.html
 
 namespace sta {
@@ -658,7 +655,7 @@ Resizer::findBufferTargetSlews(LibertyLibrarySeq *resize_libs)
     int counts[TransRiseFall::index_count]{0};
     
     findBufferTargetSlews(lib, slews, counts);
-    for (int tr = 0; tr < TransRiseFall::index_count; tr++) {
+    for (auto tr : TransRiseFall::rangeIndex()) {
       tgt_slews_[tr] += slews[tr];
       tgt_counts[tr] += counts[tr];
       slews[tr] /= counts[tr];
@@ -669,7 +666,7 @@ Resizer::findBufferTargetSlews(LibertyLibrarySeq *resize_libs)
 		slews[TransRiseFall::fallIndex()]);
   }
 
-  for (int tr = 0; tr < TransRiseFall::index_count; tr++)
+  for (auto tr : TransRiseFall::rangeIndex())
     tgt_slews_[tr] /= tgt_counts[tr];
 
   debugPrint2(debug_, "resizer", 1, "target_slews = %.2e/%.2e\n",
@@ -993,9 +990,7 @@ Resizer::hasMaxSlewViolation(const Pin *drvr_pin)
   float limit;
   bool exists;
   slewLimit(drvr_pin, MinMax::max(), limit, exists);
-  TransRiseFallIterator tr_iter;
-  while (tr_iter.hasNext()) {
-    TransRiseFall *tr = tr_iter.next();
+  for (auto tr : TransRiseFall::range()) {
     Slew slew = graph_->slew(vertex, tr, dcalc_ap_->index());
     if (slew > limit)
       return true;
