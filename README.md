@@ -262,4 +262,4 @@ utilization as show below:
 
 * James Cherry (coding)
 * Lukas van Ginneken (resizing algorithm)
-* Chris Cho (Flute steiner tree package)
+* Chris Chu (Flute steiner tree package)
