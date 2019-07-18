@@ -35,7 +35,6 @@ namespace sta {
 
 using std::abs;
 using std::floor;
-using std::round;
 using std::ifstream;
 
 class Track
@@ -297,8 +296,8 @@ DefWriter::writeRows(const char *site_name,
 	int site_dy_dbu = metersToDbu(site_dy);
 	double core_dx = abs(core_ux - core_lx);
 	double core_dy = abs(core_uy - core_ly);
-	int rows_x = core_dx / site_dx;
-	int rows_y = core_dy / site_dy;
+	int rows_x = floor(core_dx / site_dx);
+	int rows_y = floor(core_dy / site_dy);
 
 	int core_lx_dbu = metersToDbu(core_lx);
 	int y = metersToDbu(core_ly);;

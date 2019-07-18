@@ -54,8 +54,8 @@ proc set_design_size { args } {
     check_positive_float "-die" $die_ux
     check_positive_float "-die" $die_uy
     set_die_size_cmd \
-      [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
-      [expr $die_ux * 1e-6] [expr $die_uy * 1e-6]
+      [distance_ui_sta $die_lx] [distance_ui_sta $die_ly] \
+      [distance_ui_sta $die_ux] [distance_ui_sta $die_uy]
   }
 
   if [info exists keys(-core)] {
@@ -69,8 +69,8 @@ proc set_design_size { args } {
     check_positive_float "-core" $core_ux
     check_positive_float "-core" $core_uy
     set_core_size_cmd \
-      [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
-      [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
+      [distance_ui_sta $core_lx] [distance_ui_sta $core_ly] \
+      [distance_ui_sta $core_ux] [distance_ui_sta $core_uy]
   }
 }
 
@@ -106,8 +106,8 @@ proc write_def { args } {
     check_positive_float "-die_area" $die_ux
     check_positive_float "-die_area" $die_uy
     set_design_die_size_cmd \
-      [expr $die_lx * 1e-6] [expr $die_ly * 1e-6] \
-      [expr $die_ux * 1e-6] [expr $die_uy * 1e-6]
+      [distance_ui_sta $die_lx] [distance_ui_sta $die_ly] \
+      [distance_ui_sta $die_ux] [distance_ui_sta $die_uy]
   }
 
   if [info exists keys(-core_area)] {
@@ -122,8 +122,8 @@ proc write_def { args } {
     check_positive_float "-core_area" $core_ux
     check_positive_float "-core_area" $core_uy
     set_design_core_size_cmd \
-      [expr $core_lx * 1e-6] [expr $core_ly * 1e-6] \
-      [expr $core_ux * 1e-6] [expr $core_uy * 1e-6]
+      [distance_ui_sta $core_lx] [distance_ui_sta $core_ly] \
+      [distance_ui_sta $core_ux] [distance_ui_sta $core_uy]
   }
 
   set site_name ""
@@ -266,7 +266,8 @@ define_cmd_args "report_design_area" {}
 
 proc report_design_area {} {
   set util [format %.0f [expr [sta::utilization] * 100]]
-  puts "Design area [format %.0f [expr [sta::design_area] *1e12]] u^2 ${util}% utilization."
+  set area [distance_sta_ui [distance_sta_ui [sta::design_area]]]
+  puts "Design area [format %.0f $area] u^2 ${util}% utilization."
 }
 
 # sta namespace end
