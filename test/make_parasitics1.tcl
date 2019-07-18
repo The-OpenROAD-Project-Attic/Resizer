@@ -7,14 +7,14 @@ set_input_delay -clock clk 0 in1
 
 report_checks
 
-# Meters.
-set lambda .12e-6
-# Ohm/Square.
-set m1_res_sq .08
+# microns
+set lambda .12
+# kohm/Square.
+set m1_res_sq .08e-3
 # Farads/meter^2 (picofarads/micron^2).
 set m1_area_cap 39e-6
-# Farads/meter.
-set m1_edge_cap 57e-12
+# pf/micron.
+set m1_edge_cap 57e-6
 # 4 lambda wide wire
 # res/cap are per meter of wire length
 set wire_cap [expr $m1_area_cap * $lambda * 4 + $m1_edge_cap * 2]

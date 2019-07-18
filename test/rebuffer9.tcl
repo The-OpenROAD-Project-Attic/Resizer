@@ -10,8 +10,10 @@ set_driving_cell -lib_cell snl_bufx1 [get_ports in1]
 set_max_transition 1.0 [get_ports *]
 
 set buffer_cell [get_lib_cell liberty1/snl_bufx2]
+# kohm/micron, pf/micron
 # use 10x wire cap to tickle buffer insertion
-set_wire_rc -resistance 1.7e+5 -capacitance 1.3e-9
+set_wire_rc -resistance 1.7e-4 -capacitance 1.3e-3
+
 report_design_area
 
 set_design_size -core "0 0 100 100"

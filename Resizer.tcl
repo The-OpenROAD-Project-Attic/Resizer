@@ -167,7 +167,9 @@ proc set_wire_rc { args } {
   }
   set corner [parse_corner keys]
   check_argc_eq0 "set_wire_rc" $args
-  set_wire_rc_cmd $res $cap $corner
+  set r [expr [resistance_ui_sta $res] / [distance_ui_sta 1.0]]
+  set c [expr [capacitance_ui_sta $cap] / [distance_ui_sta 1.0]]
+  set_wire_rc_cmd $r $c $corner
 }
 
 define_cmd_args "resize" {[-buffer_inputs]\

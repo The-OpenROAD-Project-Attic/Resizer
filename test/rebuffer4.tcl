@@ -6,8 +6,9 @@ read_def reg3.def
 create_clock clk -period 1
 
 set buffer_cell [get_lib_cell liberty1/snl_bufx2]
+# kohm/micron, pf/micron
 # use 100x wire cap to tickle buffer insertion
-set_wire_rc -resistance 1.7e+5 -capacitance 1.3e-8
+set_wire_rc -resistance 1.7e-4 -capacitance 1.3e-2
 sta::rebuffer_net [get_pin_net u1/Z] $buffer_cell
 
 set def_file [make_result_file rebuffer4.def]

@@ -85,8 +85,9 @@ read_def $def_file
 
 create_clock clk -period 1
 
+# kohm/micron, pf/micron
 # use 100x wire cap to tickle buffer insertion
-set_wire_rc -resistance 1.7e+5 -capacitance 1.3e-8
+set_wire_rc -resistance 1.7e-4 -capacitance 1.3e-2
 set buffer_cell [get_lib_cell liberty1/snl_bufx2]
 report_worst_slack
 

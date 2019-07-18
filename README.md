@@ -106,20 +106,23 @@ Verilog netlist can also be resized by reading a Verilog netlist as in
 OpenSTA. Because there are no instance locations in the Verilog
 netlist, a wireload model is used to estimate parasitics.  The
 default_wireload model specified in the first liberty file or with the
-SDC set_wire_load command is used to make parasitics.
+SDC `set_wire_load` command is used to make parasitics.
 
-The `set_wire_rc` command sets the resistance (ohms/meter) and
-capacitance (farads/meter) of routing wires. It adds parasitics based
-on placed component pin locations. The resistance and capacitance are
-per meter of a routing wire. They should represent "average" routing
-layer resistance and capacitance. If the set_wire_rc command is not
-called before resizing, the default_wireload model specified in the
-first liberty file or with the SDC set_wire_load command is used to
-make parasitics.
+The `set_wire_rc` command sets the resistance
+(resistance_unit/distance_unit) and capacitance
+(capacitance_unit/distance_unit) of routing wires. It adds RC
+parasitics based on placed component pin locations. If there are no
+component locations no parasitics are added. The resistance and
+capacitance are per distance unit of a routing wire. Use the
+`set_units` command to check units or `set_cmd_units` to change
+units. They should represent "average" routing layer resistance and
+capacitance. If the set_wire_rc command is not called before resizing,
+the default_wireload model specified in the first liberty file or with
+the SDC set_wire_load command is used to make parasitics.
 
 The `set_design_size` command set the corners of the die (for DEF
 DIEAREA) and core (placeable area) of the design. All dimensions are
-in microns.
+in distance units.
 
 The `resize` command buffers inputs and outputs, resizes gates, and
 then uses buffer insertion to repair maximum capacitance and slew
