@@ -316,7 +316,9 @@ Resizer::bufferInputs(LibertyCell *buffer_cell)
   InstancePinIterator *port_iter(network_->pinIterator(network_->topInstance()));
   while (port_iter->hasNext()) {
     Pin *pin = port_iter->next();
-    if (network_->direction(pin)->isInput())
+    Net *net = network_->net(network_->term(pin));
+    if (network_->direction(pin)->isInput()
+	&& !isClock(net))
       bufferInput(pin, buffer_cell);
   }
   delete port_iter;

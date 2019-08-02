@@ -1,4 +1,4 @@
-Inserted 5 input buffers.
+Inserted 2 input buffers.
 Inserted 1 output buffers.
 ###############################################################################
 # reg1.v
@@ -17,18 +17,12 @@ UNITS DISTANCE MICRONS 1000 ;
 DIEAREA ( -1000 -1000 ) ( 1000 1000 ) ;
 
 
-COMPONENTS 11 ;
+COMPONENTS 8 ;
 - buffer1 snl_bufx2
 + PLACED ( 0 0 ) N ;
 - buffer2 snl_bufx2
 + PLACED ( 0 0 ) N ;
 - buffer3 snl_bufx2
-+ PLACED ( 0 0 ) N ;
-- buffer4 snl_bufx2
-+ PLACED ( 0 0 ) N ;
-- buffer5 snl_bufx2
-+ PLACED ( 0 0 ) N ;
-- buffer6 snl_bufx2
 + PLACED ( 0 0 ) N ;
 - r1 snl_ffqx1 ;
 - r2 snl_ffqx1 ;
@@ -53,19 +47,16 @@ SPECIALNETS 2 ;
   + USE POWER ;
 END SPECIALNETS
 
-NETS 16 ;
-- clk1 ( PIN clk1 ) ( buffer3 A ) ;
-- clk2 ( PIN clk2 ) ( buffer4 A ) ;
-- clk3 ( PIN clk3 ) ( buffer5 A ) ;
+NETS 13 ;
+- clk1 ( PIN clk1 ) ( r1 CP ) ;
+- clk2 ( PIN clk2 ) ( r2 CP ) ;
+- clk3 ( PIN clk3 ) ( r3 CP ) ;
 - in1 ( PIN in1 ) ( buffer1 A ) ;
 - in2 ( PIN in2 ) ( buffer2 A ) ;
 - net1 ( buffer1 Z ) ( r1 D ) ;
 - net2 ( buffer2 Z ) ( r2 D ) ;
-- net3 ( buffer3 Z ) ( r1 CP ) ;
-- net4 ( buffer4 Z ) ( r2 CP ) ;
-- net5 ( buffer5 Z ) ( r3 CP ) ;
-- net6 ( buffer6 A ) ( r3 Q ) ;
-- out ( PIN out ) ( buffer6 Z ) ;
+- net3 ( buffer3 A ) ( r3 Q ) ;
+- out ( PIN out ) ( buffer3 Z ) ;
 - r1q ( r1 Q ) ( u2 A ) ;
 - r2q ( r2 Q ) ( u1 A ) ;
 - u1z ( u1 Z ) ( u2 B ) ;
