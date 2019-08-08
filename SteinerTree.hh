@@ -45,9 +45,9 @@ makeSteinerTree(const Net *net,
 class DefPtHash
 {
 public:
-  Hash operator()(const DefPt &pt) const
+  size_t operator()(const DefPt &pt) const
   {
-    Hash hash = hash_init_value;
+    size_t hash = hash_init_value;
     hashIncr(hash, pt.x());
     hashIncr(hash, pt.y());
     return hash;

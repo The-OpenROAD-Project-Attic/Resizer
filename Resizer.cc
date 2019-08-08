@@ -1223,7 +1223,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
       // Presort options to hit better options sooner.
       sort(Z, RebufferOptionBufferReqGreater(buffer_cell, this));
       int si = 0;
-      for (int pi = 0; pi < Z.size(); pi++) {
+      for (size_t pi = 0; pi < Z.size(); pi++) {
 	auto p = Z[pi];
 	if (p) {
 	  float Lp = p->cap();
@@ -1231,7 +1231,7 @@ Resizer::rebufferBottomUp(SteinerTree *tree,
 	  si = pi + 1;
 	  // Because the options are sorted we don't have to look
 	  // beyond the first option.
-	  for (int qi = pi + 1; qi < Z.size(); qi++) {
+	  for (size_t qi = pi + 1; qi < Z.size(); qi++) {
 	    auto q = Z[qi];
 	    if (q) {
 	      float Lq = q->cap();
