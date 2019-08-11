@@ -36,20 +36,6 @@ set valgrind_options "--num-callers=20 --leak-check=full --freelist-vol=10000000
 if { [exec "uname"] == "Darwin" } {
   append valgrind_options " --dsymutil=yes"
 }
-if { 0 } {
-  append valgrind_options " --gen-suppressions=all"
-}
-
-set tcheck_path "/opt/intel/itt/tcheck/bin/32e/tcheck_cl"
-set tcheck_options "--stack_depth 10 --quiet --format csv --options nowarnings,noverbose"
-
-# Regexp to filter log files to compare with pt.
-set summary_regexp "^ *\\(Startpoint:\\|Endpoint:\\|slack\\|data arrival time\\|data required time\\)"
-
-if [info exists env(STAX)] {
-  # Directory that holds log files -cmp comparison option.
-  set cmp_log_dir [file join $env(STAX) "doc" "reports"]
-}
 
 proc cleanse_logfile { test log_file } {
   # Nothing to be done here.
