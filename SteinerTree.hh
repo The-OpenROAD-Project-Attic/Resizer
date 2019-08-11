@@ -37,6 +37,7 @@ typedef Vector<SteinerPt> SteinerPtSeq;
 
 bool
 readFluteInits(string dir);
+// Returns nullptr if net has less than 2 pins.
 SteinerTree *
 makeSteinerTree(const Net *net,
 		bool find_left_rights,
