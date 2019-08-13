@@ -262,7 +262,7 @@ DefWriter::writeHeader(int units,
 		       double die_ux,
 		       double die_uy)
 {
-  fprintf(out_stream_, "VERSION 5.5 ;\n");
+  fprintf(out_stream_, "VERSION 5.7 ;\n");
   fprintf(out_stream_, "NAMESCASESENSITIVE ON ;\n");
   fprintf(out_stream_, "DIVIDERCHAR \"%c\" ;\n", network_->pathDivider());
   fprintf(out_stream_, "BUSBITCHARS \"[]\" ;\n");
