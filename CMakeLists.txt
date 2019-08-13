@@ -316,6 +316,11 @@ if (ZLIB_FOUND)
   target_link_libraries(verilog2def ${ZLIB_LIBRARIES})
 endif()
 
+# g++ std::thread apparently still needs -pthreads.
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_libraries(verilog2def -pthread)
+endif()
+
 target_compile_options(verilog2def PUBLIC ${COMPILE_OPTIONS})
 
 ################################################################
