@@ -267,9 +267,9 @@ proc get_pin_net { pin_name } {
 define_cmd_args "report_design_area" {}
 
 proc report_design_area {} {
-  set util [format %.0f [expr [sta::utilization] * 100]]
-  set area [distance_sta_ui [distance_sta_ui [sta::design_area]]]
-  puts "Design area [format %.0f $area] u^2 ${util}% utilization."
+  set util [format %.0f [expr [utilization] * 100]]
+  set area [format_area [design_area] 0]
+  puts "Design area ${area} u^2 ${util}% utilization."
 }
 
 # sta namespace end

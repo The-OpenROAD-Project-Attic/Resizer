@@ -10,8 +10,7 @@ set utilization .3
 set aspect_ratio 0.5
 set core_space 2
 
-# unit problem - don't want to mess with it right now
-set design_area [expr [sta::design_area] * 1e12]
+set design_area [sta::area_sta_ui [sta::design_area]]
 set core_area [expr $design_area / $utilization]
 set core_width [expr sqrt($core_area / $aspect_ratio)]
 set core_height [expr $core_width * $aspect_ratio]
