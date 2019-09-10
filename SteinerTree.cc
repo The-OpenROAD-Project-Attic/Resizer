@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <string>
+#include <unistd.h>
 #include "Machine.hh"
 #include "Report.hh"
 #include "Error.hh"
@@ -36,17 +37,21 @@ connectedPins(const Net *net,
 	      // Return value.
 	      PinSeq &pins);
 
-static Flute::FluteState *flute;
-
 bool
 readFluteInits(string dir)
 {
+  string etc;
+  stringPrint(etc, "%s/etc", dir.c_str());
   string flute_path1;
   string flute_path2;
-  stringPrint(flute_path1, "%s/etc/%s", dir.c_str(), FLUTE_POWVFILE);
-  stringPrint(flute_path2, "%s/etc/%s", dir.c_str(), FLUTE_PORTFILE);
+  stringPrint(flute_path1, "%s/%s", etc.c_str(), FLUTE_POWVFILE);
+  stringPrint(flute_path2, "%s/%s", etc.c_str(), FLUTE_POSTFILE);
   if (fileExists(flute_path1) && fileExists(flute_path2)) {
-    flute = Flute::flute_init(flute_path1.c_str(), flute_path2.c_str());
+    char *cwd = getcwd(NULL, 0);
+    chdir(etc.c_str());
+    Flute::readLUT();
+    chdir(cwd);
+    stringDelete(cwd);
     return true;
   }
   else
@@ -84,8 +89,8 @@ makeSteinerTree(const Net *net,
   sort(pins, PinPathNameLess(network));
   int pin_count = pins.size();
   if (pin_count >= 2) {
-    FluteDbu x[pin_count];
-    FluteDbu y[pin_count];
+    FluteDbu *x = new FluteDbu[pin_count];
+    FluteDbu *y = new FluteDbu[pin_count];
     for (int i = 0; i < pin_count; i++) {
       Pin *pin = pins[i];
       DefPt loc = network->location(pin);
@@ -97,7 +102,7 @@ makeSteinerTree(const Net *net,
     }
 
     int flute_accuracy = 3;
-    Flute::Tree ftree = Flute::flute(flute, pin_count, x, y, flute_accuracy);
+    Flute::Tree ftree = Flute::flute(pin_count, x, y, flute_accuracy);
     tree->setTree(ftree, network);
     if (debug->check("steiner", 3)) {
       Flute::printtree(ftree);
@@ -109,6 +114,8 @@ makeSteinerTree(const Net *net,
       tree->findLeftRights(network);
     if (debug->check("steiner", 2))
       tree->report(network);
+    delete [] x;
+    delete [] y;
     return tree;
   }
   else
@@ -158,7 +165,7 @@ SteinerTree::setTree(Flute::Tree tree,
 
 SteinerTree::~SteinerTree()
 {
-  Flute::free_tree(flute, tree_);
+  Flute::free_tree(tree_);
 }
 
 bool

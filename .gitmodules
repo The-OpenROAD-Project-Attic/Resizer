@@ -9,4 +9,4 @@
 	url = https://github.com/The-OpenROAD-Project/def.git
 [submodule "module/flute"]
 	path = module/flute
-	url = https://github.com/The-OpenROAD-Project/flute.git
+	url = https://github.com/The-OpenROAD-Project/flute3.git
