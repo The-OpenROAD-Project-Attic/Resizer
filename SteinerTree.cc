@@ -418,4 +418,4 @@ SteinerTree::right(SteinerPt pt)
   return right_[pt];
 }
 
-};
+}
