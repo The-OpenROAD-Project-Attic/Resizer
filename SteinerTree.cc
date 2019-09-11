@@ -51,7 +51,7 @@ readFluteInits(string dir)
     chdir(etc.c_str());
     Flute::readLUT();
     chdir(cwd);
-    stringDelete(cwd);
+    free(cwd);
     return true;
   }
   else

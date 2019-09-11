@@ -58,7 +58,7 @@ class LefDefNetwork : public ConcreteNetwork
 {
 public:
   LefDefNetwork();
-  ~LefDefNetwork();
+  virtual ~LefDefNetwork();
   void initState(Report *report,
 		 Debug *debug);
   virtual void clear();
