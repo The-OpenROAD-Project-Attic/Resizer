@@ -42,7 +42,7 @@ LefDefNetwork::clear()
   stringDelete(def_filename_);
   def_filename_ = nullptr;
   lef_library_ = nullptr;
-  def_component_map_.clear();
+  def_component_map_.deleteContentsClear();
   lef_macro_map_.deleteContents();
   lef_size_map_.deleteContents();
   manufacturing_grid_ = 0.0;
