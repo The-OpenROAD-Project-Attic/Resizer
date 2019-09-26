@@ -1503,4 +1503,4 @@ Resizer::designArea()
   return design_area_;
 }
 
-};
+}

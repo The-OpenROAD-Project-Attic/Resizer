@@ -1,8 +1,22 @@
-# Gate resizer
+# Gate Resizer
+
+The gate resizer is used to size gates in a post synthesis Verilog or DEF netlist.
+The optimizations performed are
+
+  * Buffer input and output ports
+  * Repaire minimum capacitance and maximum slew violations using buffer insertion
+  * Resize gates to reduce slew variation
+
+If the DEF netlist has placement information, parasitics are estimated
+using Steiner trees and average interconnect capacitance and
+resistance.
+
+verilog2def is a separarate stand-alone executable that is also built as part
+of the Resizer to initialize a DEF floorplan from a Verilog netlist.
 
 #### Installation
 
-Resizer depends on the Si2 LEF/DEF parsers, OpenSTA, and flute. These
+Resizer depends on the Si2 LEF/DEF parsers, OpenSTA, and Flute3. These
 source directories are git submodules and located in `resizer/module`.
 
 ```
@@ -64,7 +78,7 @@ resizer
   cmd_file           source cmd_file
 ```
 
-Resizer looks for the files POWV9.dat and PORT9.dat in ../etc relative
+Resizer looks for the files POWV9.dat and POST9.dat in ../etc relative
 to the executable when it starts.
 
 Resizer sources the TCL command file `~/.resizer` unless the command
@@ -102,8 +116,8 @@ write_def [-units dist_units]
 Liberty libraries should be read before LEF and DEF. Only one DEF file
 is supported.
 
-Verilog netlist can also be resized by reading a Verilog netlist as in
-OpenSTA. Because there are no instance locations in the Verilog
+Verilog netlists can also be resized by reading a Verilog netlist as
+in OpenSTA. Because there are no instance locations in the Verilog
 netlist, a wireload model is used to estimate parasitics.  The
 default_wireload model specified in the first liberty file or with the
 SDC `set_wire_load` command is used to make parasitics.
@@ -179,15 +193,14 @@ report_wns
 Resizer can also be used to translate a Verilog netlist to an
 initialized DEF.
 
-The `write_def` command `-units`, `-site`,
-`-tracks` and `-auto_place`_pins arguments are only used when writing
-a DEF file from a Verilog netlist to write an initial DEF file. If a
-DEF netlist has been read everything but the COMPONENTS and NETS
-sections are copied from the original DEF file.  `dist_units` are the
-DEF database units per micron. `site_name` is a LEF site name that is
-used to write ROW statements to fill the die area.  The
-`-auto_place_pins` argument adds locations for the pins equally spaced
-around the die perimeter.
+The `write_def` command `-units`, `-site`, `-tracks` and
+`-auto_place`_pins arguments are only used when writing a DEF file
+from a Verilog netlist to write an initial DEF file. If a DEF netlist
+has been read everything but the COMPONENTS and NETS sections are
+copied from the original DEF file.  `dist_units` are the DEF database
+units per micron. `site_name` is a LEF site name that is used to write
+ROW statements to fill the die area.  The `-auto_place_pins` argument
+adds locations for the pins equally spaced around the die perimeter.
 
 TRACKS statements are added for each routing layer in the LEF file.
 The optional `tracks_file` allows an alternative specification of the
@@ -222,7 +235,8 @@ write_def -units 100 \
 ```
 
 The `verilog2def` executable can also be used to translate Verilog to
-DEF using command line arguments.
+DEF using command line arguments. It is typically used to intialize a
+floorplan for placement.
 
 ```
 verilog2def
