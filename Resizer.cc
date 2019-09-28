@@ -740,7 +740,7 @@ Resizer::initFlute(const char *resizer_path)
   resizer_dir = "..";
   if (readFluteInits(resizer_dir))
     return;
-  printf("Error: could not find FluteLUT files POWV9.dat and PORT9.dat.\n");
+  printf("Error: could not find FluteLUT files POWV9.dat and POST9.dat.\n");
   exit(EXIT_FAILURE);
 }
 
