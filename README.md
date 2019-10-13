@@ -228,10 +228,10 @@ read_verilog reg1.v
 link_design top
 set_design_size -die "0 0 1000 1000" -core "100 100 900 900"
 write_def -units 100 \
-	  -site site1 \
+          -site site1 \
           -tracks tracks.info \
-	  -auto_place_pins \
-	  reg1.def
+          -auto_place_pins \
+          reg1.def
 ```
 
 The `verilog2def` executable can also be used to translate Verilog to
