@@ -30,14 +30,8 @@ NETS 15 ;
 - clk2 ( PIN clk2 ) ( b2/r1 CP ) ;
 - in ( PIN in ) ( b1/u1 A ) ;
 - out ( PIN out ) ( b2/u2 Z ) ;
-- b1/clk ( PIN clk1 ) ( b1/r1 CP ) ;
-- b1/in ( PIN in ) ( b1/u1 A ) ;
-- b1/out ( b1/u2 Z ) ( b2/u1 A ) ;
 - b1/r1q ( b1/r1 Q ) ( b1/u2 A ) ;
 - b1/u1out ( b1/r1 D ) ( b1/u1 Z ) ;
-- b2/clk ( PIN clk2 ) ( b2/r1 CP ) ;
-- b2/in ( b1/u2 Z ) ( b2/u1 A ) ;
-- b2/out ( PIN out ) ( b2/u2 Z ) ;
 - b2/r1q ( b2/r1 Q ) ( b2/u2 A ) ;
 - b2/u1out ( b2/r1 D ) ( b2/u1 Z ) ;
 END NETS

@@ -114,6 +114,7 @@ protected:
   void writeNets();
   void writeNets(const Instance *inst);
   void writeNet(Net *net);
+  bool hasTerminals(Net *net) const;
   const char *staToDef(const char *token);
   DefDbu metersToDbu(double dist) const;
 
@@ -643,10 +644,13 @@ void
 DefWriter::writeNets(const Instance *inst)
 {
   NetSeq nets;
+  bool is_top = (inst == network_->topInstance());
   NetIterator *net_iter = network_->netIterator(inst);
   while (net_iter->hasNext()) {
     Net *net = net_iter->next();
-    if (!network_->isGround(net) && !network_->isPower(net))
+    if ((is_top || !hasTerminals(net))
+	&& !network_->isGround(net)
+	&& !network_->isPower(net))
       nets.push_back(net);
   }
   delete net_iter;
@@ -665,6 +669,15 @@ DefWriter::writeNets(const Instance *inst)
       writeNets(child);
   }
   delete child_iter;
+}
+
+bool
+DefWriter::hasTerminals(Net *net) const
+{
+  NetTermIterator *term_iter = network_->termIterator(net);
+  bool has_terms = term_iter->hasNext();
+  delete term_iter;
+  return has_terms;
 }
 
 void
